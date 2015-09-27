@@ -8,3 +8,16 @@
 * Support versioning via GIT(jgit), including support for submodules to get a distributed storage that can be synced
 * Support searching via apache lucene
 * Provide an easy to use API similar to the JPA EntityManager
+
+## JTA integration
+
+In order to integrate with application servers FlatAdocDB uses JTA.
+There are 2 main entry points:
+
+* The JTATransactionProvider, this class has to be implemented by users in order to provide the current JTA transaction to FlatAdocDB
+** It is resolved via the Java https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html[ServiceLoader] infrastructure
+* The JTATransactionSynchronizationRegistryProvider which uses the jndi lookup for *java:comp/TransactionSynchronizationRegistry* to get the registry
+
+## Usage without JTA
+
+Generally if the jndi lookup for the TransactionSynchronizationRegistry fails we fall back to our own transaction management.

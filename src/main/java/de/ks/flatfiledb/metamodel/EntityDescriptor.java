@@ -16,10 +16,14 @@
 package de.ks.flatfiledb.metamodel;
 
 import de.ks.flatfiledb.ifc.EntityPersister;
+import de.ks.flatfiledb.ifc.PropertyPersister;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import java.lang.invoke.MethodHandle;
+import java.lang.reflect.Field;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Immutable
 public class EntityDescriptor {
@@ -33,6 +37,7 @@ public class EntityDescriptor {
     private MethodHandle idAccess;
     private EntityPersister persister;
     private Class<?> entityClass;
+    private final Map<Field, PropertyPersister> propertyPersisters = new HashMap<>();
 
     private Builder() {
       //
@@ -63,6 +68,16 @@ public class EntityDescriptor {
       return this;
     }
 
+    public Builder property(Field field, PropertyPersister persister) {
+      propertyPersisters.put(field, persister);
+      return this;
+    }
+
+    public Builder properties(Map<Field, PropertyPersister> persisters) {
+      propertyPersisters.putAll(persisters);
+      return this;
+    }
+
     public EntityDescriptor build() {
       return new EntityDescriptor(this);
     }
@@ -73,7 +88,8 @@ public class EntityDescriptor {
   protected final MethodHandle naturalIdFieldAccess;
   protected final MethodHandle versionAccess;
   protected final MethodHandle idAccess;
-  protected EntityPersister persister;
+  protected final EntityPersister persister;
+  protected final Map<Field, PropertyPersister> propertyPersisters;
 
   public EntityDescriptor(Builder b) {
     this.entityClass = b.entityClass;
@@ -81,6 +97,7 @@ public class EntityDescriptor {
     this.idAccess = b.idAccess;
     this.naturalIdFieldAccess = b.naturalIdFieldAccess;
     this.versionAccess = b.versionAccess;
+    this.propertyPersisters = Collections.unmodifiableMap(b.propertyPersisters);
   }
 
   public Class<?> getEntityClass() {
@@ -97,6 +114,30 @@ public class EntityDescriptor {
 
   public boolean hasNaturalId() {
     return naturalIdFieldAccess != null;
+  }
+
+  public Optional<PropertyPersister> getPropertyPersister(Field field) {
+    return Optional.ofNullable(propertyPersisters.get(field));
+  }
+
+  /**
+   * @param property field name
+   * @return the persister if present
+   * @throws IllegalStateException when 2 fields have the same name.
+   */
+  public Optional<PropertyPersister> getPropertyPersister(String property) throws IllegalStateException {
+    Set<PropertyPersister> persisters = this.propertyPersisters.entrySet().stream().filter(e -> e.getKey().getName().equals(property)).map(e -> e.getValue()).collect(Collectors.toSet());
+    if (persisters.size() > 1) {
+      throw new IllegalStateException("Found multiple property persisters for property " + property + " on " + entityClass.getName());
+    } else if (persisters.size() == 1) {
+      return Optional.of(persisters.iterator().next());
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  public Map<Field, PropertyPersister> getPropertyPersisters() {
+    return propertyPersisters;
   }
 
   @Override

@@ -15,11 +15,9 @@
  */
 package de.ks.flatfiledb.metamodel;
 
-import de.ks.flatfiledb.annotation.Entity;
-import de.ks.flatfiledb.annotation.Id;
-import de.ks.flatfiledb.annotation.NaturalId;
-import de.ks.flatfiledb.annotation.Version;
+import de.ks.flatfiledb.annotation.*;
 import de.ks.flatfiledb.ifc.EntityPersister;
+import de.ks.flatfiledb.ifc.PropertyPersister;
 import org.reflections.ReflectionUtils;
 
 import java.lang.annotation.Annotation;
@@ -28,6 +26,8 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -51,7 +51,7 @@ public class Parser {
   }
 
   public EntityDescriptor parse(Class<?> clazz) throws ParseException {
-    Constructor constructor = checkEntityAnnotation(clazz);
+    EntityPersister persister = checkEntityAnnotation(clazz);
 
     Set<Field> allFields = ReflectionUtils.getAllFields(clazz, this::filterField);
 
@@ -59,23 +59,44 @@ public class Parser {
     MethodHandle versionHandle = resolveVersionField(clazz, allFields);
     MethodHandle naturalIdHandle = resolveNaturalIdField(clazz, allFields);
 
+    Map<Field, PropertyPersister> propertyPersisters = resolvePropertyPersisters(clazz, allFields);
 
+    return EntityDescriptor.Builder.create().entity(clazz).id(idHandle).version(versionHandle).natural(naturalIdHandle)//
+      .persister(persister).properties(propertyPersisters).build();
+  }
+
+  private Map<Field, PropertyPersister> resolvePropertyPersisters(Class<?> clazz, Set<Field> allFields) {
+    HashMap<Field, PropertyPersister> retval = new HashMap<>();
+    Set<Field> fields = allFields.stream().filter(f -> f.isAnnotationPresent(Property.class)).collect(Collectors.toSet());
+    for (Field field : fields) {
+      Property annotation = field.getAnnotation(Property.class);
+      Class<? extends PropertyPersister> persisterClass = annotation.value();
+      PropertyPersister instance = getInstance(persisterClass);
+      retval.put(field, instance);
+    }
+    return retval;
+  }
+
+  private <T> T getInstance(Class<?> clazz) {
+    Set<Constructor> persisterConstructors = ReflectionUtils.getConstructors(clazz, ctor -> ctor.getParameterCount() == 0 && Modifier.isPublic(ctor.getModifiers()));
     try {
-      Object persister = constructor.newInstance();
-      return EntityDescriptor.Builder.create().entity(clazz).id(idHandle).version(versionHandle).natural(naturalIdHandle).persister((EntityPersister) persister).build();
+      if (persisterConstructors.size() > 0) {
+        check(persisterConstructors, c -> c.size() != 1, c -> "Found no matching default constructor on given implementation " + clazz.getName());
+        return (T) persisterConstructors.iterator().next().newInstance();
+      } else {
+        return (T) clazz.newInstance();
+      }
     } catch (Exception e) {
-      throw new ParseException("Could not instantiate the given entityPersister" + constructor.getDeclaringClass().getName(), e);
+      throw new ParseException("Could not instantiate default constructor on " + clazz);
     }
   }
 
-  private Constructor checkEntityAnnotation(Class<?> clazz) {
+  private <T extends EntityPersister> T checkEntityAnnotation(Class<?> clazz) {
     check(clazz, c -> !c.isAnnotationPresent(Entity.class), c -> "Annotation " + Entity.class.getName() + " not found on class " + c);
     Entity annotation = clazz.getAnnotation(Entity.class);
     Class<? extends EntityPersister> persister = annotation.persister();
 
-    Set<Constructor> persisterConstructors = ReflectionUtils.getConstructors(persister, ctor -> ctor.getParameterCount() == 0 && Modifier.isPublic(ctor.getModifiers()));
-    check(persisterConstructors, c -> c.size() != 1, c -> "Found no matching default constructor on given " + EntityPersister.class.getSimpleName() + " implementation " + persister.getName());
-    return persisterConstructors.iterator().next();
+    return getInstance(persister);
   }
 
   private MethodHandle resolveIdField(Class<?> clazz, Set<Field> allFields) {
@@ -93,7 +114,7 @@ public class Parser {
   }
 
   private MethodHandle resolveNaturalIdField(Class<?> clazz, Set<Field> allFields) {
-    Field idField = resolveExactlyOneField(clazz, allFields, NaturalId.class, "NaturalID", true);
+    Field idField = resolveExactlyOneField(clazz, allFields, NaturalId.class, "NaturalID", false);
     if (idField != null) {
       MethodHandle versionHandle = getGetter(idField);
       return versionHandle;

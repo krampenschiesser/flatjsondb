@@ -13,8 +13,7 @@ import org.junit.Test;
 
 import java.io.File;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class ParserTest {
   private Parser parser;
@@ -86,6 +85,15 @@ public class ParserTest {
     assertEquals(3, (long) result.versionAccess.invoke(entity));
   }
 
+  @Test
+  public void testEntityWithPropertyPersisters() throws Exception {
+    EntityDescriptor result = parser.parse(EntityWithPropertyPersisters.class);
+    assertEquals(2, result.getPropertyPersisters().size());
+
+    assertTrue(result.getPropertyPersister("bla").isPresent());
+    assertTrue(result.getPropertyPersister("other").isPresent());
+  }
+
   @Entity
   static class CorrectEntity extends NamedEntity {
     public CorrectEntity(String name) {
@@ -146,6 +154,7 @@ public class ParserTest {
     }
   }
 
+  @Entity
   static class EntityWithPropertyPersisters extends BaseEntity {
     @Property(TestStringPropertyPersister.class)
     protected String bla;

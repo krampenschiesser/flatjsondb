@@ -15,42 +15,19 @@
  */
 package de.ks.flatadocdb.session.transaction.local;
 
-import javax.transaction.Synchronization;
+import de.ks.flatadocdb.session.transaction.JTAProvider;
+
+import javax.transaction.Transaction;
 import javax.transaction.TransactionSynchronizationRegistry;
 
-public class LocalTransactionSynchronizationRegistry implements TransactionSynchronizationRegistry {
+public class LocalJTAProvider implements JTAProvider {
   @Override
-  public Object getTransactionKey() {
+  public Transaction getCurrentTransaction() {
     return null;
   }
 
   @Override
-  public void putResource(Object key, Object value) {
-
-  }
-
-  @Override
-  public Object getResource(Object key) {
+  public TransactionSynchronizationRegistry getRegistry() {
     return null;
-  }
-
-  @Override
-  public void registerInterposedSynchronization(Synchronization sync) {
-
-  }
-
-  @Override
-  public int getTransactionStatus() {
-    return 0;
-  }
-
-  @Override
-  public void setRollbackOnly() {
-
-  }
-
-  @Override
-  public boolean getRollbackOnly() {
-    return false;
   }
 }

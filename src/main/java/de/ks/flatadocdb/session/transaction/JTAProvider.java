@@ -16,24 +16,22 @@
 package de.ks.flatadocdb.session.transaction;
 
 import javax.transaction.Transaction;
+import javax.transaction.TransactionSynchronizationRegistry;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.ServiceLoader;
-import java.util.function.Supplier;
 
-/**
- *
- */
-public interface JTATransactionProvider extends Supplier<Transaction> {
-  @Override
-  Transaction get();
+public interface JTAProvider {
+  Transaction getCurrentTransaction();
 
-  static Optional<JTATransactionProvider> lookup() {
-    ServiceLoader<JTATransactionProvider> loader = ServiceLoader.load(JTATransactionProvider.class);
-    HashSet<JTATransactionProvider> providers = new HashSet<>();
+  TransactionSynchronizationRegistry getRegistry();
+
+  static Optional<JTAProvider> lookup() {
+    ServiceLoader<JTAProvider> loader = ServiceLoader.load(JTAProvider.class);
+    HashSet<JTAProvider> providers = new HashSet<>();
     loader.forEach(l -> providers.add(l));
     if (providers.size() > 1) {
-      throw new IllegalStateException("Found multiple providers for " + JTATransactionProvider.class.getName());
+      throw new IllegalStateException("Found multiple providers for " + JTAProvider.class.getName());
     } else if (providers.size() == 1) {
       return Optional.of(providers.iterator().next());
     } else {

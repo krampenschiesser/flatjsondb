@@ -16,42 +16,35 @@
 package de.ks.flatadocdb.session;
 
 import de.ks.flatadocdb.metamodel.MetaModel;
-import de.ks.flatadocdb.session.transaction.JTATransactionProvider;
-import de.ks.flatadocdb.session.transaction.JTATransactionSynchronizationRegistryProvider;
-import de.ks.flatadocdb.session.transaction.local.LocalTransactionProvider;
-import de.ks.flatadocdb.session.transaction.local.LocalTransactionSynchronizationRegistry;
+import de.ks.flatadocdb.session.transaction.JTAProvider;
+import de.ks.flatadocdb.session.transaction.local.LocalJTAProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.transaction.TransactionSynchronizationRegistry;
 import java.util.Optional;
 
 public class SessionFactory {
   private static final Logger log = LoggerFactory.getLogger(SessionFactory.class);
 
   private final MetaModel metaModel = new MetaModel();
-  private final JTATransactionSynchronizationRegistryProvider registryProvider = new JTATransactionSynchronizationRegistryProvider();
-  private final JTATransactionProvider transactionProvider;
+  private final JTAProvider jtaProvider;
 
   public SessionFactory() {
-    TransactionSynchronizationRegistry registry = registryProvider.get();
-    if (registry == null) {
-      log.info("Found no TransactionSynchronizationRegistry via jndi lookup. Will use custom implementation.");
-      registryProvider.set(new LocalTransactionSynchronizationRegistry());
-      transactionProvider = new LocalTransactionProvider(registryProvider.get());
+    Optional<JTAProvider> lookup = JTAProvider.lookup();
+    if (lookup.isPresent()) {
+      log.info("Found custom implementation of JTAProvider {}", lookup.get());
+      jtaProvider = lookup.get();
     } else {
-      Optional<JTATransactionProvider> txProvider = JTATransactionProvider.lookup();
-      if (txProvider.isPresent()) {
-        this.transactionProvider = txProvider.get();
-      } else {
-        throw new IllegalStateException("We run in a JTA environment but do not have any JTATransactionProvider. Please provide an implementation.");
-      }
+      log.info("Found no custom implementation of JTAProvider. Will fallback to use local transaction management.");
+      jtaProvider = new LocalJTAProvider();
     }
-
   }
 
   public MetaModel getMetaModel() {
     return metaModel;
   }
 
+  public boolean isLocallyManaged() {
+    return jtaProvider instanceof LocalJTAProvider;
+  }
 }

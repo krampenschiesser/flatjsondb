@@ -89,6 +89,7 @@ dependencies {
         exclude module: "objenesis"
     }
     testCompile "org.hamcrest:hamcrest-all:$hamcrest"
+    testCompile "ch.qos.logback:logback-classic:$logback"
 
     testRuntime "ch.qos.logback:logback-core:$logback"
     testRuntime "ch.qos.logback:logback-classic:$logback"

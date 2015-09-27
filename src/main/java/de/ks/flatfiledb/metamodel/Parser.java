@@ -19,11 +19,13 @@ import de.ks.flatfiledb.annotation.Entity;
 import de.ks.flatfiledb.annotation.Id;
 import de.ks.flatfiledb.annotation.NaturalId;
 import de.ks.flatfiledb.annotation.Version;
+import de.ks.flatfiledb.ifc.EntityPersister;
 import org.reflections.ReflectionUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Set;
@@ -49,7 +51,8 @@ public class Parser {
   }
 
   public EntityDescriptor parse(Class<?> clazz) throws ParseException {
-    check(clazz, c -> !c.isAnnotationPresent(Entity.class), c -> "Annotation " + Entity.class.getName() + " not found on class " + c);
+    Constructor constructor = checkEntityAnnotation(clazz);
+
     Set<Field> allFields = ReflectionUtils.getAllFields(clazz, this::filterField);
 
     MethodHandle idHandle = resolveIdField(clazz, allFields);
@@ -57,10 +60,22 @@ public class Parser {
     MethodHandle naturalIdHandle = resolveNaturalIdField(clazz, allFields);
 
 
-//    check(allFields,fields -> fields.f);
+    try {
+      Object persister = constructor.newInstance();
+      return EntityDescriptor.Builder.create().entity(clazz).id(idHandle).version(versionHandle).natural(naturalIdHandle).persister((EntityPersister) persister).build();
+    } catch (Exception e) {
+      throw new ParseException("Could not instantiate the given entityPersister" + constructor.getDeclaringClass().getName(), e);
+    }
+  }
 
+  private Constructor checkEntityAnnotation(Class<?> clazz) {
+    check(clazz, c -> !c.isAnnotationPresent(Entity.class), c -> "Annotation " + Entity.class.getName() + " not found on class " + c);
+    Entity annotation = clazz.getAnnotation(Entity.class);
+    Class<? extends EntityPersister> persister = annotation.persister();
 
-    return EntityDescriptor.Builder.create().entity(clazz).id(idHandle).version(versionHandle).natural(naturalIdHandle).persister(null).build();
+    Set<Constructor> persisterConstructors = ReflectionUtils.getConstructors(persister, ctor -> ctor.getParameterCount() == 0 && Modifier.isPublic(ctor.getModifiers()));
+    check(persisterConstructors, c -> c.size() != 1, c -> "Found no matching default constructor on given " + EntityPersister.class.getSimpleName() + " implementation " + persister.getName());
+    return persisterConstructors.iterator().next();
   }
 
   private MethodHandle resolveIdField(Class<?> clazz, Set<Field> allFields) {

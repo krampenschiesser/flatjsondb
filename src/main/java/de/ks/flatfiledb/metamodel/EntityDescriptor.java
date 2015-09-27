@@ -15,6 +15,8 @@
  */
 package de.ks.flatfiledb.metamodel;
 
+import de.ks.flatfiledb.ifc.EntityPersister;
+
 import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandle;
 
@@ -65,11 +67,11 @@ public class EntityDescriptor {
   }
 
   protected final Class<?> entityClass;
-  protected final EntityPersister persister;
   @Nullable
   protected final MethodHandle naturalIdFieldAccess;
   protected final MethodHandle versionAccess;
   protected final MethodHandle idAccess;
+  protected EntityPersister persister;
 
   public EntityDescriptor(Builder b) {
     this.entityClass = b.entityClass;

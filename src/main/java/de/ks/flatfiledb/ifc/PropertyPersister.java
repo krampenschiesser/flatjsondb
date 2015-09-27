@@ -13,21 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.ks.flatfiledb.defaults;
+package de.ks.flatfiledb.ifc;
 
-import de.ks.flatfiledb.ifc.EntityPersister;
-import de.ks.flatfiledb.metamodel.EntityDescriptor;
+public interface PropertyPersister<Parent, Property> {
+  Property load(Parent parent);
 
-import java.io.File;
-
-public class DefaultEntityPersister implements EntityPersister {
-  @Override
-  public Object load(EntityDescriptor descriptor) {
-    return null;
-  }
-
-  @Override
-  public void save(EntityDescriptor descriptor, File path, Object object) {
-
-  }
+  void save(Property property, Parent parent);
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.ks.flatfiledb.annotation;
-
-public @interface PropertyPersister {
-}
+/**
+ * Contains the interfaces/abstract classes that you can change/extend to customize your storage/loading procedures
+ */
+package de.ks.flatfiledb.ifc;

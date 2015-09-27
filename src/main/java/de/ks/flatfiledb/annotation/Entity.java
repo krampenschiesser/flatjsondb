@@ -16,7 +16,7 @@
 package de.ks.flatfiledb.annotation;
 
 import de.ks.flatfiledb.defaults.DefaultEntityPersister;
-import de.ks.flatfiledb.metamodel.EntityPersister;
+import de.ks.flatfiledb.ifc.EntityPersister;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

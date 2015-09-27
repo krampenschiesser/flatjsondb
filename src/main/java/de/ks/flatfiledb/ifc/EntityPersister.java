@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.ks.flatfiledb.metamodel;
+package de.ks.flatfiledb.ifc;
+
+import de.ks.flatfiledb.metamodel.EntityDescriptor;
 
 import java.io.File;
 
-public abstract class EntityPersister {
-  protected final EntityDescriptor descriptor;
+public interface EntityPersister {
+  Object load(EntityDescriptor descriptor);
 
-  public EntityPersister(EntityDescriptor descriptor) {
-    this.descriptor = descriptor;
-  }
-
-  public abstract Object load();
-
-  public abstract void save(File path, Object object);
+  void save(EntityDescriptor descriptor, File path, Object object);
 }

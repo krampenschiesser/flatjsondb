@@ -72,6 +72,8 @@ dependencies {
         exclude module: 'javassist'
     }
 
+    compile "javax.transaction:jta:$jta"
+
     compile "org.apache.lucene:lucene-core:$lucene"
     compile "org.eclipse.jgit:org.eclipse.jgit:$jgit"
 

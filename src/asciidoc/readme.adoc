@@ -1,0 +1,10 @@
+# FlatAdocDB
+
+## Main goals
+
+* Store asciidoctor and other text/json files hierarchical in the file system
+* Storage has to be *Atomic* and *Isolated*, Consistency and Durability are not the main goals( After close of stream I hope that it is written to the FS, as there are (almost) no relations, consistency is no issue either)
+* In process database
+* Support versioning via GIT(jgit), including support for submodules to get a distributed storage that can be synced
+* Support searching via apache lucene
+* Provide an easy to use API similar to the JPA EntityManager

@@ -63,9 +63,14 @@ dependencies {
     compile("org.slf4j:slf4j-ext:$slf4j") {
         exclude module: "cal10n-api"
     }
+    compile "com.google.code.findbugs:jsr305:$jsr305"
+
     compile "org.apache.commons:commons-lang3:$lang3"
     compile "org.javassist:javassist:$javassist"
     compile "org.objenesis:objenesis:$objenesis"
+    compile("org.reflections:reflections:$reflections") {
+        exclude module: 'javassist'
+    }
 
     compile "org.apache.lucene:lucene-core:$lucene"
     compile "org.eclipse.jgit:org.eclipse.jgit:$jgit"

@@ -1,0 +1,124 @@
+/*
+ * Copyright [2015] [Christian Loehnert]
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package de.ks.flatfiledb.metamodel;
+
+import de.ks.flatfiledb.annotation.Entity;
+import de.ks.flatfiledb.annotation.Id;
+import de.ks.flatfiledb.annotation.NaturalId;
+import de.ks.flatfiledb.annotation.Version;
+import org.reflections.ReflectionUtils;
+
+import java.lang.annotation.Annotation;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+public class Parser {
+  public static class ParseException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
+
+    public ParseException(String msg) {
+      super(msg);
+    }
+
+    public ParseException(Throwable cause) {
+      super(cause);
+    }
+
+    public ParseException(String message, Throwable cause) {
+      super(message, cause);
+    }
+  }
+
+  public EntityDescriptor parse(Class<?> clazz) throws ParseException {
+    check(clazz, c -> !c.isAnnotationPresent(Entity.class), c -> "Annotation " + Entity.class.getName() + " not found on class " + c);
+    Set<Field> allFields = ReflectionUtils.getAllFields(clazz, this::filterField);
+
+    MethodHandle idHandle = resolveIdField(clazz, allFields);
+    MethodHandle versionHandle = resolveVersionField(clazz, allFields);
+    MethodHandle naturalIdHandle = resolveNaturalIdField(clazz, allFields);
+
+
+//    check(allFields,fields -> fields.f);
+
+
+    return EntityDescriptor.Builder.create().entity(clazz).id(idHandle).version(versionHandle).natural(naturalIdHandle).persister(null).build();
+  }
+
+  private MethodHandle resolveIdField(Class<?> clazz, Set<Field> allFields) {
+    Field idField = resolveExactlyOneField(clazz, allFields, Id.class, "ID", true);
+    check(idField, f -> f.getType() != long.class, f -> "Type of ID field is no 'long' on " + clazz.getName());
+    MethodHandle idHandle = getGetter(idField);
+    return idHandle;
+  }
+
+  private MethodHandle resolveVersionField(Class<?> clazz, Set<Field> allFields) {
+    Field idField = resolveExactlyOneField(clazz, allFields, Version.class, "Version", true);
+    check(idField, f -> f.getType() != long.class, f -> "Type of Version field is no 'long' on " + clazz.getName());
+    MethodHandle versionHandle = getGetter(idField);
+    return versionHandle;
+  }
+
+  private MethodHandle resolveNaturalIdField(Class<?> clazz, Set<Field> allFields) {
+    Field idField = resolveExactlyOneField(clazz, allFields, NaturalId.class, "NaturalID", true);
+    if (idField != null) {
+      MethodHandle versionHandle = getGetter(idField);
+      return versionHandle;
+    } else {
+      return null;
+    }
+  }
+
+  private Field resolveExactlyOneField(Class<?> clazz, Set<Field> allFields, Class<? extends Annotation> annotation, String member, boolean hasToExist) {
+    Set<Field> idFields = allFields.stream().filter(f -> f.isAnnotationPresent(annotation)).collect(Collectors.toSet());
+    check(idFields, c -> c.size() > 1, c -> "Multiple " + member + " fields found on " + clazz.getName() + ": " + c);
+    if (hasToExist) {
+      check(idFields, c -> c.size() == 0, c -> "No " + member + " field found on " + clazz.getName() + ".");
+      return idFields.iterator().next();
+    } else {
+      if (idFields.isEmpty()) {
+        return null;
+      } else {
+        return idFields.iterator().next();
+      }
+    }
+  }
+
+  protected MethodHandle getGetter(Field f) {
+    try {
+      f.setAccessible(true);
+      return MethodHandles.lookup().unreflectGetter(f);
+    } catch (IllegalAccessException e) {
+      throw new ParseException("Could not extract getter handle for " + f + " on " + f.getDeclaringClass().getName(), e);
+    }
+  }
+
+  protected boolean filterField(Field f) {
+    int modifiers = f.getModifiers();
+    return !Modifier.isStatic(modifiers);
+  }
+
+  protected <T> void check(T t, Predicate<T> filter, Function<T, String> errorMsg) {
+    if (filter.test(t)) {
+      throw new ParseException(errorMsg.apply(t));
+    }
+  }
+}

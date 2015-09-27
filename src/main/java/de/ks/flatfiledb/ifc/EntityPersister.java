@@ -17,8 +17,14 @@ package de.ks.flatfiledb.ifc;
 
 import de.ks.flatfiledb.metamodel.EntityDescriptor;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.io.File;
 
+/**
+ * A persister is local for each entity and can store stateful information.
+ * It has to be threadsafe as it is used and accessed by all modifying/reading jvm threads.
+ */
+@ThreadSafe
 public interface EntityPersister {
   Object load(EntityDescriptor descriptor);
 

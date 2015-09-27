@@ -15,17 +15,33 @@
  */
 package de.ks.flatfiledb.metamodel;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+@ThreadSafe
 public class MetaModel {
+  protected final ReadWriteLock lock = new ReentrantReadWriteLock();
   protected final List<EntityDescriptor> entities = new LinkedList<EntityDescriptor>();
 
   public List<EntityDescriptor> getEntities() {
-    return entities;
+    lock.readLock().lock();
+    try {
+      return entities;
+    } finally {
+      lock.readLock().unlock();
+    }
   }
 
   public void addEntity(Class<?> clazz) {
-    EntityDescriptor entityDescriptor = new Parser().parse(clazz);
+    lock.writeLock().lock();
+    try {
+      EntityDescriptor entityDescriptor = new Parser().parse(clazz);
+      entities.add(entityDescriptor);
+    } finally {
+      lock.writeLock().unlock();
+    }
   }
 }

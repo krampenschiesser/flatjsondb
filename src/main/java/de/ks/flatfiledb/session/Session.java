@@ -15,6 +15,9 @@
  */
 package de.ks.flatfiledb.session;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
+@NotThreadSafe//can only be used as ThreadLocal
 public class Session {
 
   public void persist(Object entity) {

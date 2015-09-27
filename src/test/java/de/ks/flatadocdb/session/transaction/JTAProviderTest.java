@@ -16,10 +16,13 @@
 
 package de.ks.flatadocdb.session.transaction;
 
+import de.ks.flatadocdb.session.transaction.local.LocalJTAProvider;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.transaction.*;
 import javax.transaction.xa.XAResource;
@@ -28,6 +31,8 @@ import java.util.Optional;
 import static org.junit.Assert.*;
 
 public class JTAProviderTest {
+  private static final Logger log = LoggerFactory.getLogger(JTAProviderTest.class);
+
   @Before
   public void setUp() throws Exception {
     DelegatingJTATransactionProvider.setProvider(new TestProvider());
@@ -35,7 +40,7 @@ public class JTAProviderTest {
 
   @After
   public void tearDown() throws Exception {
-    DelegatingJTATransactionProvider.setProvider(null);
+    DelegatingJTATransactionProvider.setProvider(new LocalJTAProvider());
   }
 
   @Test

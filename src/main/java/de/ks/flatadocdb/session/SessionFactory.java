@@ -40,6 +40,10 @@ public class SessionFactory {
     }
   }
 
+  public Session openSession() {
+    return new Session();
+  }
+
   public MetaModel getMetaModel() {
     return metaModel;
   }

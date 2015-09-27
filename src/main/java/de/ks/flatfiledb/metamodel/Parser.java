@@ -51,7 +51,7 @@ public class Parser {
   }
 
   public EntityDescriptor parse(Class<?> clazz) throws ParseException {
-    checkEntityAnnotation(clazz);
+    Constructor constructor = checkEntityAnnotation(clazz);
 
     Set<Field> allFields = ReflectionUtils.getAllFields(clazz, this::filterField);
 
@@ -60,16 +60,22 @@ public class Parser {
     MethodHandle naturalIdHandle = resolveNaturalIdField(clazz, allFields);
 
 
-    return EntityDescriptor.Builder.create().entity(clazz).id(idHandle).version(versionHandle).natural(naturalIdHandle).build();
+    try {
+      Object persister = constructor.newInstance();
+      return EntityDescriptor.Builder.create().entity(clazz).id(idHandle).version(versionHandle).natural(naturalIdHandle).persister((EntityPersister) persister).build();
+    } catch (Exception e) {
+      throw new ParseException("Could not instantiate the given entityPersister" + constructor.getDeclaringClass().getName(), e);
+    }
   }
 
-  private void checkEntityAnnotation(Class<?> clazz) {
+  private Constructor checkEntityAnnotation(Class<?> clazz) {
     check(clazz, c -> !c.isAnnotationPresent(Entity.class), c -> "Annotation " + Entity.class.getName() + " not found on class " + c);
     Entity annotation = clazz.getAnnotation(Entity.class);
     Class<? extends EntityPersister> persister = annotation.persister();
 
     Set<Constructor> persisterConstructors = ReflectionUtils.getConstructors(persister, ctor -> ctor.getParameterCount() == 0 && Modifier.isPublic(ctor.getModifiers()));
     check(persisterConstructors, c -> c.size() != 1, c -> "Found no matching default constructor on given " + EntityPersister.class.getSimpleName() + " implementation " + persister.getName());
+    return persisterConstructors.iterator().next();
   }
 
   private MethodHandle resolveIdField(Class<?> clazz, Set<Field> allFields) {

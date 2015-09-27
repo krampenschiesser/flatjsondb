@@ -15,6 +15,8 @@
  */
 package de.ks.flatfiledb.metamodel;
 
+import de.ks.flatfiledb.ifc.EntityPersister;
+
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import java.lang.invoke.MethodHandle;
@@ -29,6 +31,7 @@ public class EntityDescriptor {
     private MethodHandle versionAccess;
     private MethodHandle naturalIdFieldAccess;
     private MethodHandle idAccess;
+    private EntityPersister persister;
     private Class<?> entityClass;
 
     private Builder() {
@@ -55,6 +58,11 @@ public class EntityDescriptor {
       return this;
     }
 
+    public Builder persister(EntityPersister p) {
+      persister = p;
+      return this;
+    }
+
     public EntityDescriptor build() {
       return new EntityDescriptor(this);
     }
@@ -65,9 +73,11 @@ public class EntityDescriptor {
   protected final MethodHandle naturalIdFieldAccess;
   protected final MethodHandle versionAccess;
   protected final MethodHandle idAccess;
+  protected EntityPersister persister;
 
   public EntityDescriptor(Builder b) {
     this.entityClass = b.entityClass;
+    this.persister = b.persister;
     this.idAccess = b.idAccess;
     this.naturalIdFieldAccess = b.naturalIdFieldAccess;
     this.versionAccess = b.versionAccess;
@@ -75,6 +85,10 @@ public class EntityDescriptor {
 
   public Class<?> getEntityClass() {
     return entityClass;
+  }
+
+  public EntityPersister getPersister() {
+    return persister;
   }
 
   public boolean isVersioned() {

@@ -17,10 +17,13 @@ package de.ks.flatadocdb.annotation;
 
 import de.ks.flatadocdb.ifc.PropertyPersister;
 
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
 public @interface Property {
   Class<? extends PropertyPersister> value();
 }

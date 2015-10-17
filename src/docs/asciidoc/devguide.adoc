@@ -1,0 +1,73 @@
+### The repositories
+
+We can manage multiple repositories. +
+One repository is the same as you are used to in git. +
+However it is additionally the root path for one single FADB. +
+-> Do we need 1 global or multiple indexes? What does lucene recommend?
+
+
+### Managing and referencing objects
+
+In the beginning I thought referencing an object by an incremental ID is enough.
+However if the same repository is cloned twice this is not possible anymore.
+But as each file has a unique path inside the repository, this path can be used as identifier.
+To shorten it we use the hash(SHA1) of the relative path. +
+
+Renaming the project/file will cause a new id.
+Renaming = Delete + Create completely new.
+
+### Indexing
+
+We scan and index all files in order to prevent having them all in memory.
+If checksums don't match or new files are added we will scan those again.
+Additionally we maintain a full lucene index.
+
+### File+Folder naming
+
+There is one annotation based policy that defines how the folders are named if the files get into subfolders or one folder.
+
+### Git integration
+
+After each transaction commit a git commit is done. However there is no need to commit it successfully.
+Additionally syncs with external devices/computers can be done via git.
+
+### Large files
+
+Large files will pollute git and external devices.
+Therefore a threshold is definded for files coming into the large binary folder.
+This folder is not in git and needs to be synced manually.
+
+### Optimistic locking
+
+Simple version counter that is checked before and after flushing to ensure that no change is done.
+If there is already one flushfile we will immediatly fail with a staleobjectstateexception.
+
+### Lazy loading
+
+References can be lazily loaded. Which will prevent too much memory consumption.
+
+### Parent child behaviour
+
+Usually the folder and file of an entity is defined by its main(class) annotation.
+However if it is a member and annotated with @Child new folder and file naming is chosen depending on
+
+* If the child contains a specialized folder+naming strategy
+* Or non is defined and its child folder + name is defined by the main(class) annotation
+
+### Commit and flush phase
+
+Before the commit we need to flush our changes.
+This is done by creating a temporary and hidden(including file attribute and prefix dot) file.
+Its name is the following:
+
+. *.* a dot for hiding it on unix system
+. *filename.ext.* depeding on the given rules
+. *pid_host* defining the pid and host of the process and system owning it.
+** this is needed in order to be secured against a killed program that didn't delete that file.
+** However this is only working if the file is written by the local machine.
+
+*.myNeededTask.json.2274_192.168.170.14*
+
+#### Shutdown hook
+
+We add a shutdown hook to ensure that those flush files are deleted again.

@@ -15,12 +15,12 @@
  */
 package de.ks.flatadocdb.entity;
 
-import de.ks.flatadocdb.annotation.Id;
 import de.ks.flatadocdb.annotation.Version;
 
+/**
+ * Base class you can use. If you have your own domain model you can just add the corresponding fields and annotations.
+ */
 public class BaseEntity {
   @Version
   protected long version;
-  @Id
-  protected long id;
 }

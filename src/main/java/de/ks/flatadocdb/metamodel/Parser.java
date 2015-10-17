@@ -15,7 +15,10 @@
  */
 package de.ks.flatadocdb.metamodel;
 
-import de.ks.flatadocdb.annotation.*;
+import de.ks.flatadocdb.annotation.Entity;
+import de.ks.flatadocdb.annotation.NaturalId;
+import de.ks.flatadocdb.annotation.Property;
+import de.ks.flatadocdb.annotation.Version;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.ifc.PropertyPersister;
 import org.reflections.ReflectionUtils;
@@ -55,13 +58,12 @@ public class Parser {
 
     Set<Field> allFields = ReflectionUtils.getAllFields(clazz, this::filterField);
 
-    MethodHandle idHandle = resolveIdField(clazz, allFields);
     MethodHandle versionHandle = resolveVersionField(clazz, allFields);
     MethodHandle naturalIdHandle = resolveNaturalIdField(clazz, allFields);
 
     Map<Field, PropertyPersister> propertyPersisters = resolvePropertyPersisters(clazz, allFields);
 
-    return EntityDescriptor.Builder.create().entity(clazz).id(idHandle).version(versionHandle).natural(naturalIdHandle)//
+    return EntityDescriptor.Builder.create().entity(clazz).version(versionHandle).natural(naturalIdHandle)//
       .persister(persister).properties(propertyPersisters).build();
   }
 
@@ -97,13 +99,6 @@ public class Parser {
     Class<? extends EntityPersister> persister = annotation.persister();
 
     return getInstance(persister);
-  }
-
-  private MethodHandle resolveIdField(Class<?> clazz, Set<Field> allFields) {
-    Field idField = resolveExactlyOneField(clazz, allFields, Id.class, "ID", true);
-    check(idField, f -> f.getType() != long.class, f -> "Type of ID field is no 'long' on " + clazz.getName());
-    MethodHandle idHandle = getGetter(idField);
-    return idHandle;
   }
 
   private MethodHandle resolveVersionField(Class<?> clazz, Set<Field> allFields) {

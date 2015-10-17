@@ -18,6 +18,7 @@ task wrapper(type: Wrapper) {
 }
 
 apply plugin: "java"
+
 group = "de.ks"
 version = "$version"
 
@@ -33,6 +34,17 @@ repositories {
         url = "https://oss.sonatype.org/content/repositories/snapshots/"
     }
 }
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "org.asciidoctor:asciidoctor-gradle-plugin:$asciidoc"
+    }
+}
+
+apply plugin: 'org.asciidoctor.convert'
 
 sourceSets {
     main {
@@ -106,4 +118,16 @@ task cleanlog {
 javadoc {
     options.docletpath = configurations.asciidoclet.files.asType(List)
     options.doclet = 'org.asciidoctor.Asciidoclet'
+}
+
+asciidoctor {
+    options = [
+            eruby     : 'erubis',
+            attributes: [
+                    'source-highlighter': 'coderay',
+                    toc                 : '',
+                    idprefix            : '',
+                    idseparator         : '-'
+            ]
+    ]
 }

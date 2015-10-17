@@ -15,40 +15,37 @@
  */
 package de.ks.flatadocdb.session;
 
-import de.ks.flatadocdb.metamodel.MetaModel;
-import de.ks.flatadocdb.session.transaction.JTAProvider;
-import de.ks.flatadocdb.session.transaction.local.LocalJTAProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
+//import de.ks.flatadocdb.session.transaction.local.LocalJTAProvider;
 
 public class SessionFactory {
   private static final Logger log = LoggerFactory.getLogger(SessionFactory.class);
-
-  private final MetaModel metaModel = new MetaModel();
-  private final JTAProvider jtaProvider;
-
-  public SessionFactory() {
-    Optional<JTAProvider> lookup = JTAProvider.lookup();
-    if (lookup.isPresent()) {
-      log.info("Found custom implementation of JTAProvider {}", lookup.get());
-      jtaProvider = lookup.get();
-    } else {
-      log.info("Found no custom implementation of JTAProvider. Will fallback to use local transaction management.");
-      jtaProvider = new LocalJTAProvider();
-    }
-  }
-
-  public Session openSession() {
-    return new Session();
-  }
-
-  public MetaModel getMetaModel() {
-    return metaModel;
-  }
-
-  public boolean isLocallyManaged() {
-    return jtaProvider instanceof LocalJTAProvider;
-  }
+//
+//  private final MetaModel metaModel = new MetaModel();
+//  private final JTAProvider jtaProvider;
+//
+//  public SessionFactory() {
+//    Optional<JTAProvider> lookup = JTAProvider.lookup();
+//    if (lookup.isPresent()) {
+//      log.info("Found custom implementation of JTAProvider {}", lookup.get());
+//      jtaProvider = lookup.get();
+//    } else {
+//      log.info("Found no custom implementation of JTAProvider. Will fallback to use local transaction management.");
+//      jtaProvider = new LocalJTAProvider();
+//    }
+//  }
+//
+//  public Session openSession() {
+//    return new Session();
+//  }
+//
+//  public MetaModel getMetaModel() {
+//    return metaModel;
+//  }
+//
+//  public boolean isLocallyManaged() {
+//    return jtaProvider instanceof LocalJTAProvider;
+//  }
 }

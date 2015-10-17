@@ -16,97 +16,86 @@
 
 package de.ks.flatadocdb.session.transaction;
 
-import de.ks.flatadocdb.session.transaction.local.LocalJTAProvider;
-import org.hamcrest.Matchers;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.transaction.*;
-import javax.transaction.xa.XAResource;
-import java.util.Optional;
-
-import static org.junit.Assert.*;
-
 public class JTAProviderTest {
   private static final Logger log = LoggerFactory.getLogger(JTAProviderTest.class);
-
-  @Before
-  public void setUp() throws Exception {
-    DelegatingJTATransactionProvider.setProvider(new TestProvider());
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    DelegatingJTATransactionProvider.setProvider(new LocalJTAProvider());
-  }
-
-  @Test
-  public void testGetTXByLoader() throws Exception {
-    Optional<JTAProvider> lookup = JTAProvider.lookup();
-    assertTrue(lookup.isPresent());
-    JTAProvider provider = lookup.get();
-    assertNotNull(provider.getCurrentTransaction());
-    assertThat(provider.getCurrentTransaction(), Matchers.instanceOf(TestTransaction.class));
-    assertThat(provider, Matchers.instanceOf(DelegatingJTATransactionProvider.class));
-  }
-
-  @Test
-  public void testNone() throws Exception {
-    DelegatingJTATransactionProvider.setProvider(null);
-
-    Optional<JTAProvider> lookup = JTAProvider.lookup();
-    assertNull(lookup.get().getCurrentTransaction());
-  }
-
-  static class TestTransaction implements Transaction {
-    @Override
-    public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, IllegalStateException, SystemException {
-
-    }
-
-    @Override
-    public boolean delistResource(XAResource xaRes, int flag) throws IllegalStateException, SystemException {
-      return false;
-    }
-
-    @Override
-    public boolean enlistResource(XAResource xaRes) throws RollbackException, IllegalStateException, SystemException {
-      return false;
-    }
-
-    @Override
-    public int getStatus() throws SystemException {
-      return 42;
-    }
-
-    @Override
-    public void registerSynchronization(Synchronization sync) throws RollbackException, IllegalStateException, SystemException {
-
-    }
-
-    @Override
-    public void rollback() throws IllegalStateException, SystemException {
-
-    }
-
-    @Override
-    public void setRollbackOnly() throws IllegalStateException, SystemException {
-
-    }
-  }
-
-  static class TestProvider implements JTAProvider {
-    @Override
-    public Transaction getCurrentTransaction() {
-      return new TestTransaction();
-    }
-
-    @Override
-    public TransactionSynchronizationRegistry getRegistry() {
-      return null;
-    }
-  }
+//
+//  @Before
+//  public void setUp() throws Exception {
+//    DelegatingJTATransactionProvider.setProvider(new TestProvider());
+//  }
+//
+//  @After
+//  public void tearDown() throws Exception {
+//    DelegatingJTATransactionProvider.setProvider(new LocalJTAProvider());
+//  }
+//
+//  @Test
+//  public void testGetTXByLoader() throws Exception {
+//    Optional<JTAProvider> lookup = JTAProvider.lookup();
+//    assertTrue(lookup.isPresent());
+//    JTAProvider provider = lookup.get();
+//    assertNotNull(provider.getCurrentTransaction());
+//    assertThat(provider.getCurrentTransaction(), Matchers.instanceOf(TestTransaction.class));
+//    assertThat(provider, Matchers.instanceOf(DelegatingJTATransactionProvider.class));
+//  }
+//
+//  @Test
+//  public void testNone() throws Exception {
+//    DelegatingJTATransactionProvider.setProvider(null);
+//
+//    Optional<JTAProvider> lookup = JTAProvider.lookup();
+//    assertNull(lookup.get().getCurrentTransaction());
+//  }
+//
+//  static class TestTransaction implements Transaction {
+//    @Override
+//    public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, IllegalStateException, SystemException {
+//
+//    }
+//
+//    @Override
+//    public boolean delistResource(XAResource xaRes, int flag) throws IllegalStateException, SystemException {
+//      return false;
+//    }
+//
+//    @Override
+//    public boolean enlistResource(XAResource xaRes) throws RollbackException, IllegalStateException, SystemException {
+//      return false;
+//    }
+//
+//    @Override
+//    public int getStatus() throws SystemException {
+//      return 42;
+//    }
+//
+//    @Override
+//    public void registerSynchronization(Synchronization sync) throws RollbackException, IllegalStateException, SystemException {
+//
+//    }
+//
+//    @Override
+//    public void rollback() throws IllegalStateException, SystemException {
+//
+//    }
+//
+//    @Override
+//    public void setRollbackOnly() throws IllegalStateException, SystemException {
+//
+//    }
+//  }
+//
+//  static class TestProvider implements JTAProvider {
+//    @Override
+//    public Transaction getCurrentTransaction() {
+//      return new TestTransaction();
+//    }
+//
+//    @Override
+//    public TransactionSynchronizationRegistry getRegistry() {
+//      return null;
+//    }
+//  }
 }

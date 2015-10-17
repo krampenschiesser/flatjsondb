@@ -13,21 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.ks.flatadocdb.session.transaction.local;
+package de.ks.flatadocdb.ifc;
 
-import de.ks.flatadocdb.session.transaction.JTAProvider;
-
-import javax.transaction.Transaction;
-import javax.transaction.TransactionSynchronizationRegistry;
-
-public class LocalJTAProvider implements JTAProvider {
-  @Override
-  public Transaction getCurrentTransaction() {
-    return null;
-  }
-
-  @Override
-  public TransactionSynchronizationRegistry getRegistry() {
-    return null;
-  }
+public class Repository {
 }

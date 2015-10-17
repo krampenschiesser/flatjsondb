@@ -9,6 +9,11 @@
 * Support searching via apache lucene
 * Provide an easy to use API similar to the JPA EntityManager
 
+
+## Implementation details
+
+include::devguide.adoc[]
+
 ## JTA integration
 
 In order to integrate with application servers FlatAdocDB uses JTA.

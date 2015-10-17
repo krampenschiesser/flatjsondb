@@ -19,6 +19,9 @@ import javax.annotation.concurrent.NotThreadSafe;
 
 @NotThreadSafe//can only be used as ThreadLocal
 public class Session {
+//  protected final Map<Long,SessionEntry> entriesById = new HashMap<>();
+//  protected final IdentityHashMap<Long,SessionEntry> entriesById = new HashMap<>();
+
 
   public void persist(Object entity) {
 

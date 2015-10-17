@@ -18,10 +18,13 @@ package de.ks.flatadocdb.annotation;
 import de.ks.flatadocdb.defaults.DefaultEntityPersister;
 import de.ks.flatadocdb.ifc.EntityPersister;
 
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
 public @interface Entity {
   Class<? extends EntityPersister> persister() default DefaultEntityPersister.class;
 }

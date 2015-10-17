@@ -15,30 +15,29 @@
  */
 package de.ks.flatadocdb.session.transaction;
 
-import de.ks.flatadocdb.session.transaction.local.LocalJTAProvider;
-
 import javax.transaction.Transaction;
 import javax.transaction.TransactionSynchronizationRegistry;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class DelegatingJTATransactionProvider implements JTAProvider {
-  public static final AtomicReference<JTAProvider> provider = new AtomicReference<>(new LocalJTAProvider());
-
-  public static void setProvider(JTAProvider other) {
-    provider.set(other);
-  }
-
-  public static JTAProvider getProvider() {
-    return provider.get();
-  }
+//  public static final AtomicReference<JTAProvider> provider = new AtomicReference<>(new LocalJTAProvider());
+//
+//  public static void setProvider(JTAProvider other) {
+//    provider.set(other);
+//  }
+//
+//  public static JTAProvider getProvider() {
+//    return provider.get();
+//  }
 
   @Override
   public Transaction getCurrentTransaction() {
-    return provider.get() == null ? null : provider.get().getCurrentTransaction();
+//    return provider.get() == null ? null : provider.get().getCurrentTransaction();
+    return null;
   }
 
   @Override
   public TransactionSynchronizationRegistry getRegistry() {
-    return provider.get() == null ? null : provider.get().getRegistry();
+//    return provider.get() == null ? null : provider.get().getRegistry();
+    return null;
   }
 }

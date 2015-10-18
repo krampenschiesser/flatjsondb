@@ -15,10 +15,7 @@
  */
 package de.ks.flatadocdb.metamodel;
 
-import de.ks.flatadocdb.annotation.Entity;
-import de.ks.flatadocdb.annotation.NaturalId;
-import de.ks.flatadocdb.annotation.Property;
-import de.ks.flatadocdb.annotation.Version;
+import de.ks.flatadocdb.annotation.*;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.ifc.PropertyPersister;
 import org.reflections.ReflectionUtils;
@@ -58,12 +55,13 @@ public class Parser {
 
     Set<Field> allFields = ReflectionUtils.getAllFields(clazz, this::filterField);
 
+    MethodHandle idHandle = resolveIdField(clazz, allFields);
     MethodHandle versionHandle = resolveVersionField(clazz, allFields);
     MethodHandle naturalIdHandle = resolveNaturalIdField(clazz, allFields);
 
     Map<Field, PropertyPersister> propertyPersisters = resolvePropertyPersisters(clazz, allFields);
 
-    return EntityDescriptor.Builder.create().entity(clazz).version(versionHandle).natural(naturalIdHandle)//
+    return EntityDescriptor.Builder.create().entity(clazz).id(idHandle).version(versionHandle).natural(naturalIdHandle)//
       .persister(persister).properties(propertyPersisters).build();
   }
 
@@ -79,6 +77,7 @@ public class Parser {
     return retval;
   }
 
+  @SuppressWarnings("unchecked")
   private <T> T getInstance(Class<?> clazz) {
     Set<Constructor> persisterConstructors = ReflectionUtils.getConstructors(clazz, ctor -> ctor.getParameterCount() == 0 && Modifier.isPublic(ctor.getModifiers()));
     try {
@@ -101,6 +100,13 @@ public class Parser {
     return getInstance(persister);
   }
 
+  private MethodHandle resolveIdField(Class<?> clazz, Set<Field> allFields) {
+    Field idField = resolveExactlyOneField(clazz, allFields, Id.class, "ID", true);
+    check(idField, f -> f.getType() != String.class, f -> "Type of ID field is no 'long' on " + clazz.getName());
+    MethodHandle idHandle = getGetter(idField);
+    return idHandle;
+  }
+
   private MethodHandle resolveVersionField(Class<?> clazz, Set<Field> allFields) {
     Field idField = resolveExactlyOneField(clazz, allFields, Version.class, "Version", true);
     check(idField, f -> f.getType() != long.class, f -> "Type of Version field is no 'long' on " + clazz.getName());
@@ -109,9 +115,9 @@ public class Parser {
   }
 
   private MethodHandle resolveNaturalIdField(Class<?> clazz, Set<Field> allFields) {
-    Field idField = resolveExactlyOneField(clazz, allFields, NaturalId.class, "NaturalID", false);
-    if (idField != null) {
-      MethodHandle versionHandle = getGetter(idField);
+    Field naturalIdField = resolveExactlyOneField(clazz, allFields, NaturalId.class, "NaturalID", false);
+    if (naturalIdField != null) {
+      MethodHandle versionHandle = getGetter(naturalIdField);
       return versionHandle;
     } else {
       return null;

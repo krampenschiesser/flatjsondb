@@ -34,6 +34,7 @@ public class EntityDescriptor {
 
     private MethodHandle versionAccess;
     private MethodHandle naturalIdFieldAccess;
+    private MethodHandle idAccess;
     private EntityPersister persister;
     private Class<?> entityClass;
     private final Map<Field, PropertyPersister> propertyPersisters = new HashMap<>();
@@ -49,6 +50,11 @@ public class EntityDescriptor {
 
     public Builder version(MethodHandle h) {
       versionAccess = h;
+      return this;
+    }
+
+    public Builder id(MethodHandle h) {
+      idAccess = h;
       return this;
     }
 
@@ -81,12 +87,14 @@ public class EntityDescriptor {
   @Nullable
   protected final MethodHandle naturalIdFieldAccess;
   protected final MethodHandle versionAccess;
+  protected final MethodHandle idAccess;
   protected final EntityPersister persister;
   protected final Map<Field, PropertyPersister> propertyPersisters;
 
   public EntityDescriptor(Builder b) {
     this.entityClass = b.entityClass;
     this.persister = b.persister;
+    this.idAccess = b.idAccess;
     this.naturalIdFieldAccess = b.naturalIdFieldAccess;
     this.versionAccess = b.versionAccess;
     this.propertyPersisters = Collections.unmodifiableMap(b.propertyPersisters);

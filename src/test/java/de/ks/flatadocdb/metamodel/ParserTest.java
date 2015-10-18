@@ -1,6 +1,7 @@
 package de.ks.flatadocdb.metamodel;
 
 import de.ks.flatadocdb.annotation.Entity;
+import de.ks.flatadocdb.annotation.Id;
 import de.ks.flatadocdb.annotation.Property;
 import de.ks.flatadocdb.annotation.Version;
 import de.ks.flatadocdb.entity.BaseEntity;
@@ -25,6 +26,16 @@ public class ParserTest {
   @Test(expected = Parser.ParseException.class)
   public void testNoEntity() throws Exception {
     parser.parse(NoEntity.class);
+  }
+
+  @Test(expected = Parser.ParseException.class)
+  public void testMultipleId() throws Exception {
+    parser.parse(MultipleId.class);
+  }
+
+  @Test(expected = Parser.ParseException.class)
+  public void testWrongIdType() throws Exception {
+    parser.parse(WrongIdType.class);
   }
 
   @Test(expected = Parser.ParseException.class)
@@ -59,11 +70,13 @@ public class ParserTest {
     assertEquals(CorrectEntity.class, result.entityClass);
     assertNotNull(result.naturalIdFieldAccess);
     assertNotNull(result.versionAccess);
+    assertNotNull(result.idAccess);
     assertNotNull(result.persister);
 
-    CorrectEntity entity = new CorrectEntity("test").setVersion(3);
+    CorrectEntity entity = new CorrectEntity("test").setId("abc123").setVersion(3);
 
     assertEquals("test", result.naturalIdFieldAccess.invoke(entity));
+    assertEquals("abc123", (String) result.idAccess.invoke(entity));
     assertEquals(3, (long) result.versionAccess.invoke(entity));
   }
 
@@ -87,6 +100,10 @@ public class ParserTest {
       return this;
     }
 
+    public CorrectEntity setId(String id) {
+      this.id = id;
+      return this;
+    }
 
   }
 
@@ -158,12 +175,30 @@ public class ParserTest {
   }
 
   @Entity
+  static class MultipleId {
+    @Id
+    private long id1;
+    @Id
+    private long id2;
+    protected String name;
+  }
+
+  @Entity
+  static class WrongIdType {
+    @Id
+    private short id1;
+    protected String name;
+  }
+
+  @Entity
   static class NoVersion {
+    @Id
     private long id;
   }
 
   @Entity
   static class MultipleVersion {
+    @Id
     private long id;
     @Version
     private long version1;
@@ -173,6 +208,7 @@ public class ParserTest {
 
   @Entity
   static class WrongVersionType {
+    @Id
     private long id;
     @Version
     private short version;

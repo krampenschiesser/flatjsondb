@@ -15,6 +15,7 @@
  */
 package de.ks.flatadocdb.entity;
 
+import de.ks.flatadocdb.annotation.Id;
 import de.ks.flatadocdb.annotation.Version;
 
 /**
@@ -23,4 +24,6 @@ import de.ks.flatadocdb.annotation.Version;
 public class BaseEntity {
   @Version
   protected long version;
+  @Id
+  protected String id;
 }

@@ -24,7 +24,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @ThreadSafe
 public class MetaModel {
   protected final ReadWriteLock lock = new ReentrantReadWriteLock();
-  protected final List<EntityDescriptor> entities = new LinkedList<EntityDescriptor>();
+  protected final List<EntityDescriptor> entities = new LinkedList<>();
 
   public List<EntityDescriptor> getEntities() {
     lock.readLock().lock();

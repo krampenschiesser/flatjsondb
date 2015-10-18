@@ -13,7 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.ks.flatadocdb.ifc;
+package de.ks.flatadocdb;
+
+import java.nio.file.Path;
 
 public class Repository {
+  protected Path path;
+  protected String name;
+
+  public Path getPath() {
+    return path;
+  }
+
+  public String getName() {
+    return name;
+  }
 }

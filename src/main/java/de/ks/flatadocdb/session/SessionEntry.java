@@ -15,8 +15,11 @@
  */
 package de.ks.flatadocdb.session;
 
+import de.ks.flatadocdb.index.IndexElement;
+
 public class SessionEntry {
   protected Object object;
+  protected IndexElement indexElement;
   protected String id;
   protected long version;
 }

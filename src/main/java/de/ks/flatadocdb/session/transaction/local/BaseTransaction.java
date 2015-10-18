@@ -20,7 +20,7 @@ import java.util.List;
 
 class BaseTransaction implements SimpleTransaction {
   private final String name;
-  private List<TransactionResource> resources = new ArrayList<>();
+  private final List<TransactionResource> resources = new ArrayList<>();
 
   public BaseTransaction(String name) {
     this.name = name;
@@ -28,17 +28,17 @@ class BaseTransaction implements SimpleTransaction {
 
   @Override
   public void prepare() {
-    resources.forEach(r -> r.prepare());
+    resources.forEach(TransactionResource::prepare);
   }
 
   @Override
   public void commit() {
-    resources.forEach(r -> r.commit());
+    resources.forEach(TransactionResource::commit);
   }
 
   @Override
   public void rollback() {
-    resources.forEach(r -> r.rollback());
+    resources.forEach(TransactionResource::rollback);
   }
 
   public void registerResource(TransactionResource resource) {

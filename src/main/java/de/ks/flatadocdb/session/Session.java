@@ -16,12 +16,14 @@
 package de.ks.flatadocdb.session;
 
 import javax.annotation.concurrent.NotThreadSafe;
+import java.util.HashMap;
+import java.util.Map;
 
 @NotThreadSafe//can only be used as ThreadLocal
 public class Session {
-//  protected final Map<Long,SessionEntry> entriesById = new HashMap<>();
+  protected final Map<String, SessionEntry> entriesById = new HashMap<>();
+  protected final Map<Object, SessionEntry> entriesByNaturalId = new HashMap<>();
 //  protected final IdentityHashMap<Long,SessionEntry> entriesById = new HashMap<>();
-
 
   public void persist(Object entity) {
 
@@ -35,7 +37,11 @@ public class Session {
     return null;
   }
 
-  public <E> E findById(Class<E> clazz, long id) {
+  public <E> E findById(Class<E> clazz, String id) {
+    return null;
+  }
+
+  public String getId(Object object) {
     return null;
   }
 }

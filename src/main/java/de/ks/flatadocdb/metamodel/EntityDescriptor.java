@@ -120,6 +120,32 @@ public class EntityDescriptor {
     return Optional.ofNullable(propertyPersisters.get(field));
   }
 
+  public MethodHandle getIdAccess() {
+    return idAccess;
+  }
+
+  @Nullable
+  public String getId(Object entity) {
+    if (hasIdAccess()) {
+      return invokeGetter(idAccess, entity);
+    } else {
+      return null;
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T> T invokeGetter(MethodHandle handle, Object object) {
+    try {
+      return (T) idAccess.invoke(object);
+    } catch (Throwable t) {
+      throw new RuntimeException(t);
+    }
+  }
+
+  public boolean hasIdAccess() {
+    return idAccess != null;
+  }
+
   /**
    * @param property field name
    * @return the persister if present

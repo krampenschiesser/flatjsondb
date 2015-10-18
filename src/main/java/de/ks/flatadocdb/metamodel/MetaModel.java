@@ -15,21 +15,22 @@
  */
 package de.ks.flatadocdb.metamodel;
 
+import de.ks.flatadocdb.exception.EntityNotRegisteredException;
+
 import javax.annotation.concurrent.ThreadSafe;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @ThreadSafe
 public class MetaModel {
   protected final ReadWriteLock lock = new ReentrantReadWriteLock();
-  protected final List<EntityDescriptor> entities = new LinkedList<>();
+  protected final Map<Class<?>, EntityDescriptor> clazz2EntityDescriptor = new HashMap<>();
 
   public List<EntityDescriptor> getEntities() {
     lock.readLock().lock();
     try {
-      return entities;
+      return new ArrayList<>(clazz2EntityDescriptor.values());
     } finally {
       lock.readLock().unlock();
     }
@@ -39,9 +40,23 @@ public class MetaModel {
     lock.writeLock().lock();
     try {
       EntityDescriptor entityDescriptor = new Parser().parse(clazz);
-      entities.add(entityDescriptor);
+      clazz2EntityDescriptor.put(entityDescriptor.getEntityClass(), entityDescriptor);
     } finally {
       lock.writeLock().unlock();
+    }
+  }
+
+  public EntityDescriptor getEntityDescriptor(Class<?> clazz) throws EntityNotRegisteredException {
+    lock.readLock().lock();
+    try {
+      EntityDescriptor retval = clazz2EntityDescriptor.get(clazz);
+      if (retval == null) {
+        throw new EntityNotRegisteredException(clazz, new HashSet<>(clazz2EntityDescriptor.keySet()));
+      } else {
+        return retval;
+      }
+    } finally {
+      lock.readLock().unlock();
     }
   }
 }

@@ -24,5 +24,9 @@ public class IndexElement {
   private Path pathInRepository;
   private String id;
   private Object naturalId;
+  private Class<?> entityClass;
 
+  public Class<?> getEntityClass() {
+    return entityClass;
+  }
 }

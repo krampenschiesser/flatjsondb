@@ -29,4 +29,8 @@ public class LocalIndex {
   public void removeEntry(IndexElement element) {
 
   }
+
+  public IndexElement getById(String id) {
+    return idToElement.get(id);
+  }
 }

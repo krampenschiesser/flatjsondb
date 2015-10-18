@@ -16,6 +16,8 @@
 package de.ks.flatadocdb.session;
 
 import de.ks.flatadocdb.exception.NoIdField;
+import de.ks.flatadocdb.ifc.EntityPersister;
+import de.ks.flatadocdb.index.IndexElement;
 import de.ks.flatadocdb.index.LocalIndex;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
@@ -55,7 +57,25 @@ public class Session {
     return null;
   }
 
+  @SuppressWarnings("unchecked")
   public <E> Optional<E> findById(Class<E> clazz, String id) {
+    Objects.requireNonNull(clazz);
+    Objects.requireNonNull(id);
+
+    SessionEntry sessionEntry = entriesById.get(id);
+    if (sessionEntry == null) {
+      IndexElement indexElement = localIndex.getById(id);
+      return Optional.ofNullable((E) load(indexElement));
+    } else {
+      return Optional.of((E) sessionEntry.object);
+    }
+  }
+
+  private Object load(IndexElement indexElement) {
+    EntityDescriptor descriptor = metaModel.getEntityDescriptor(indexElement.getEntityClass());
+    EntityPersister persister = descriptor.getPersister();
+    Object load = persister.load(descriptor);
+    SessionEntry sessionEntry = new SessionEntry();
     return null;
   }
 

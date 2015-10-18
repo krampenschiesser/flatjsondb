@@ -15,33 +15,64 @@
  */
 package de.ks.flatadocdb.session;
 
+import de.ks.flatadocdb.exception.NoIdField;
+import de.ks.flatadocdb.index.LocalIndex;
+import de.ks.flatadocdb.metamodel.EntityDescriptor;
+import de.ks.flatadocdb.metamodel.MetaModel;
+
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 @NotThreadSafe//can only be used as ThreadLocal
 public class Session {
+  protected final MetaModel metaModel;
+  protected final LocalIndex localIndex;
+
   protected final Map<String, SessionEntry> entriesById = new HashMap<>();
   protected final Map<Object, SessionEntry> entriesByNaturalId = new HashMap<>();
-//  protected final IdentityHashMap<Long,SessionEntry> entriesById = new HashMap<>();
+  protected final Map<Object, SessionEntry> entity2Entry = new HashMap<>();
+
+  public Session(MetaModel metaModel, LocalIndex localIndex) {
+    this.metaModel = metaModel;
+    this.localIndex = localIndex;
+  }
 
   public void persist(Object entity) {
+    Objects.requireNonNull(entity);
 
   }
 
   public void remove(Object entity) {
+    if (entity != null) {
 
+    }
   }
 
-  public <E> E findByNaturalId(Class<E> clazz, Object naturalId) {
+  public <E> Optional<E> findByNaturalId(Class<E> clazz, Object naturalId) {
     return null;
   }
 
-  public <E> E findById(Class<E> clazz, String id) {
+  public <E> Optional<E> findById(Class<E> clazz, String id) {
     return null;
   }
 
-  public String getId(Object object) {
-    return null;
+  public Optional<String> getId(Object entity) {
+    Objects.requireNonNull(entity);
+
+    SessionEntry sessionEntry = entity2Entry.get(entity);
+    if (sessionEntry == null) {//read from entity
+      EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(entity.getClass());
+      if (entityDescriptor.hasIdAccess()) {
+        return Optional.ofNullable(entityDescriptor.getId(entity));
+      } else {
+        throw new NoIdField(entity.getClass());
+      }
+    } else {
+      return Optional.of(sessionEntry.id);
+    }
   }
+
 }

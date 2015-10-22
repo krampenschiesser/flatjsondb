@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package de.ks.flatadocdb.session;
 
 import de.ks.flatadocdb.exception.NoIdField;
@@ -53,8 +54,23 @@ public class Session {
     }
   }
 
+  @SuppressWarnings("unchecked")
   public <E> Optional<E> findByNaturalId(Class<E> clazz, Object naturalId) {
-    return null;
+    Objects.requireNonNull(clazz);
+    Objects.requireNonNull(naturalId);
+
+    SessionEntry sessionEntry = entriesByNaturalId.get(naturalId);
+    if (sessionEntry == null) {
+      IndexElement indexElement = localIndex.getByNaturalId(naturalId);
+      if (indexElement == null) {
+        return Optional.empty();
+      } else {
+        return Optional.ofNullable((E) load(indexElement));
+      }
+
+    } else {
+      return Optional.of((E) sessionEntry.object);
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -65,13 +81,18 @@ public class Session {
     SessionEntry sessionEntry = entriesById.get(id);
     if (sessionEntry == null) {
       IndexElement indexElement = localIndex.getById(id);
-      return Optional.ofNullable((E) load(indexElement));
+      if (indexElement == null) {
+        return Optional.empty();
+      } else {
+        return Optional.ofNullable((E) load(indexElement));
+      }
     } else {
       return Optional.of((E) sessionEntry.object);
     }
   }
 
   private Object load(IndexElement indexElement) {
+    Objects.requireNonNull(indexElement);
     EntityDescriptor descriptor = metaModel.getEntityDescriptor(indexElement.getEntityClass());
     EntityPersister persister = descriptor.getPersister();
     Object load = persister.load(descriptor);
@@ -93,6 +114,14 @@ public class Session {
     } else {
       return Optional.of(sessionEntry.id);
     }
+  }
+
+  protected void prepare() {
+
+  }
+
+  protected void commit() {
+
   }
 
 }

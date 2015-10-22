@@ -14,20 +14,25 @@
  * limitations under the License.
  */
 
-package de.ks.flatadocdb.ifc;
+package de.ks.flatadocdb;
 
-import de.ks.flatadocdb.metamodel.EntityDescriptor;
-
-import javax.annotation.concurrent.ThreadSafe;
-import java.io.File;
-
-/**
- * A persister is local for each entity and can store stateful information.
- * It has to be threadsafe as it is used and accessed by all modifying/reading jvm threads.
- */
-@ThreadSafe
-public interface EntityPersister {
-  Object load(EntityDescriptor descriptor);
-
-  void save(EntityDescriptor descriptor, File path, Object object);
+public enum EncryptionMode {
+  /**
+   * No encryption at all
+   */
+  NONE,
+  /**
+   * When transferring the git repository to sync with other devices, it is encrypted
+   */
+  REPOSITORY_ONLY,
+  /**
+   * File contents are encrypted
+   * currently not supported, doesn't make much sense with asciidoctor...
+   */
+  CONTENT,
+  /**
+   * File contents, file names, and folder names are encrypted
+   * currently not supported, doesn't make much sense with asciidoctor...
+   */
+  PATHS;
 }

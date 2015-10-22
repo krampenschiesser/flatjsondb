@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package de.ks.flatadocdb;
 
 import java.io.File;
@@ -28,6 +29,10 @@ public class DeleteDir {
 
   public DeleteDir(File dir) {
     this.dir = dir;
+  }
+
+  public DeleteDir(Path path) {
+    this.dir = path.toFile();
   }
 
   public void delete() {

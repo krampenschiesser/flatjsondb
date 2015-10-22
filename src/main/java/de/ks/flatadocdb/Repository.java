@@ -13,13 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package de.ks.flatadocdb;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class Repository {
-  protected Path path;
-  protected String name;
+  protected final Path path;
+  protected final String name;
+  protected final EncryptionMode encryption;
+
+  public Repository(Path path) {
+    this(path, EncryptionMode.NONE);
+  }
+
+  public Repository(Path path, EncryptionMode encryptionMode) {
+    this.path = path;
+    this.name = path.getName(path.getNameCount() - 1).toString();
+    this.encryption = encryptionMode;
+    if (!path.toFile().exists()) {
+      try {
+        Files.createDirectories(path);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
 
   public Path getPath() {
     return path;
@@ -27,5 +48,9 @@ public class Repository {
 
   public String getName() {
     return name;
+  }
+
+  public EncryptionMode getEncryption() {
+    return encryption;
   }
 }

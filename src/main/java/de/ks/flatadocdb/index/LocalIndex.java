@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package de.ks.flatadocdb.index;
 
 import java.util.Map;
@@ -33,4 +34,9 @@ public class LocalIndex {
   public IndexElement getById(String id) {
     return idToElement.get(id);
   }
+
+  public IndexElement getByNaturalId(Object id) {
+    return naturalIdToElement.get(id);
+  }
+
 }

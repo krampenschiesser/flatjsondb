@@ -27,4 +27,12 @@ public class BaseEntity {
   protected long version;
   @Id
   protected String id;
+
+  public long getVersion() {
+    return version;
+  }
+
+  public String getId() {
+    return id;
+  }
 }

@@ -13,21 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package de.ks.flatadocdb;
 
-package de.ks.flatadocdb.ifc;
+import com.google.common.base.StandardSystemProperty;
+import org.junit.rules.ExternalResource;
 
-import de.ks.flatadocdb.metamodel.EntityDescriptor;
-
-import javax.annotation.concurrent.ThreadSafe;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
-/**
- * A persister is local for each entity and can store stateful information.
- * It has to be threadsafe as it is used and accessed by all modifying/reading jvm threads.
- */
-@ThreadSafe
-public interface EntityPersister {
-  Object load(EntityDescriptor descriptor);
+public class TempRepository extends ExternalResource {
+  private Path path;
+  private Repository repository;
 
-  void save(EntityDescriptor descriptor, Path path, Object object);
+  @Override
+  protected void before() throws Throwable {
+    path = Paths.get(StandardSystemProperty.JAVA_IO_TMPDIR.value(), "testRepository");
+    new DeleteDir(path).delete();
+    repository = new Repository(path);
+  }
+
+  public Path getPath() {
+    return path;
+  }
+
+  public Repository getRepository() {
+    return repository;
+  }
 }

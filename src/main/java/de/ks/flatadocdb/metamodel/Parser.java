@@ -18,6 +18,8 @@ package de.ks.flatadocdb.metamodel;
 
 import de.ks.flatadocdb.annotation.*;
 import de.ks.flatadocdb.ifc.EntityPersister;
+import de.ks.flatadocdb.ifc.FileGenerator;
+import de.ks.flatadocdb.ifc.FolderGenerator;
 import de.ks.flatadocdb.ifc.PropertyPersister;
 import org.reflections.ReflectionUtils;
 
@@ -52,18 +54,22 @@ public class Parser {
   }
 
   public EntityDescriptor parse(Class<?> clazz) throws ParseException {
-    EntityPersister persister = checkEntityAnnotation(clazz);
+    Entity annotation = checkEntityAnnotation(clazz);
+    EntityPersister persister = getInstance(annotation.persister());
+    FileGenerator fileGenerator = getInstance(annotation.fileGenerator());
+    FolderGenerator folderGenerator = getInstance(annotation.folderGenerator());
 
     Set<Field> allFields = ReflectionUtils.getAllFields(clazz, this::filterField);
 
-    MethodHandle idHandle = resolveIdField(clazz, allFields);
+    MethodHandle idGetterHandle = resolveIdFieldGetter(clazz, allFields);
+    MethodHandle idSetterHandle = resolveIdFieldSetter(clazz, allFields);
     MethodHandle versionHandle = resolveVersionField(clazz, allFields);
     MethodHandle naturalIdHandle = resolveNaturalIdField(clazz, allFields);
 
     Map<Field, PropertyPersister> propertyPersisters = resolvePropertyPersisters(clazz, allFields);
 
-    return EntityDescriptor.Builder.create().entity(clazz).id(idHandle).version(versionHandle).natural(naturalIdHandle)//
-      .persister(persister).properties(propertyPersisters).build();
+    return EntityDescriptor.Builder.create().entity(clazz).id(idGetterHandle, idSetterHandle).version(versionHandle).natural(naturalIdHandle)//
+      .persister(persister).fileGenerator(fileGenerator).folderGenerator(folderGenerator).properties(propertyPersisters).build();
   }
 
   private Map<Field, PropertyPersister> resolvePropertyPersisters(Class<?> clazz, Set<Field> allFields) {
@@ -93,18 +99,23 @@ public class Parser {
     }
   }
 
-  private <T extends EntityPersister> T checkEntityAnnotation(Class<?> clazz) {
+  private <T extends EntityPersister> Entity checkEntityAnnotation(Class<?> clazz) {
     check(clazz, c -> !c.isAnnotationPresent(Entity.class), c -> "Annotation " + Entity.class.getName() + " not found on class " + c);
     Entity annotation = clazz.getAnnotation(Entity.class);
-    Class<? extends EntityPersister> persister = annotation.persister();
-
-    return getInstance(persister);
+    return annotation;
   }
 
-  private MethodHandle resolveIdField(Class<?> clazz, Set<Field> allFields) {
+  private MethodHandle resolveIdFieldGetter(Class<?> clazz, Set<Field> allFields) {
     Field idField = resolveExactlyOneField(clazz, allFields, Id.class, "ID", true);
     check(idField, f -> f.getType() != String.class, f -> "Type of ID field is no 'long' on " + clazz.getName());
     MethodHandle idHandle = getGetter(idField);
+    return idHandle;
+  }
+
+  private MethodHandle resolveIdFieldSetter(Class<?> clazz, Set<Field> allFields) {
+    Field idField = resolveExactlyOneField(clazz, allFields, Id.class, "ID", true);
+    check(idField, f -> f.getType() != String.class, f -> "Type of ID field is no 'long' on " + clazz.getName());
+    MethodHandle idHandle = getSetter(idField);
     return idHandle;
   }
 
@@ -146,6 +157,15 @@ public class Parser {
       return MethodHandles.lookup().unreflectGetter(f);
     } catch (IllegalAccessException e) {
       throw new ParseException("Could not extract getter handle for " + f + " on " + f.getDeclaringClass().getName(), e);
+    }
+  }
+
+  protected MethodHandle getSetter(Field f) {
+    try {
+      f.setAccessible(true);
+      return MethodHandles.lookup().unreflectSetter(f);
+    } catch (IllegalAccessException e) {
+      throw new ParseException("Could not extract setter handle for " + f + " on " + f.getDeclaringClass().getName(), e);
     }
   }
 

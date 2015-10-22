@@ -13,21 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package de.ks.flatadocdb.exception;
 
-package de.ks.flatadocdb.ifc;
+public class StaleObjectStateException extends RuntimeException {
+  private static final long serialVersionUID = 1L;
 
-import de.ks.flatadocdb.metamodel.EntityDescriptor;
-
-import javax.annotation.concurrent.ThreadSafe;
-import java.nio.file.Path;
-
-/**
- * A persister is local for each entity and can store stateful information.
- * It has to be threadsafe as it is used and accessed by all modifying/reading jvm threads.
- */
-@ThreadSafe
-public interface EntityPersister {
-  Object load(EntityDescriptor descriptor);
-
-  void save(EntityDescriptor descriptor, Path path, Object object);
+  public StaleObjectStateException(String message) {
+    super(message);
+  }
 }

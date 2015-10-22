@@ -17,6 +17,8 @@
 package de.ks.flatadocdb.metamodel;
 
 import de.ks.flatadocdb.ifc.EntityPersister;
+import de.ks.flatadocdb.ifc.FileGenerator;
+import de.ks.flatadocdb.ifc.FolderGenerator;
 import de.ks.flatadocdb.ifc.PropertyPersister;
 
 import javax.annotation.Nullable;
@@ -35,8 +37,11 @@ public class EntityDescriptor {
 
     private MethodHandle versionAccess;
     private MethodHandle naturalIdFieldAccess;
-    private MethodHandle idAccess;
+    private MethodHandle idGetterAccess;
+    private MethodHandle idSetterAccess;
     private EntityPersister persister;
+    private FolderGenerator folderGenerator;
+    private FileGenerator fileGenerator;
     private Class<?> entityClass;
     private final Map<Field, PropertyPersister> propertyPersisters = new HashMap<>();
 
@@ -54,8 +59,9 @@ public class EntityDescriptor {
       return this;
     }
 
-    public Builder id(MethodHandle h) {
-      idAccess = h;
+    public Builder id(MethodHandle getter, MethodHandle setter) {
+      idGetterAccess = getter;
+      idSetterAccess = setter;
       return this;
     }
 
@@ -66,6 +72,16 @@ public class EntityDescriptor {
 
     public Builder persister(EntityPersister p) {
       persister = p;
+      return this;
+    }
+
+    public Builder fileGenerator(FileGenerator f) {
+      fileGenerator = f;
+      return this;
+    }
+
+    public Builder folderGenerator(FolderGenerator f) {
+      folderGenerator = f;
       return this;
     }
 
@@ -88,17 +104,23 @@ public class EntityDescriptor {
   @Nullable
   protected final MethodHandle naturalIdFieldAccess;
   protected final MethodHandle versionAccess;
-  protected final MethodHandle idAccess;
+  protected final MethodHandle idGetterAccess;
+  protected final MethodHandle idSetterAccess;
   protected final EntityPersister persister;
+  protected final FolderGenerator folderGenerator;
+  protected final FileGenerator fileGenerator;
   protected final Map<Field, PropertyPersister> propertyPersisters;
 
   public EntityDescriptor(Builder b) {
     this.entityClass = b.entityClass;
     this.persister = b.persister;
-    this.idAccess = b.idAccess;
+    this.idGetterAccess = b.idGetterAccess;
+    this.idSetterAccess = b.idSetterAccess;
     this.naturalIdFieldAccess = b.naturalIdFieldAccess;
     this.versionAccess = b.versionAccess;
     this.propertyPersisters = Collections.unmodifiableMap(b.propertyPersisters);
+    this.folderGenerator = b.folderGenerator;
+    this.fileGenerator = b.fileGenerator;
   }
 
   public Class<?> getEntityClass() {
@@ -107,6 +129,14 @@ public class EntityDescriptor {
 
   public EntityPersister getPersister() {
     return persister;
+  }
+
+  public FileGenerator getFileGenerator() {
+    return fileGenerator;
+  }
+
+  public FolderGenerator getFolderGenerator() {
+    return folderGenerator;
   }
 
   public boolean isVersioned() {
@@ -121,30 +151,58 @@ public class EntityDescriptor {
     return Optional.ofNullable(propertyPersisters.get(field));
   }
 
-  public MethodHandle getIdAccess() {
-    return idAccess;
+  public MethodHandle getIdGetterAccess() {
+    return idGetterAccess;
+  }
+
+  public MethodHandle getIdSetterAccess() {
+    return idSetterAccess;
   }
 
   @Nullable
   public String getId(Object entity) {
     if (hasIdAccess()) {
-      return invokeGetter(idAccess, entity);
+      return invokeGetter(idGetterAccess, entity);
+    } else {
+      return null;
+    }
+  }
+
+  public void writetId(Object entity, String id) {
+    if (hasIdAccess()) {
+      invokeSetter(idSetterAccess, entity, id);
+    }
+  }
+
+  @Nullable
+  public Object getNaturalId(Object entity) {
+    if (hasNaturalId()) {
+      return invokeGetter(naturalIdFieldAccess, entity);
     } else {
       return null;
     }
   }
 
   @SuppressWarnings("unchecked")
-  private <T> T invokeGetter(MethodHandle handle, Object object) {
+  private <T> T invokeGetter(MethodHandle handle, Object instance) {
     try {
-      return (T) idAccess.invoke(object);
+      return (T) handle.invoke(instance);
+    } catch (Throwable t) {
+      throw new RuntimeException(t);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T> T invokeSetter(MethodHandle handle, Object instance, Object param) {
+    try {
+      return (T) handle.invoke(instance, param);
     } catch (Throwable t) {
       throw new RuntimeException(t);
     }
   }
 
   public boolean hasIdAccess() {
-    return idAccess != null;
+    return idGetterAccess != null;
   }
 
   /**

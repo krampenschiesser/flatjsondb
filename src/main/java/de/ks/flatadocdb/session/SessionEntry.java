@@ -16,11 +16,34 @@
 
 package de.ks.flatadocdb.session;
 
-import de.ks.flatadocdb.index.IndexElement;
+import java.nio.file.Path;
 
 public class SessionEntry {
-  protected Object object;
-  protected IndexElement indexElement;
-  protected String id;
+  protected final Object object;
+  protected final String id;
   protected long version;
+  protected final Path completePath;
+
+  public SessionEntry(Object object, String id, long version, Path completePath) {
+    this.object = object;
+    this.id = id;
+    this.version = version;
+    this.completePath = completePath;
+  }
+
+  public Object getObject() {
+    return object;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public long getVersion() {
+    return version;
+  }
+
+  public Path getCompletePath() {
+    return completePath;
+  }
 }

@@ -26,6 +26,7 @@ import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -53,7 +54,7 @@ public class SessionTest {
 
   @Test
   public void testFileWriting() throws Exception {
-    Session session1 = new Session(metamodel, index);
+    Session session1 = new Session(metamodel, repository, index);
     TestEntity testEntity = new TestEntity("Schnitzel");
     session1.persist(testEntity);
 
@@ -61,19 +62,23 @@ public class SessionTest {
     Path entityFolder = path.resolve(TestEntity.class.getSimpleName());
     assertTrue(entityFolder.toFile().exists());
     assertTrue(entityFolder.toFile().isDirectory());
-    assertThat(entityFolder.toFile().listFiles(), Matchers.arrayWithSize(1));
+    File[] files = entityFolder.toFile().listFiles();
+    assertThat(files, Matchers.arrayWithSize(1));
 
     session1.commit();
-    Path entityFile = entityFolder.resolve("schnitzel.json");
+    Path entityFile = entityFolder.resolve("schnitzel." + TestEntity.class.getSimpleName());
     assertTrue(entityFile.toFile().exists());
+    assertFalse(files[0].exists());
   }
 
   @Test
   public void testLocalSessionView() {
-    Session session1 = new Session(metamodel, index);
-    Session session2 = new Session(metamodel, index);
+    Session session1 = new Session(metamodel, repository, index);
+    Session session2 = new Session(metamodel, repository, index);
     TestEntity testEntity = new TestEntity("Schnitzel");
+
     session1.persist(testEntity);
+    assertNotNull(testEntity.getId());
 
     Optional<TestEntity> result = session1.findByNaturalId(TestEntity.class, "Schnitzel");
     assertTrue(result.isPresent());

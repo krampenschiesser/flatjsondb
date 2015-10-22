@@ -19,7 +19,7 @@ package de.ks.flatadocdb.defaults;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 
-import java.io.File;
+import java.nio.file.Path;
 
 public class DefaultEntityPersister implements EntityPersister {
   @Override
@@ -28,7 +28,7 @@ public class DefaultEntityPersister implements EntityPersister {
   }
 
   @Override
-  public void save(EntityDescriptor descriptor, File path, Object object) {
+  public void save(EntityDescriptor descriptor, Path path, Object object) {
 
   }
 }

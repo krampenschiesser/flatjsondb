@@ -16,6 +16,8 @@
 
 package de.ks.flatadocdb.metamodel;
 
+import com.google.common.base.StandardSystemProperty;
+import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.annotation.Entity;
 import de.ks.flatadocdb.annotation.Id;
 import de.ks.flatadocdb.annotation.Property;
@@ -24,10 +26,13 @@ import de.ks.flatadocdb.entity.BaseEntity;
 import de.ks.flatadocdb.entity.NamedEntity;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.ifc.PropertyPersister;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static org.junit.Assert.*;
 
@@ -86,14 +91,26 @@ public class ParserTest {
     assertEquals(CorrectEntity.class, result.entityClass);
     assertNotNull(result.naturalIdFieldAccess);
     assertNotNull(result.versionAccess);
-    assertNotNull(result.idAccess);
+    assertNotNull(result.idGetterAccess);
+    assertNotNull(result.idSetterAccess);
     assertNotNull(result.persister);
+    assertNotNull(result.persister);
+    assertNotNull(result.fileGenerator);
+    assertNotNull(result.folderGenerator);
 
     CorrectEntity entity = new CorrectEntity("test").setId("abc123").setVersion(3);
 
     assertEquals("test", result.naturalIdFieldAccess.invoke(entity));
-    assertEquals("abc123", (String) result.idAccess.invoke(entity));
+    assertEquals("abc123", result.getId(entity));
     assertEquals(3, (long) result.versionAccess.invoke(entity));
+
+    Repository repo = Mockito.mock(Repository.class);
+    Mockito.when(repo.getPath()).thenReturn(Paths.get(StandardSystemProperty.JAVA_IO_TMPDIR.value()));
+    assertThat(result.folderGenerator.getFolder(repo, entity).toString(), Matchers.endsWith(CorrectEntity.class.getSimpleName()));
+
+    EntityDescriptor desc = Mockito.mock(EntityDescriptor.class);
+    Mockito.when(desc.getNaturalId(entity)).thenReturn("test");
+    assertEquals("test." + CorrectEntity.class.getSimpleName(), result.fileGenerator.getFileName(repo, desc, entity));
   }
 
   @Test
@@ -144,7 +161,7 @@ public class ParserTest {
     }
 
     @Override
-    public void save(EntityDescriptor descriptor, File path, Object object) {
+    public void save(EntityDescriptor descriptor, Path path, Object object) {
 
     }
   }
@@ -160,7 +177,7 @@ public class ParserTest {
     }
 
     @Override
-    public void save(EntityDescriptor descriptor, File path, Object object) {
+    public void save(EntityDescriptor descriptor, Path path, Object object) {
 
     }
   }

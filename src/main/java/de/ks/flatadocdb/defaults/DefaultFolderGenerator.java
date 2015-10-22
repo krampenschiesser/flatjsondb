@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package de.ks.flatadocdb.defaults;
 
-package de.ks.flatadocdb.ifc;
+import de.ks.flatadocdb.Repository;
+import de.ks.flatadocdb.ifc.FolderGenerator;
 
-import de.ks.flatadocdb.metamodel.EntityDescriptor;
-
-import javax.annotation.concurrent.ThreadSafe;
 import java.nio.file.Path;
 
-/**
- * A persister is local for each entity and can store stateful information.
- * It has to be threadsafe as it is used and accessed by all modifying/reading jvm threads.
- */
-@ThreadSafe
-public interface EntityPersister {
-  Object load(EntityDescriptor descriptor);
-
-  void save(EntityDescriptor descriptor, Path path, Object object);
+public class DefaultFolderGenerator implements FolderGenerator {
+  @Override
+  public Path getFolder(Repository repository, Object object) {
+    Path path = repository.getPath();
+    Path resolve = path.resolve(object.getClass().getSimpleName());
+    if (!resolve.toFile().exists()) {
+      resolve.toFile().mkdir();
+    } else if (!resolve.toFile().isDirectory()) {
+      throw new IllegalStateException("File " + resolve + " needs to be a directory.");
+    }
+    return resolve;
+  }
 }

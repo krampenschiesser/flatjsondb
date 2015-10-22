@@ -65,8 +65,9 @@ Its name is the following:
 . *pid_host* defining the pid and host of the process and system owning it.
 ** this is needed in order to be secured against a killed program that didn't delete that file.
 ** However this is only working if the file is written by the local machine.
+. *.flush*
 
-*.myNeededTask.json.2274_192.168.170.14*
+*.myNeededTask.MyExt.2274@192.168.170.14.flush*
 
 #### Shutdown hook
 

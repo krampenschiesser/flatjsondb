@@ -17,7 +17,11 @@
 package de.ks.flatadocdb.annotation;
 
 import de.ks.flatadocdb.defaults.DefaultEntityPersister;
+import de.ks.flatadocdb.defaults.DefaultFileGenerator;
+import de.ks.flatadocdb.defaults.DefaultFolderGenerator;
 import de.ks.flatadocdb.ifc.EntityPersister;
+import de.ks.flatadocdb.ifc.FileGenerator;
+import de.ks.flatadocdb.ifc.FolderGenerator;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -28,4 +32,8 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Entity {
   Class<? extends EntityPersister> persister() default DefaultEntityPersister.class;
+
+  Class<? extends FolderGenerator> folderGenerator() default DefaultFolderGenerator.class;
+
+  Class<? extends FileGenerator> fileGenerator() default DefaultFileGenerator.class;
 }

@@ -46,6 +46,6 @@ public class DefaultFolderGeneratorTest {
 
     Repository repo = tempRepository.getRepository();
     DefaultFolderGenerator defaultFolderGenerator = new DefaultFolderGenerator();
-    Path path = defaultFolderGenerator.getFolder(repo, new TestEntity("test"));
+    defaultFolderGenerator.getFolder(repo, new TestEntity("test"));
   }
 }

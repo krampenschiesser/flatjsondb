@@ -110,7 +110,7 @@ public class ParserTest {
 
     EntityDescriptor desc = Mockito.mock(EntityDescriptor.class);
     Mockito.when(desc.getNaturalId(entity)).thenReturn("test");
-    assertEquals("test." + CorrectEntity.class.getSimpleName(), result.fileGenerator.getFileName(repo, desc, entity));
+    assertEquals("test.json", result.fileGenerator.getFileName(repo, desc, entity));
   }
 
   @Test
@@ -156,12 +156,12 @@ public class ParserTest {
     }
 
     @Override
-    public Object load(EntityDescriptor descriptor) {
+    public Object load(Repository repository, EntityDescriptor descriptor, Path path) {
       return null;
     }
 
     @Override
-    public void save(EntityDescriptor descriptor, Path path, Object object) {
+    public void save(Repository repository, EntityDescriptor descriptor, Path target, Object object) {
 
     }
   }
@@ -172,12 +172,12 @@ public class ParserTest {
     }
 
     @Override
-    public Object load(EntityDescriptor descriptor) {
+    public Object load(Repository repository, EntityDescriptor descriptor, Path path) {
       return null;
     }
 
     @Override
-    public void save(EntityDescriptor descriptor, Path path, Object object) {
+    public void save(Repository repository, EntityDescriptor descriptor, Path target, Object object) {
 
     }
   }

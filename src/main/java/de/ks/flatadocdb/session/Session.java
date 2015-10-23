@@ -77,20 +77,18 @@ public class Session {
     String id = idGenerator.getSha1Hash(repository.getPath(), complete);
     entityDescriptor.writetId(entity, id);
 
-    SessionEntry sessionEntry = new SessionEntry(entity, id, 0, complete);
-    entriesById.put(id, sessionEntry);
-    if (naturalId != null) {
-      entriesByNaturalId.put(naturalId, sessionEntry);
-    }
+    SessionEntry sessionEntry = new SessionEntry(entity, id, 0, naturalId, complete);
+    addToSession(sessionEntry);
     prepareActions.add(s -> {
       checkNoFlushFileExists(folder, fileName);
-      entityDescriptor.getPersister().save(entityDescriptor, flushComplete, entity);
+      entityDescriptor.getPersister().save(repository, entityDescriptor, flushComplete, entity);
       applyWindowsHiddenAttribute(flushComplete);
       checkAppendToComplete(complete);
     });
     commitActions.add(s -> {
       try {
         Files.move(flushComplete, complete, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        localIndex.addEntry(new IndexElement(repository, complete, id, naturalId, entity.getClass()));
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -171,9 +169,16 @@ public class Session {
     Objects.requireNonNull(indexElement);
     EntityDescriptor descriptor = metaModel.getEntityDescriptor(indexElement.getEntityClass());
     EntityPersister persister = descriptor.getPersister();
-    Object load = persister.load(descriptor);
-//    SessionEntry sessionEntry = new SessionEntry();
-    return null;
+    Object object = persister.load(repository, descriptor, indexElement.getPathInRepository());
+    SessionEntry sessionEntry = new SessionEntry(object, indexElement.getId(), descriptor.getVersion(object), indexElement.getNaturalId(), indexElement.getPathInRepository());
+    addToSession(sessionEntry);
+    return object;
+  }
+
+  private void addToSession(SessionEntry sessionEntry) {
+    this.entriesById.put(sessionEntry.getId(), sessionEntry);
+    this.entriesByNaturalId.put(sessionEntry.getNaturalId(), sessionEntry);
+    this.entity2Entry.put(sessionEntry.getObject(), sessionEntry);
   }
 
   public Optional<String> getId(Object entity) {

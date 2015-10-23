@@ -20,14 +20,16 @@ import java.nio.file.Path;
 
 public class SessionEntry {
   protected final Object object;
+  protected final Object naturalId;
   protected final String id;
   protected long version;
   protected final Path completePath;
 
-  public SessionEntry(Object object, String id, long version, Path completePath) {
+  public SessionEntry(Object object, String id, long version, Object naturalId, Path completePath) {
     this.object = object;
     this.id = id;
     this.version = version;
+    this.naturalId = naturalId;
     this.completePath = completePath;
   }
 
@@ -37,6 +39,10 @@ public class SessionEntry {
 
   public String getId() {
     return id;
+  }
+
+  public Object getNaturalId() {
+    return naturalId;
   }
 
   public long getVersion() {

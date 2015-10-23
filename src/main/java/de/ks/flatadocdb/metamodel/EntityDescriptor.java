@@ -161,17 +161,16 @@ public class EntityDescriptor {
 
   @Nullable
   public String getId(Object entity) {
-    if (hasIdAccess()) {
-      return invokeGetter(idGetterAccess, entity);
-    } else {
-      return null;
-    }
+    return invokeGetter(idGetterAccess, entity);
+  }
+
+  @Nullable
+  public long getVersion(Object entity) {
+    return invokeGetter(versionAccess, entity);
   }
 
   public void writetId(Object entity, String id) {
-    if (hasIdAccess()) {
-      invokeSetter(idSetterAccess, entity, id);
-    }
+    invokeSetter(idSetterAccess, entity, id);
   }
 
   @Nullable

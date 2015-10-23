@@ -27,7 +27,35 @@ public class IndexElement {
   private Object naturalId;
   private Class<?> entityClass;
 
+  public IndexElement(Repository repository, Path pathInRepository, String id, Object naturalId, Class<?> entityClass) {
+    this.repository = repository;
+    this.pathInRepository = pathInRepository;
+    this.id = id;
+    this.naturalId = naturalId;
+    this.entityClass = entityClass;
+  }
+
   public Class<?> getEntityClass() {
     return entityClass;
+  }
+
+  public Repository getRepository() {
+    return repository;
+  }
+
+  public Path getPathInRepository() {
+    return pathInRepository;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public Object getNaturalId() {
+    return naturalId;
+  }
+
+  public boolean hasNaturalId() {
+    return naturalId != null;
   }
 }

@@ -24,11 +24,17 @@ public class LocalIndex {
   protected Map<String, IndexElement> idToElement = new ConcurrentHashMap<>();
 
   public void addEntry(IndexElement element) {
-
+    idToElement.put(element.getId(), element);
+    if (element.hasNaturalId()) {
+      naturalIdToElement.put(element.getNaturalId(), element);
+    }
   }
 
   public void removeEntry(IndexElement element) {
-
+    idToElement.remove(element.getId());
+    if (element.hasNaturalId()) {
+      naturalIdToElement.remove(element.getNaturalId());
+    }
   }
 
   public IndexElement getById(String id) {

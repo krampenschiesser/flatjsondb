@@ -40,7 +40,7 @@ public class DefaultFileGeneratorTest {
     EntityDescriptor desc = Mockito.mock(EntityDescriptor.class);
     Mockito.when(desc.getNaturalId(o)).thenReturn(null);
     String fileName = generator.getFileName(null, desc, o);
-    assertEquals(s + ".Object", fileName);
+    assertEquals(s + "." + DefaultFileGenerator.EXTENSION, fileName);
   }
 
   @Test

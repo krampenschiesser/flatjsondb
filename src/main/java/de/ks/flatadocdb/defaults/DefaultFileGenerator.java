@@ -26,18 +26,19 @@ import java.util.stream.Collectors;
 
 public class DefaultFileGenerator implements FileGenerator {
   public final String pidAndHost = ManagementFactory.getRuntimeMXBean().getName();
+  public static final String EXTENSION = "json";
 
   @Override
   public String getFileName(Repository repository, EntityDescriptor descriptor, Object object) {
-    String extension = object.getClass().getSimpleName();
+//    String extension = object.getClass().getSimpleName();
 
     Object naturalId = descriptor.getNaturalId(object);
     if (naturalId != null) {
       String naturalIdString = parseNaturalId(String.valueOf(naturalId));
-      return naturalIdString + "." + extension;
+      return naturalIdString + "." + EXTENSION;
     } else {
       String hexString = parseHashCode(object);
-      return hexString + "." + extension;
+      return hexString + "." + EXTENSION;
     }
   }
 

@@ -19,6 +19,7 @@ package de.ks.flatadocdb.session;
 import com.google.common.base.StandardSystemProperty;
 import de.ks.flatadocdb.DeleteDir;
 import de.ks.flatadocdb.Repository;
+import de.ks.flatadocdb.defaults.DefaultFileGenerator;
 import de.ks.flatadocdb.index.LocalIndex;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
@@ -66,7 +67,7 @@ public class SessionTest {
     assertThat(files, Matchers.arrayWithSize(1));
 
     session1.commit();
-    Path entityFile = entityFolder.resolve("schnitzel." + TestEntity.class.getSimpleName());
+    Path entityFile = entityFolder.resolve("Schnitzel." + DefaultFileGenerator.EXTENSION);
     assertTrue(entityFile.toFile().exists());
     assertFalse(files[0].exists());
   }

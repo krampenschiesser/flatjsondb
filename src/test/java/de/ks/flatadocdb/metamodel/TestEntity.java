@@ -20,6 +20,11 @@ import de.ks.flatadocdb.entity.NamedEntity;
 
 @Entity
 public class TestEntity extends NamedEntity {
+
+  protected TestEntity() {
+    super(null);
+  }
+
   public TestEntity(String name) {
     super(name);
   }

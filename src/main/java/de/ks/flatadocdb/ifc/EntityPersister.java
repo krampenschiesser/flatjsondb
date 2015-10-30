@@ -18,6 +18,7 @@ package de.ks.flatadocdb.ifc;
 
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
+import de.ks.flatadocdb.metamodel.MetaModel;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.nio.file.Path;
@@ -28,6 +29,10 @@ import java.nio.file.Path;
  */
 @ThreadSafe
 public interface EntityPersister {
+  default void initialize(Repository repository, MetaModel metaModel) {
+    //
+  }
+
   Object load(Repository repository, EntityDescriptor descriptor, Path path);
 
   byte[] createFileContents(Repository repository, EntityDescriptor descriptor, Object object);

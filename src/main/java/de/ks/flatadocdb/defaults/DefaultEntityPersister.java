@@ -26,10 +26,12 @@ import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
+import de.ks.flatadocdb.metamodel.MetaModel;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DefaultEntityPersister implements EntityPersister {
@@ -41,6 +43,10 @@ public class DefaultEntityPersister implements EntityPersister {
     mapper.enableDefaultTyping();
     mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.WRAPPER_OBJECT);
     mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+  }
+
+  //FIXME need to add this to initialization cycle
+  public void initialize(Repository repository, MetaModel metaModel) {
     mapper.registerModule(new Module() {
       @Override
       public String getModuleName() {
@@ -57,9 +63,9 @@ public class DefaultEntityPersister implements EntityPersister {
         context.addBeanSerializerModifier(new BeanSerializerModifier() {
           @Override
           public List<BeanPropertyWriter> changeProperties(SerializationConfig config, BeanDescription beanDesc, List<BeanPropertyWriter> beanProperties) {
+            Set<Class<?>> entityClasses = metaModel.getEntities().stream().map(d -> d.getEntityClass()).collect(Collectors.toSet());
             return beanProperties.stream()//
-//                .filter(p -> !p.getType().getRawClass().equals(Core.class))//
-//                .filter(p -> !p.getName().equals("properties"))//
+              .filter(p -> entityClasses.contains(p.getType().getRawClass()))//fixme, need to replace with @Child, @Related and store/read ID's
               .collect(Collectors.toList());
           }
         });

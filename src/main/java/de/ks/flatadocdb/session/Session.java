@@ -86,9 +86,9 @@ public class Session {
   }
 
   public void remove(Object entity) {
-    if (entity != null) {
+    Objects.requireNonNull(entity);
+    insertions.remove(entity);
 
-    }
   }
 
   @SuppressWarnings("unchecked")

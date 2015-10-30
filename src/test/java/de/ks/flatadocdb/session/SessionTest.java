@@ -160,7 +160,7 @@ public class SessionTest {
   }
 
   @Test
-  public void testVersionIncrement() throws Exception {
+  public void testVersionIncrement2Sessions() throws Exception {
     TestEntity testEntity = new TestEntity("Schnitzel");
 
     Session session1 = new Session(metamodel, repository, index);
@@ -185,5 +185,38 @@ public class SessionTest {
     } catch (StaleObjectStateException e) {
       //ok
     }
+  }
+
+  @Test
+  public void testVersionIncrement() throws Exception {
+    TestEntity testEntity = new TestEntity("Schnitzel");
+
+    Session session = new Session(metamodel, repository, index);
+    session.persist(testEntity);
+    session.prepare();
+    session.commit();
+
+    for (int i = 0; i < 5; i++) {
+      session = new Session(metamodel, repository, index);
+      testEntity = session.findByNaturalId(TestEntity.class, "Schnitzel").get();
+      testEntity.setAttribute("att" + i);
+      session.prepare();
+      session.commit();
+    }
+    assertEquals(5, testEntity.getVersion());
+  }
+
+  @Test
+  public void testSameInstance1Session() throws Exception {
+    TestEntity testEntity = new TestEntity("Schnitzel");
+    Session session = new Session(metamodel, repository, index);
+    session.persist(testEntity);
+    session.prepare();
+    session.commit();
+
+    session = new Session(metamodel, repository, index);
+    testEntity = session.findByNaturalId(TestEntity.class, "Schnitzel").get();
+    TestEntity testEntity2 = session.findByNaturalId(TestEntity.class, "Schnitzel").get();
+    assertSame(testEntity, testEntity2);
   }
 }

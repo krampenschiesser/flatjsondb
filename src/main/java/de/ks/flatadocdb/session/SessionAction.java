@@ -17,6 +17,7 @@ package de.ks.flatadocdb.session;
 
 import com.google.common.base.StandardSystemProperty;
 import de.ks.flatadocdb.Repository;
+import de.ks.flatadocdb.annotation.lifecycle.LifeCycle;
 import de.ks.flatadocdb.exception.AggregateException;
 import de.ks.flatadocdb.exception.StaleObjectFileException;
 import de.ks.flatadocdb.exception.StaleObjectStateException;
@@ -26,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.invoke.MethodHandle;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -63,7 +65,6 @@ public abstract class SessionAction {
       throw new AggregateException(exceptions);
     }
   }
-
 
   protected void addFileDeleteRollback(Path path) {
     rollbacks.add(() -> {
@@ -139,4 +140,17 @@ public abstract class SessionAction {
     return folder.resolve(flushFileName);
   }
 
+  protected void executeLifecycleAction(LifeCycle lifeCycle) {
+    Object entity = sessionEntry.getObject();
+    EntityDescriptor descriptor = sessionEntry.getEntityDescriptor();
+
+    Set<MethodHandle> lifeCycleMethods = descriptor.getLifeCycleMethods(lifeCycle);
+    for (MethodHandle handle : lifeCycleMethods) {
+      try {
+        handle.invoke(entity);
+      } catch (Throwable throwable) {
+        throw new RuntimeException(throwable);
+      }
+    }
+  }
 }

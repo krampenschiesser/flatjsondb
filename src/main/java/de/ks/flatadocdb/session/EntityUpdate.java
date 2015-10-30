@@ -16,6 +16,7 @@
 package de.ks.flatadocdb.session;
 
 import de.ks.flatadocdb.Repository;
+import de.ks.flatadocdb.annotation.lifecycle.LifeCycle;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -44,11 +45,15 @@ public class EntityUpdate extends SessionAction {
     byte[] md5 = DigestUtils.md5(fileContents);
     sessionEntry.setMd5(md5);
 
+    executeLifecycleAction(LifeCycle.PRE_UPDATE);
+
     checkAppendToComplete(sessionEntry.getCompletePath());//better to use Filelock if possible
   }
 
   @Override
   public void commit(Session session) {
     moveFlushFile(getFlushPath());
+
+    executeLifecycleAction(LifeCycle.POST_UPDATE);
   }
 }

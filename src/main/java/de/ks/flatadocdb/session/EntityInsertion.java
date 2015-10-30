@@ -16,6 +16,7 @@
 package de.ks.flatadocdb.session;
 
 import de.ks.flatadocdb.Repository;
+import de.ks.flatadocdb.annotation.lifecycle.LifeCycle;
 import de.ks.flatadocdb.exception.StaleObjectFileException;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.index.IndexElement;
@@ -51,6 +52,9 @@ public class EntityInsertion extends SessionAction {
     byte[] md5 = DigestUtils.md5(fileContents);
     sessionEntry.setMd5(md5);
 
+    executeLifecycleAction(LifeCycle.PRE_PERSIST);
+    executeLifecycleAction(LifeCycle.PRE_UPDATE);
+
     checkAppendToComplete(sessionEntry.getCompletePath());//better to use Filelock if possible
   }
 
@@ -58,6 +62,8 @@ public class EntityInsertion extends SessionAction {
   public void commit(Session session) {
     moveFlushFile(getFlushPath());
     addToIndex(session);
+    executeLifecycleAction(LifeCycle.POST_PERSIST);
+    executeLifecycleAction(LifeCycle.POST_UPDATE);
   }
 
   private void addToIndex(Session session) {

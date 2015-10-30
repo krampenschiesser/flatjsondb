@@ -243,7 +243,9 @@ public class EntityDescriptor {
   }
 
   public Set<MethodHandle> getLifeCycleMethods(LifeCycle lifeCycle) {
-    return this.lifecycleMethods.get(lifeCycle);
+    Set<MethodHandle> methodHandles = this.lifecycleMethods.get(lifeCycle);
+    methodHandles = methodHandles == null ? Collections.emptySet() : methodHandles;
+    return methodHandles;
   }
 
   @Override

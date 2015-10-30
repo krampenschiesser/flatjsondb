@@ -17,6 +17,7 @@
 package de.ks.flatadocdb.session;
 
 import de.ks.flatadocdb.Repository;
+import de.ks.flatadocdb.annotation.lifecycle.LifeCycle;
 import de.ks.flatadocdb.defaults.DefaultIdGenerator;
 import de.ks.flatadocdb.exception.NoIdField;
 import de.ks.flatadocdb.ifc.EntityPersister;
@@ -29,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
+import java.lang.invoke.MethodHandle;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -136,6 +138,15 @@ public class Session {
     SessionEntry sessionEntry = new SessionEntry(object, indexElement.getId(), descriptor.getVersion(object), indexElement.getNaturalId(), indexElement.getPathInRepository(), descriptor);
     addToSession(sessionEntry);
     dirtyChecker.trackLoad(sessionEntry);
+
+    Set<MethodHandle> lifeCycleMethods = descriptor.getLifeCycleMethods(LifeCycle.POST_LOAD);
+    for (MethodHandle handle : lifeCycleMethods) {
+      try {
+        handle.invoke(object);
+      } catch (Throwable throwable) {
+        throw new RuntimeException(throwable);
+      }
+    }
     return object;
   }
 

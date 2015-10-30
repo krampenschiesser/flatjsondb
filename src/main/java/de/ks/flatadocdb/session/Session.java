@@ -24,14 +24,13 @@ import de.ks.flatadocdb.index.GlobalIndex;
 import de.ks.flatadocdb.index.IndexElement;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
-import org.apache.commons.codec.digest.DigestUtils;
+import de.ks.flatadocdb.session.dirtycheck.DirtyChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @NotThreadSafe//can only be used as ThreadLocal
 public class Session {
@@ -47,12 +46,13 @@ public class Session {
   protected final Map<Object, SessionEntry> entity2Entry = new HashMap<>();
 
   protected final List<SessionAction> actions = new LinkedList<>();
-  protected final Set<Object> insertions = new HashSet<>();
+  protected final DirtyChecker dirtyChecker;
 
   public Session(MetaModel metaModel, Repository repository, GlobalIndex globalIndex) {
     this.metaModel = metaModel;
     this.repository = repository;
     this.globalIndex = globalIndex;
+    dirtyChecker = new DirtyChecker(repository, metaModel);
   }
 
   public void persist(Object entity) {
@@ -79,7 +79,7 @@ public class Session {
     SessionEntry sessionEntry = new SessionEntry(entity, id, 0, naturalId, complete, entityDescriptor);
     addToSession(sessionEntry);
 
-    insertions.add(sessionEntry.getObject());
+    dirtyChecker.trackPersist(sessionEntry);
 
     EntityInsertion singleEntityInsertion = new EntityInsertion(repository, sessionEntry);
     actions.add(singleEntityInsertion);
@@ -87,8 +87,8 @@ public class Session {
 
   public void remove(Object entity) {
     Objects.requireNonNull(entity);
-    insertions.remove(entity);
-
+    SessionEntry sessionEntry = entity2Entry.get(entity);
+    dirtyChecker.trackDelete(sessionEntry);
   }
 
   @SuppressWarnings("unchecked")
@@ -135,6 +135,7 @@ public class Session {
     Object object = persister.load(repository, descriptor, indexElement.getPathInRepository());
     SessionEntry sessionEntry = new SessionEntry(object, indexElement.getId(), descriptor.getVersion(object), indexElement.getNaturalId(), indexElement.getPathInRepository(), descriptor);
     addToSession(sessionEntry);
+    dirtyChecker.trackLoad(sessionEntry);
     return object;
   }
 
@@ -161,19 +162,9 @@ public class Session {
   }
 
   protected void prepare() {
-    Collection<SessionEntry> dirty = findDirty();
+    Collection<SessionEntry> dirty = dirtyChecker.findDirty(this.entriesById.values());
     dirty.stream().map(e -> new EntityUpdate(repository, e)).forEach(actions::add);
     actions.forEach(a -> a.prepare(this));
-  }
-
-  protected Collection<SessionEntry> findDirty() {
-    return this.entriesById.values().stream().filter(e -> !insertions.contains(e.getObject())).filter(e -> {
-      EntityDescriptor entityDescriptor = e.getEntityDescriptor();
-      EntityPersister persister = entityDescriptor.getPersister();
-      byte[] fileContents = persister.createFileContents(repository, entityDescriptor, e.getObject());
-      byte[] md5 = DigestUtils.md5(fileContents);
-      return !Arrays.equals(md5, e.getMd5());
-    }).collect(Collectors.toSet());
   }
 
   protected void commit() {

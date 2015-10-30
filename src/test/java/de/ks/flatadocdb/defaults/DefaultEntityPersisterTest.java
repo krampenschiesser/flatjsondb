@@ -34,18 +34,19 @@ public class DefaultEntityPersisterTest {
   @Rule
   public TempRepository tempRepository = new TempRepository();
   private MetaModel metaModel;
+  private EntityDescriptor entityDescriptor;
 
   @Before
   public void setUp() throws Exception {
     metaModel = new MetaModel();
     metaModel.addEntity(TestEntity.class);
+    entityDescriptor = metaModel.getEntityDescriptor(TestEntity.class);
   }
 
   @Test
   public void testStore() throws Exception {
     DefaultEntityPersister persister = new DefaultEntityPersister();
     TestEntity testEntity = new TestEntity("Hallo welt");
-    EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(TestEntity.class);
 
     String fileName = entityDescriptor.getFileGenerator().getFileName(tempRepository.getRepository(), entityDescriptor, testEntity);
     Path folder = entityDescriptor.getFolderGenerator().getFolder(tempRepository.getRepository(), testEntity);
@@ -60,5 +61,14 @@ public class DefaultEntityPersisterTest {
 
     Object load = persister.load(tempRepository.getRepository(), entityDescriptor, target);
     assertEquals(testEntity, load);
+  }
+
+  @Test
+  public void testCanHandleFile() throws Exception {
+    DefaultEntityPersister persister = new DefaultEntityPersister();
+    TestEntity testEntity = new TestEntity("Hallo welt");
+    byte[] contents = persister.createFileContents(tempRepository.getRepository(), entityDescriptor, testEntity);
+    Path write = Files.write(tempRepository.getPath().resolve(TestEntity.class.getSimpleName()), contents);
+    assertTrue(persister.canParse(write, entityDescriptor));
   }
 }

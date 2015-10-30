@@ -35,5 +35,23 @@ public interface EntityPersister {
 
   Object load(Repository repository, EntityDescriptor descriptor, Path path);
 
+  /**
+   * Generates the file contents for the given object
+   *
+   * @param repository
+   * @param descriptor
+   * @param object
+   * @return
+   */
   byte[] createFileContents(Repository repository, EntityDescriptor descriptor, Object object);
+
+  /**
+   * Will be used to check if this file can be handled by this entity persister.
+   * This is needed in order to rebuild the index.
+   *
+   * @param path
+   * @param descriptor
+   * @return true/false
+   */
+  boolean canParse(Path path, EntityDescriptor descriptor);
 }

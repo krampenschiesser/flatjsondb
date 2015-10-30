@@ -164,6 +164,11 @@ public class ParserTest {
     public byte[] createFileContents(Repository repository, EntityDescriptor descriptor, Object object) {
       return new byte[0];
     }
+
+    @Override
+    public boolean canParse(Path path, EntityDescriptor descriptor) {
+      return false;
+    }
   }
 
   static class PrivatePersister implements EntityPersister {
@@ -179,6 +184,11 @@ public class ParserTest {
     @Override
     public byte[] createFileContents(Repository repository, EntityDescriptor descriptor, Object object) {
       return new byte[0];
+    }
+
+    @Override
+    public boolean canParse(Path path, EntityDescriptor descriptor) {
+      return false;
     }
   }
 

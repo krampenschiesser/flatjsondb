@@ -28,7 +28,10 @@ import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
@@ -86,9 +89,42 @@ public class DefaultEntityPersister implements EntityPersister {
   @Override
   public byte[] createFileContents(Repository repository, EntityDescriptor descriptor, Object object) {
     try {
+//      return mapper.writeValueAsBytes(object);
       return mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(object);
     } catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public boolean canParse(Path path, EntityDescriptor descriptor) {
+    if (path.toFile().exists()) {
+      try (FileInputStream stream = new FileInputStream(path.toFile())) {
+        try (LineNumberReader reader = new LineNumberReader(new InputStreamReader(stream))) {
+          String line1 = reader.readLine();
+          String line2 = reader.readLine();
+          line1 = line1 == null ? "" : line1.trim();
+          line2 = line2 == null ? "" : line2.trim();
+          if (checkLine(line1, line2, descriptor.getEntityClass())) {
+            return true;
+          } else {
+            return false;
+          }
+        }
+      } catch (IOException e) {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  private boolean checkLine(String line1, String line2, Class<?> clazz) {
+    if (line2.startsWith("\"" + clazz.getName() + "\"")) {
+      return true;
+    } else if (line1.startsWith("{\"" + clazz.getName() + "\":")) {
+      return true;
+    } else {
+      return false;
     }
   }
 }

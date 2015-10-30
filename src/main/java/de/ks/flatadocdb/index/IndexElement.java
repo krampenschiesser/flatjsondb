@@ -69,6 +69,14 @@ public class IndexElement {
     return naturalId != null;
   }
 
+  public long getLastModified() {
+    return lastModified;
+  }
+
+  public void setLastModified(long lastModified) {
+    this.lastModified = lastModified;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {

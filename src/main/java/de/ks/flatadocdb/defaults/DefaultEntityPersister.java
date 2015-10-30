@@ -38,6 +38,7 @@ public class DefaultEntityPersister implements EntityPersister {
   final ObjectMapper mapper = new ObjectMapper();
 
   public DefaultEntityPersister() {
+    mapper.findAndRegisterModules();
     mapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
     mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
     mapper.enableDefaultTyping();

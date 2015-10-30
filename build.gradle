@@ -97,6 +97,9 @@ dependencies {
     runtime "ch.qos.logback:logback-core:$logback"
     runtime "ch.qos.logback:logback-classic:$logback"
 
+    runtime "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jackson"
+    runtime "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson"
+
     testCompile "junit:junit:$junit"
     testCompile("org.mockito:mockito-core:$mockito") {
         exclude module: "objenesis"

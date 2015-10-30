@@ -137,7 +137,7 @@ public class SessionTest {
     try {
       session2.prepare();
       fail("No " + StaleObjectStateException.class.getSimpleName() + " although version was increased by session1");
-    } catch (StaleObjectStateException e) {
+    } catch (StaleObjectFileException e) {
       //ok
     }
   }

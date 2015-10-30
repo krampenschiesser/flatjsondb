@@ -17,6 +17,7 @@ package de.ks.flatadocdb.session;
 
 import com.google.common.base.StandardSystemProperty;
 import de.ks.flatadocdb.Repository;
+import de.ks.flatadocdb.exception.AggregateException;
 import de.ks.flatadocdb.exception.StaleObjectFileException;
 import de.ks.flatadocdb.exception.StaleObjectStateException;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
@@ -29,10 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 public abstract class SessionAction {
   private static final Logger log = LoggerFactory.getLogger(SessionAction.class);
@@ -50,7 +48,22 @@ public abstract class SessionAction {
 
   public abstract void commit(Session session);
 
-  public abstract void rollback(Session session);
+  public void rollback(Session session) {
+    ArrayList<Exception> exceptions = new ArrayList<>();
+
+    for (Runnable rollback : rollbacks) {
+      try {
+        rollback.run();
+      } catch (Exception e) {
+        log.error("Got exception during rollback: ", e);
+        exceptions.add(e);
+      }
+    }
+    if (!exceptions.isEmpty()) {
+      throw new AggregateException(exceptions);
+    }
+  }
+
 
   protected void addFileDeleteRollback(Path path) {
     rollbacks.add(() -> {
@@ -67,7 +80,7 @@ public abstract class SessionAction {
       EntityDescriptor entityDescriptor = sessionEntry.getEntityDescriptor();
       Object load = entityDescriptor.getPersister().load(repository, entityDescriptor, completePath);
       long currentVersion = entityDescriptor.getVersion(load);
-      if (currentVersion >= version) {
+      if (currentVersion > version) {
         throw new StaleObjectStateException("Entity version changed, file=" + currentVersion + ", session=" + version + ". Path:" + completePath);
       }
     }
@@ -109,9 +122,7 @@ public abstract class SessionAction {
   }
 
   protected void writeFlushFile(byte[] fileContents) {
-    Path folder = sessionEntry.getFolder();
-    String flushFileName = sessionEntry.getEntityDescriptor().getFileGenerator().getFlushFileName(repository, sessionEntry.getEntityDescriptor(), sessionEntry.getObject());
-    Path flushPath = folder.resolve(flushFileName);
+    Path flushPath = getFlushPath();
 
     try {
       Files.write(flushPath, fileContents);
@@ -120,6 +131,12 @@ public abstract class SessionAction {
       throw new RuntimeException(e);
     }
     applyWindowsHiddenAttribute(flushPath);
+  }
+
+  protected Path getFlushPath() {
+    Path folder = sessionEntry.getFolder();
+    String flushFileName = sessionEntry.getEntityDescriptor().getFileGenerator().getFlushFileName(repository, sessionEntry.getEntityDescriptor(), sessionEntry.getObject());
+    return folder.resolve(flushFileName);
   }
 
 }

@@ -15,27 +15,40 @@
  */
 package de.ks.flatadocdb.session;
 
+import de.ks.flatadocdb.Repository;
+import de.ks.flatadocdb.ifc.EntityPersister;
+import de.ks.flatadocdb.metamodel.EntityDescriptor;
+import org.apache.commons.codec.digest.DigestUtils;
+
 public class EntityUpdate extends SessionAction {
-  private final SessionEntry sessionEntry;
-
-  public EntityUpdate(SessionEntry sessionEntry) {
-    this.sessionEntry = sessionEntry;
-
+  public EntityUpdate(Repository repository, SessionEntry sessionEntry) {
+    super(repository, sessionEntry);
   }
 
   @Override
   public void prepare(Session session) {
+    EntityDescriptor entityDescriptor = sessionEntry.getEntityDescriptor();
+    Object entity = sessionEntry.getObject();
 
+    checkVersionIncrement(sessionEntry.getCompletePath(), sessionEntry.getVersion());
+    checkNoFlushFileExists(sessionEntry.getFolder(), sessionEntry.getFileName());
+
+    long version = entityDescriptor.getVersion(entity);
+    entityDescriptor.writeVersion(entity, version + 1);
+    sessionEntry.version++;
+    EntityPersister persister = entityDescriptor.getPersister();
+    byte[] fileContents = persister.createFileContents(repository, entityDescriptor, entity);
+
+    writeFlushFile(fileContents);
+
+    byte[] md5 = DigestUtils.md5(fileContents);
+    sessionEntry.setMd5(md5);
+
+    checkAppendToComplete(sessionEntry.getCompletePath());//better to use Filelock if possible
   }
 
   @Override
   public void commit(Session session) {
-
+    moveFlushFile(getFlushPath());
   }
-
-  @Override
-  public void rollback(Session session) {
-
-  }
-
 }

@@ -35,7 +35,8 @@ public class EntityDescriptor {
       return new Builder();
     }
 
-    private MethodHandle versionAccess;
+    private MethodHandle versionGetterAccess;
+    private MethodHandle versionSetterAccess;
     private MethodHandle naturalIdFieldAccess;
     private MethodHandle idGetterAccess;
     private MethodHandle idSetterAccess;
@@ -54,8 +55,9 @@ public class EntityDescriptor {
       return this;
     }
 
-    public Builder version(MethodHandle h) {
-      versionAccess = h;
+    public Builder version(MethodHandle getter, MethodHandle setter) {
+      versionSetterAccess = setter;
+      versionGetterAccess = getter;
       return this;
     }
 
@@ -103,7 +105,8 @@ public class EntityDescriptor {
   protected final Class<?> entityClass;
   @Nullable
   protected final MethodHandle naturalIdFieldAccess;
-  protected final MethodHandle versionAccess;
+  protected final MethodHandle versionGetterAccess;
+  protected final MethodHandle versionSetterAccess;
   protected final MethodHandle idGetterAccess;
   protected final MethodHandle idSetterAccess;
   protected final EntityPersister persister;
@@ -117,7 +120,8 @@ public class EntityDescriptor {
     this.idGetterAccess = b.idGetterAccess;
     this.idSetterAccess = b.idSetterAccess;
     this.naturalIdFieldAccess = b.naturalIdFieldAccess;
-    this.versionAccess = b.versionAccess;
+    this.versionGetterAccess = b.versionGetterAccess;
+    this.versionSetterAccess = b.versionSetterAccess;
     this.propertyPersisters = Collections.unmodifiableMap(b.propertyPersisters);
     this.folderGenerator = b.folderGenerator;
     this.fileGenerator = b.fileGenerator;
@@ -140,7 +144,7 @@ public class EntityDescriptor {
   }
 
   public boolean isVersioned() {
-    return versionAccess != null;
+    return versionGetterAccess != null;
   }
 
   public boolean hasNaturalId() {
@@ -166,11 +170,15 @@ public class EntityDescriptor {
 
   @Nullable
   public long getVersion(Object entity) {
-    return invokeGetter(versionAccess, entity);
+    return invokeGetter(versionGetterAccess, entity);
   }
 
   public void writetId(Object entity, String id) {
     invokeSetter(idSetterAccess, entity, id);
+  }
+
+  public void writeVersion(Object entity, long version) {
+    invokeSetter(versionSetterAccess, entity, version);
   }
 
   @Nullable

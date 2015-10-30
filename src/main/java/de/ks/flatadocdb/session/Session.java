@@ -47,6 +47,7 @@ public class Session {
   protected final Map<Object, SessionEntry> entity2Entry = new HashMap<>();
 
   protected final List<SessionAction> actions = new LinkedList<>();
+  protected final Set<Object> insertions = new HashSet<>();
 
   public Session(MetaModel metaModel, Repository repository, GlobalIndex globalIndex) {
     this.metaModel = metaModel;
@@ -78,10 +79,9 @@ public class Session {
     SessionEntry sessionEntry = new SessionEntry(entity, id, 0, naturalId, complete, entityDescriptor);
     addToSession(sessionEntry);
 
-    String flushFile = entityDescriptor.getFileGenerator().getFlushFileName(repository, entityDescriptor, entity);
-    Path flushComplete = folder.resolve(flushFile);
+    insertions.add(sessionEntry.getObject());
 
-    EntityInsertion singleEntityInsertion = new EntityInsertion(repository, sessionEntry, entityDescriptor, flushComplete);
+    EntityInsertion singleEntityInsertion = new EntityInsertion(repository, sessionEntry);
     actions.add(singleEntityInsertion);
   }
 
@@ -162,20 +162,18 @@ public class Session {
 
   protected void prepare() {
     Collection<SessionEntry> dirty = findDirty();
-    dirty.stream().map(EntityUpdate::new).forEach(actions::add);
+    dirty.stream().map(e -> new EntityUpdate(repository, e)).forEach(actions::add);
     actions.forEach(a -> a.prepare(this));
   }
 
-  private Collection<SessionEntry> findDirty() {
-    Set<SessionEntry> retval = new HashSet<>();
-    this.entriesById.values().stream().filter(e -> {
+  protected Collection<SessionEntry> findDirty() {
+    return this.entriesById.values().stream().filter(e -> !insertions.contains(e.getObject())).filter(e -> {
       EntityDescriptor entityDescriptor = e.getEntityDescriptor();
       EntityPersister persister = entityDescriptor.getPersister();
       byte[] fileContents = persister.createFileContents(repository, entityDescriptor, e.getObject());
       byte[] md5 = DigestUtils.md5(fileContents);
       return !Arrays.equals(md5, e.getMd5());
     }).collect(Collectors.toSet());
-    return retval;
   }
 
   protected void commit() {

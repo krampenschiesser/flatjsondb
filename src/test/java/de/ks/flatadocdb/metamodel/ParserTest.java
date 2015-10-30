@@ -90,7 +90,7 @@ public class ParserTest {
     assertNotNull(result);
     assertEquals(CorrectEntity.class, result.entityClass);
     assertNotNull(result.naturalIdFieldAccess);
-    assertNotNull(result.versionAccess);
+    assertNotNull(result.versionGetterAccess);
     assertNotNull(result.idGetterAccess);
     assertNotNull(result.idSetterAccess);
     assertNotNull(result.persister);
@@ -102,7 +102,7 @@ public class ParserTest {
 
     assertEquals("test", result.naturalIdFieldAccess.invoke(entity));
     assertEquals("abc123", result.getId(entity));
-    assertEquals(3, (long) result.versionAccess.invoke(entity));
+    assertEquals(3, (long) result.versionGetterAccess.invoke(entity));
 
     Repository repo = Mockito.mock(Repository.class);
     Mockito.when(repo.getPath()).thenReturn(Paths.get(StandardSystemProperty.JAVA_IO_TMPDIR.value()));

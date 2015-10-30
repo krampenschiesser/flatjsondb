@@ -63,12 +63,13 @@ public class Parser {
 
     MethodHandle idGetterHandle = resolveIdFieldGetter(clazz, allFields);
     MethodHandle idSetterHandle = resolveIdFieldSetter(clazz, allFields);
-    MethodHandle versionHandle = resolveVersionField(clazz, allFields);
+    MethodHandle versionGetterHandle = resolveVersionFieldGetter(clazz, allFields);
+    MethodHandle versionSetterHandle = resolveVersionFieldSetter(clazz, allFields);
     MethodHandle naturalIdHandle = resolveNaturalIdField(clazz, allFields);
 
     Map<Field, PropertyPersister> propertyPersisters = resolvePropertyPersisters(clazz, allFields);
 
-    return EntityDescriptor.Builder.create().entity(clazz).id(idGetterHandle, idSetterHandle).version(versionHandle).natural(naturalIdHandle)//
+    return EntityDescriptor.Builder.create().entity(clazz).id(idGetterHandle, idSetterHandle).version(versionGetterHandle, versionSetterHandle).natural(naturalIdHandle)//
       .persister(persister).fileGenerator(fileGenerator).folderGenerator(folderGenerator).properties(propertyPersisters).build();
   }
 
@@ -119,10 +120,17 @@ public class Parser {
     return idHandle;
   }
 
-  private MethodHandle resolveVersionField(Class<?> clazz, Set<Field> allFields) {
+  private MethodHandle resolveVersionFieldGetter(Class<?> clazz, Set<Field> allFields) {
     Field idField = resolveExactlyOneField(clazz, allFields, Version.class, "Version", true);
     check(idField, f -> f.getType() != long.class, f -> "Type of Version field is no 'long' on " + clazz.getName());
     MethodHandle versionHandle = getGetter(idField);
+    return versionHandle;
+  }
+
+  private MethodHandle resolveVersionFieldSetter(Class<?> clazz, Set<Field> allFields) {
+    Field idField = resolveExactlyOneField(clazz, allFields, Version.class, "Version", true);
+    check(idField, f -> f.getType() != long.class, f -> "Type of Version field is no 'long' on " + clazz.getName());
+    MethodHandle versionHandle = getSetter(idField);
     return versionHandle;
   }
 

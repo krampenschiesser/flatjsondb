@@ -16,32 +16,30 @@
 package de.ks.flatadocdb.session;
 
 import de.ks.flatadocdb.Repository;
-import de.ks.flatadocdb.exception.AggregateException;
+import de.ks.flatadocdb.exception.StaleObjectFileException;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.index.IndexElement;
-import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 public class EntityInsertion extends SessionAction {
   private static final Logger log = LoggerFactory.getLogger(EntityInsertion.class);
 
-  private final Path flushPath;
   private final List<Runnable> rollbacks = new LinkedList<>();
 
-  public EntityInsertion(Repository repository, SessionEntry sessionEntry, EntityDescriptor entityDescriptor, Path flushPath) {
+  public EntityInsertion(Repository repository, SessionEntry sessionEntry) {
     super(repository, sessionEntry);
-    this.flushPath = flushPath;
   }
 
   @Override
   public void prepare(Session session) {
+    if (sessionEntry.getCompletePath().toFile().exists()) {
+      throw new StaleObjectFileException("Real file already exists" + sessionEntry.getCompletePath());
+    }
     checkVersionIncrement(sessionEntry.getCompletePath(), sessionEntry.getVersion());
     checkNoFlushFileExists(sessionEntry.getFolder(), sessionEntry.getFileName());
 
@@ -58,29 +56,12 @@ public class EntityInsertion extends SessionAction {
 
   @Override
   public void commit(Session session) {
-    moveFlushFile(flushPath);
+    moveFlushFile(getFlushPath());
     addToIndex(session);
   }
 
   private void addToIndex(Session session) {
     session.globalIndex.addEntry(new IndexElement(repository, sessionEntry.getCompletePath(), sessionEntry.getId(), sessionEntry.getNaturalId(), sessionEntry.getObject().getClass()));
-  }
-
-  @Override
-  public void rollback(Session session) {
-    ArrayList<Exception> exceptions = new ArrayList<>();
-
-    for (Runnable rollback : rollbacks) {
-      try {
-        rollback.run();
-      } catch (Exception e) {
-        log.error("Got exception during rollback: ", e);
-        exceptions.add(e);
-      }
-    }
-    if (!exceptions.isEmpty()) {
-      throw new AggregateException(exceptions);
-    }
   }
 
 }

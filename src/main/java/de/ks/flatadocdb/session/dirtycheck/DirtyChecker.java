@@ -40,7 +40,7 @@ public class DirtyChecker {
   }
 
   public void trackLoad(SessionEntry sessionEntry) {
-
+    //maybe store initial state und do comparison like hibernate?
   }
 
   public void trackPersist(SessionEntry sessionEntry) {
@@ -48,7 +48,6 @@ public class DirtyChecker {
   }
 
   public void trackDelete(SessionEntry sessionEntry) {
-    insertions.remove(sessionEntry.getObject());
   }
 
   public Collection<SessionEntry> findDirty(Collection<SessionEntry> values) {

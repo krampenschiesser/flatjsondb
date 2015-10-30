@@ -16,6 +16,7 @@
 
 package de.ks.flatadocdb.metamodel;
 
+import de.ks.flatadocdb.annotation.lifecycle.LifeCycle;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.ifc.FileGenerator;
 import de.ks.flatadocdb.ifc.FolderGenerator;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 @Immutable
 public class EntityDescriptor {
   public static class Builder {
+
     public static Builder create() {
       return new Builder();
     }
@@ -44,6 +46,7 @@ public class EntityDescriptor {
     private FolderGenerator folderGenerator;
     private FileGenerator fileGenerator;
     private Class<?> entityClass;
+    private Map<LifeCycle, Set<MethodHandle>> lifecycleMethods;
     private final Map<Field, PropertyPersister> propertyPersisters = new HashMap<>();
 
     private Builder() {
@@ -97,6 +100,11 @@ public class EntityDescriptor {
       return this;
     }
 
+    public Builder lifecycle(Map<LifeCycle, Set<MethodHandle>> methods) {
+      this.lifecycleMethods = methods;
+      return this;
+    }
+
     public EntityDescriptor build() {
       return new EntityDescriptor(this);
     }
@@ -112,6 +120,7 @@ public class EntityDescriptor {
   protected final EntityPersister persister;
   protected final FolderGenerator folderGenerator;
   protected final FileGenerator fileGenerator;
+  protected final Map<LifeCycle, Set<MethodHandle>> lifecycleMethods;
   protected final Map<Field, PropertyPersister> propertyPersisters;
 
   public EntityDescriptor(Builder b) {
@@ -122,6 +131,7 @@ public class EntityDescriptor {
     this.naturalIdFieldAccess = b.naturalIdFieldAccess;
     this.versionGetterAccess = b.versionGetterAccess;
     this.versionSetterAccess = b.versionSetterAccess;
+    this.lifecycleMethods = Collections.unmodifiableMap(b.lifecycleMethods);
     this.propertyPersisters = Collections.unmodifiableMap(b.propertyPersisters);
     this.folderGenerator = b.folderGenerator;
     this.fileGenerator = b.fileGenerator;
@@ -230,6 +240,10 @@ public class EntityDescriptor {
 
   public Map<Field, PropertyPersister> getPropertyPersisters() {
     return propertyPersisters;
+  }
+
+  public Set<MethodHandle> getLifeCycleMethods(LifeCycle lifeCycle) {
+    return this.lifecycleMethods.get(lifeCycle);
   }
 
   @Override

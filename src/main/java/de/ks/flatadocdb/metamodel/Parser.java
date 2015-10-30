@@ -17,6 +17,7 @@
 package de.ks.flatadocdb.metamodel;
 
 import de.ks.flatadocdb.annotation.*;
+import de.ks.flatadocdb.annotation.lifecycle.LifeCycle;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.ifc.FileGenerator;
 import de.ks.flatadocdb.ifc.FolderGenerator;
@@ -68,9 +69,10 @@ public class Parser {
     MethodHandle naturalIdHandle = resolveNaturalIdField(clazz, allFields);
 
     Map<Field, PropertyPersister> propertyPersisters = resolvePropertyPersisters(clazz, allFields);
+    Map<LifeCycle, Set<MethodHandle>> lifecycleMethods = new LifeCycleParser().parseMethods(clazz);
 
     return EntityDescriptor.Builder.create().entity(clazz).id(idGetterHandle, idSetterHandle).version(versionGetterHandle, versionSetterHandle).natural(naturalIdHandle)//
-      .persister(persister).fileGenerator(fileGenerator).folderGenerator(folderGenerator).properties(propertyPersisters).build();
+      .persister(persister).fileGenerator(fileGenerator).folderGenerator(folderGenerator).properties(propertyPersisters).lifecycle(lifecycleMethods).build();
   }
 
   private Map<Field, PropertyPersister> resolvePropertyPersisters(Class<?> clazz, Set<Field> allFields) {

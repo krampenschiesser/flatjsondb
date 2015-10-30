@@ -28,8 +28,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Very simple dirty checker right now.
+ * Need to balloon it up to something hibernate uses, storing the initial state and then comparing all fields
+ */
 public class DirtyChecker {
-
   private final Repository repository;
   private final MetaModel metaModel;
   private final Set<Object> insertions = new HashSet<>();
@@ -40,7 +43,7 @@ public class DirtyChecker {
   }
 
   public void trackLoad(SessionEntry sessionEntry) {
-
+    //maybe store initial state und do comparison like hibernate?
   }
 
   public void trackPersist(SessionEntry sessionEntry) {
@@ -48,7 +51,6 @@ public class DirtyChecker {
   }
 
   public void trackDelete(SessionEntry sessionEntry) {
-    insertions.remove(sessionEntry.getObject());
   }
 
   public Collection<SessionEntry> findDirty(Collection<SessionEntry> values) {

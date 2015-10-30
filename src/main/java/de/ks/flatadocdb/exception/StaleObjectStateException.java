@@ -16,6 +16,9 @@
 
 package de.ks.flatadocdb.exception;
 
+/**
+ * Indicates that the version was increased (and committed) by another tx
+ */
 public class StaleObjectStateException extends RuntimeException {
   private static final long serialVersionUID = 1L;
 

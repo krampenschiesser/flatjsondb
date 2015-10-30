@@ -34,7 +34,7 @@ public class DefaultFolderGeneratorTest {
   @Test
   public void testDefaultFolderGeneration() throws Exception {
     Repository repo = tempRepository.getRepository();
-    DefaultFolderGenerator defaultFolderGenerator = new DefaultFolderGenerator();
+    JoinedRootFolderGenerator defaultFolderGenerator = new JoinedRootFolderGenerator();
     Path path = defaultFolderGenerator.getFolder(repo, new TestEntity("test"));
     assertEquals(tempRepository.getPath().resolve(TestEntity.class.getSimpleName()), path);
     assertTrue(path.toFile().exists());
@@ -45,7 +45,7 @@ public class DefaultFolderGeneratorTest {
     tempRepository.getPath().resolve(TestEntity.class.getSimpleName()).toFile().createNewFile();
 
     Repository repo = tempRepository.getRepository();
-    DefaultFolderGenerator defaultFolderGenerator = new DefaultFolderGenerator();
+    JoinedRootFolderGenerator defaultFolderGenerator = new JoinedRootFolderGenerator();
     defaultFolderGenerator.getFolder(repo, new TestEntity("test"));
   }
 }

@@ -51,7 +51,8 @@ public class DefaultEntityPersisterTest {
     Path folder = entityDescriptor.getFolderGenerator().getFolder(tempRepository.getRepository(), testEntity);
 
     Path target = folder.resolve(fileName);
-    persister.save(tempRepository.getRepository(), entityDescriptor, target, testEntity);
+    byte[] contents = persister.createFileContents(tempRepository.getRepository(), entityDescriptor, testEntity);
+    Files.write(target, contents);
 
     assertTrue(target.toFile().exists());
 

@@ -77,9 +77,9 @@ public class DefaultEntityPersister implements EntityPersister {
   }
 
   @Override
-  public void save(Repository repository, EntityDescriptor descriptor, Path target, Object object) {
+  public byte[] createFileContents(Repository repository, EntityDescriptor descriptor, Object object) {
     try {
-      mapper.writerWithDefaultPrettyPrinter().writeValue(target.toFile(), object);
+      return mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(object);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

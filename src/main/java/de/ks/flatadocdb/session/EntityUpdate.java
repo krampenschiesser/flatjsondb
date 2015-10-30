@@ -13,28 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.ks.flatadocdb.metamodel;
+package de.ks.flatadocdb.session;
 
-import de.ks.flatadocdb.annotation.Entity;
-import de.ks.flatadocdb.entity.NamedEntity;
+public class EntityUpdate extends SessionAction {
+  private final SessionEntry sessionEntry;
 
-@Entity
-public class TestEntity extends NamedEntity {
-  String attribute;
+  public EntityUpdate(SessionEntry sessionEntry) {
+    this.sessionEntry = sessionEntry;
 
-  protected TestEntity() {
-    super(null);
   }
 
-  public TestEntity(String name) {
-    super(name);
+  @Override
+  public void prepare(Session session) {
+
   }
 
-  public String getAttribute() {
-    return attribute;
+  @Override
+  public void commit(Session session) {
+
   }
 
-  public void setAttribute(String attribute) {
-    this.attribute = attribute;
+  @Override
+  public void rollback(Session session) {
+
   }
+
 }

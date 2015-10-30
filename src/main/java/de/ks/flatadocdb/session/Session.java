@@ -16,28 +16,22 @@
 
 package de.ks.flatadocdb.session;
 
-import com.google.common.base.StandardSystemProperty;
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.defaults.DefaultIdGenerator;
 import de.ks.flatadocdb.exception.NoIdField;
-import de.ks.flatadocdb.exception.StaleObjectFileException;
 import de.ks.flatadocdb.ifc.EntityPersister;
+import de.ks.flatadocdb.index.GlobalIndex;
 import de.ks.flatadocdb.index.IndexElement;
-import de.ks.flatadocdb.index.LocalIndex;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
-import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @NotThreadSafe//can only be used as ThreadLocal
 public class Session {
@@ -45,20 +39,19 @@ public class Session {
 
   protected final MetaModel metaModel;
   protected final Repository repository;
-  protected final LocalIndex localIndex;
+  protected final GlobalIndex globalIndex;
   protected final DefaultIdGenerator idGenerator = new DefaultIdGenerator();
 
   protected final Map<String, SessionEntry> entriesById = new HashMap<>();
   protected final Map<Object, SessionEntry> entriesByNaturalId = new HashMap<>();
   protected final Map<Object, SessionEntry> entity2Entry = new HashMap<>();
 
-  protected final LinkedList<Consumer<Session>> prepareActions = new LinkedList<>();
-  protected final LinkedList<Consumer<Session>> commitActions = new LinkedList<>();
+  protected final List<SessionAction> actions = new LinkedList<>();
 
-  public Session(MetaModel metaModel, Repository repository, LocalIndex localIndex) {
+  public Session(MetaModel metaModel, Repository repository, GlobalIndex globalIndex) {
     this.metaModel = metaModel;
     this.repository = repository;
-    this.localIndex = localIndex;
+    this.globalIndex = globalIndex;
   }
 
   public void persist(Object entity) {
@@ -69,57 +62,27 @@ public class Session {
 
     Path folder = entityDescriptor.getFolderGenerator().getFolder(repository, entity);
     String fileName = entityDescriptor.getFileGenerator().getFileName(repository, entityDescriptor, entity);
-    String flushFile = entityDescriptor.getFileGenerator().getFlushFileName(repository, entityDescriptor, entity);
 
-    Path flushComplete = folder.resolve(flushFile);
     Path complete = folder.resolve(fileName);
 
     String id = idGenerator.getSha1Hash(repository.getPath(), complete);
+
+    Optional<?> found = findById(entity.getClass(), id);
+    if (found.isPresent()) {
+      log.warn("Trying to persist entity {} [{}] twice", entity, complete);
+      return;
+    }
+
     entityDescriptor.writetId(entity, id);
 
-    SessionEntry sessionEntry = new SessionEntry(entity, id, 0, naturalId, complete);
+    SessionEntry sessionEntry = new SessionEntry(entity, id, 0, naturalId, complete, entityDescriptor);
     addToSession(sessionEntry);
-    prepareActions.add(s -> {
-      checkNoFlushFileExists(folder, fileName);
-      entityDescriptor.getPersister().save(repository, entityDescriptor, flushComplete, entity);
-      applyWindowsHiddenAttribute(flushComplete);
-      checkAppendToComplete(complete);
-    });
-    commitActions.add(s -> {
-      try {
-        Files.move(flushComplete, complete, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-        localIndex.addEntry(new IndexElement(repository, complete, id, naturalId, entity.getClass()));
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    });
-  }
 
-  protected void checkNoFlushFileExists(Path flushComplete, String fileName) {
-    File[] files = flushComplete.toFile().listFiles(f -> f.isFile() && f.getName().startsWith("." + fileName));
-    if (files.length != 0) {
-      throw new StaleObjectFileException("Flush file already exists" + flushComplete);
-    }
-  }
+    String flushFile = entityDescriptor.getFileGenerator().getFlushFileName(repository, entityDescriptor, entity);
+    Path flushComplete = folder.resolve(flushFile);
 
-  protected void checkAppendToComplete(Path complete) {
-    if (complete.toFile().exists()) {
-      try {
-        Files.write(complete, Arrays.asList(""), StandardOpenOption.APPEND);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  }
-
-  protected void applyWindowsHiddenAttribute(Path flushComplete) {
-    if (StandardSystemProperty.OS_NAME.value().toLowerCase(Locale.ROOT).contains("win")) {
-      try {
-        Files.setAttribute(flushComplete, "dos:hidden", true);
-      } catch (IOException e) {
-        log.warn("Cannot set hidden attribute on {}", flushComplete, e);
-      }
-    }
+    EntityInsertion singleEntityInsertion = new EntityInsertion(repository, sessionEntry, entityDescriptor, flushComplete);
+    actions.add(singleEntityInsertion);
   }
 
   public void remove(Object entity) {
@@ -135,7 +98,7 @@ public class Session {
 
     SessionEntry sessionEntry = entriesByNaturalId.get(naturalId);
     if (sessionEntry == null) {
-      IndexElement indexElement = localIndex.getByNaturalId(naturalId);
+      IndexElement indexElement = globalIndex.getByNaturalId(naturalId);
       if (indexElement == null) {
         return Optional.empty();
       } else {
@@ -154,7 +117,7 @@ public class Session {
 
     SessionEntry sessionEntry = entriesById.get(id);
     if (sessionEntry == null) {
-      IndexElement indexElement = localIndex.getById(id);
+      IndexElement indexElement = globalIndex.getById(id);
       if (indexElement == null) {
         return Optional.empty();
       } else {
@@ -170,7 +133,7 @@ public class Session {
     EntityDescriptor descriptor = metaModel.getEntityDescriptor(indexElement.getEntityClass());
     EntityPersister persister = descriptor.getPersister();
     Object object = persister.load(repository, descriptor, indexElement.getPathInRepository());
-    SessionEntry sessionEntry = new SessionEntry(object, indexElement.getId(), descriptor.getVersion(object), indexElement.getNaturalId(), indexElement.getPathInRepository());
+    SessionEntry sessionEntry = new SessionEntry(object, indexElement.getId(), descriptor.getVersion(object), indexElement.getNaturalId(), indexElement.getPathInRepository(), descriptor);
     addToSession(sessionEntry);
     return object;
   }
@@ -198,10 +161,28 @@ public class Session {
   }
 
   protected void prepare() {
-    prepareActions.forEach(a -> a.accept(this));
+    Collection<SessionEntry> dirty = findDirty();
+    dirty.stream().map(EntityUpdate::new).forEach(actions::add);
+    actions.forEach(a -> a.prepare(this));
+  }
+
+  private Collection<SessionEntry> findDirty() {
+    Set<SessionEntry> retval = new HashSet<>();
+    this.entriesById.values().stream().filter(e -> {
+      EntityDescriptor entityDescriptor = e.getEntityDescriptor();
+      EntityPersister persister = entityDescriptor.getPersister();
+      byte[] fileContents = persister.createFileContents(repository, entityDescriptor, e.getObject());
+      byte[] md5 = DigestUtils.md5(fileContents);
+      return !Arrays.equals(md5, e.getMd5());
+    }).collect(Collectors.toSet());
+    return retval;
   }
 
   protected void commit() {
-    commitActions.forEach(a -> a.accept(this));
+    actions.forEach(a -> a.commit(this));
+  }
+
+  protected void rollback() {
+    actions.forEach(a -> a.rollback(this));
   }
 }

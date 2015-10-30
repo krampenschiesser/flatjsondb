@@ -161,8 +161,8 @@ public class ParserTest {
     }
 
     @Override
-    public void save(Repository repository, EntityDescriptor descriptor, Path target, Object object) {
-
+    public byte[] createFileContents(Repository repository, EntityDescriptor descriptor, Object object) {
+      return new byte[0];
     }
   }
 
@@ -177,8 +177,8 @@ public class ParserTest {
     }
 
     @Override
-    public void save(Repository repository, EntityDescriptor descriptor, Path target, Object object) {
-
+    public byte[] createFileContents(Repository repository, EntityDescriptor descriptor, Object object) {
+      return new byte[0];
     }
   }
 

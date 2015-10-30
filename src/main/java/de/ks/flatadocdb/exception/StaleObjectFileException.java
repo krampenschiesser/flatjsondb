@@ -16,6 +16,9 @@
 
 package de.ks.flatadocdb.exception;
 
+/**
+ * Indicates that another tx already created the flush file.
+ */
 public class StaleObjectFileException extends RuntimeException {
   private static final long serialVersionUID = 1L;
 

@@ -13,28 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.ks.flatadocdb.metamodel;
+package de.ks.flatadocdb.exception;
 
-import de.ks.flatadocdb.annotation.Entity;
-import de.ks.flatadocdb.entity.NamedEntity;
+import java.util.List;
 
-@Entity
-public class TestEntity extends NamedEntity {
-  String attribute;
+public class AggregateException extends RuntimeException {
+  private final List<Exception> exceptions;
 
-  protected TestEntity() {
-    super(null);
+  public AggregateException(List<Exception> exceptions) {
+    super(exceptions.toString());
+    this.exceptions = exceptions;
+    exceptions.forEach(this::addSuppressed);
   }
 
-  public TestEntity(String name) {
-    super(name);
-  }
-
-  public String getAttribute() {
-    return attribute;
-  }
-
-  public void setAttribute(String attribute) {
-    this.attribute = attribute;
+  public List<Exception> getExceptions() {
+    return exceptions;
   }
 }

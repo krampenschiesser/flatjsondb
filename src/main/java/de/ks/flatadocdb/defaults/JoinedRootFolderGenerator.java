@@ -21,7 +21,7 @@ import de.ks.flatadocdb.ifc.FolderGenerator;
 
 import java.nio.file.Path;
 
-public class DefaultFolderGenerator implements FolderGenerator {
+public class JoinedRootFolderGenerator implements FolderGenerator {
   @Override
   public Path getFolder(Repository repository, Object object) {
     Path path = repository.getPath();

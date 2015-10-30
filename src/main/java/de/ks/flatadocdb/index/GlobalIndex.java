@@ -19,7 +19,7 @@ package de.ks.flatadocdb.index;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class LocalIndex {
+public class GlobalIndex {
   protected Map<Object, IndexElement> naturalIdToElement = new ConcurrentHashMap<>();
   protected Map<String, IndexElement> idToElement = new ConcurrentHashMap<>();
 

@@ -30,5 +30,5 @@ import java.nio.file.Path;
 public interface EntityPersister {
   Object load(Repository repository, EntityDescriptor descriptor, Path path);
 
-  void save(Repository repository, EntityDescriptor descriptor, Path target, Object object);
+  byte[] createFileContents(Repository repository, EntityDescriptor descriptor, Object object);
 }

@@ -16,6 +16,8 @@
 
 package de.ks.flatadocdb.session;
 
+import de.ks.flatadocdb.metamodel.EntityDescriptor;
+
 import java.nio.file.Path;
 
 public class SessionEntry {
@@ -24,13 +26,16 @@ public class SessionEntry {
   protected final String id;
   protected long version;
   protected final Path completePath;
+  private final EntityDescriptor entityDescriptor;
+  protected byte[] md5;
 
-  public SessionEntry(Object object, String id, long version, Object naturalId, Path completePath) {
+  public SessionEntry(Object object, String id, long version, Object naturalId, Path completePath, EntityDescriptor entityDescriptor) {
     this.object = object;
     this.id = id;
     this.version = version;
     this.naturalId = naturalId;
     this.completePath = completePath;
+    this.entityDescriptor = entityDescriptor;
   }
 
   public Object getObject() {
@@ -51,5 +56,44 @@ public class SessionEntry {
 
   public Path getCompletePath() {
     return completePath;
+  }
+
+  public Path getFolder() {
+    return completePath.toFile().getParentFile().toPath();
+  }
+
+  public String getFileName() {
+    return completePath.getFileName().toFile().getName();
+  }
+
+  public byte[] getMd5() {
+    return md5;
+  }
+
+  public void setMd5(byte[] md5) {
+    this.md5 = md5;
+  }
+
+  public EntityDescriptor getEntityDescriptor() {
+    return entityDescriptor;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof SessionEntry)) {
+      return false;
+    }
+
+    SessionEntry that = (SessionEntry) o;
+    return id.equals(that.id);
+
+  }
+
+  @Override
+  public int hashCode() {
+    return id.hashCode();
   }
 }

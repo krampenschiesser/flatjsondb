@@ -26,6 +26,8 @@ public class IndexElement {
   private String id;
   private Object naturalId;
   private Class<?> entityClass;
+  private byte[] md5Sum;
+  private long lastModified;
 
   public IndexElement(Repository repository, Path pathInRepository, String id, Object naturalId, Class<?> entityClass) {
     this.repository = repository;
@@ -33,6 +35,14 @@ public class IndexElement {
     this.id = id;
     this.naturalId = naturalId;
     this.entityClass = entityClass;
+  }
+
+  public byte[] getMd5Sum() {
+    return md5Sum;
+  }
+
+  public void setMd5Sum(byte[] md5Sum) {
+    this.md5Sum = md5Sum;
   }
 
   public Class<?> getEntityClass() {
@@ -57,5 +67,25 @@ public class IndexElement {
 
   public boolean hasNaturalId() {
     return naturalId != null;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof IndexElement)) {
+      return false;
+    }
+
+    IndexElement that = (IndexElement) o;
+
+    return id.equals(that.id);
+
+  }
+
+  @Override
+  public int hashCode() {
+    return id.hashCode();
   }
 }

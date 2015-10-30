@@ -20,7 +20,9 @@ import com.google.common.base.StandardSystemProperty;
 import de.ks.flatadocdb.DeleteDir;
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.defaults.DefaultFileGenerator;
-import de.ks.flatadocdb.index.LocalIndex;
+import de.ks.flatadocdb.exception.StaleObjectFileException;
+import de.ks.flatadocdb.exception.StaleObjectStateException;
+import de.ks.flatadocdb.index.GlobalIndex;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
 import org.hamcrest.Matchers;
@@ -37,7 +39,7 @@ import static org.junit.Assert.*;
 public class SessionTest {
 
   private MetaModel metamodel;
-  private LocalIndex index;
+  private GlobalIndex index;
   private Repository repository;
   private Path path;
 
@@ -50,7 +52,7 @@ public class SessionTest {
     new DeleteDir(path).delete();
 
     repository = new Repository(path);
-    index = new LocalIndex();
+    index = new GlobalIndex();
   }
 
   @Test
@@ -92,5 +94,96 @@ public class SessionTest {
 
     result = session2.findByNaturalId(TestEntity.class, "Schnitzel");
     assertTrue(result.isPresent());
+  }
+
+  @Test
+  public void testFlushFileExists() throws Exception {
+    TestEntity testEntity = new TestEntity("Schnitzel");
+
+    Session session1 = new Session(metamodel, repository, index);
+    session1.persist(testEntity);
+    Session session2 = new Session(metamodel, repository, index);
+    session2.persist(testEntity);
+    session1.prepare();
+    try {
+      session2.prepare();
+      fail("Got no exception from second flush file!");
+    } catch (StaleObjectFileException e) {
+      //ok
+    }
+  }
+
+  @Test
+  public void testDoublePersist() throws Exception {
+    TestEntity testEntity = new TestEntity("Schnitzel");
+    Session session = new Session(metamodel, repository, index);
+
+    session.persist(testEntity);
+    session.persist(testEntity);
+    assertEquals(1, session.actions.size());
+  }
+
+  @Test
+  public void testTwoSessionCommit() throws Exception {
+    TestEntity testEntity = new TestEntity("Schnitzel");
+
+    Session session1 = new Session(metamodel, repository, index);
+    Session session2 = new Session(metamodel, repository, index);
+    session1.persist(testEntity);
+    session2.persist(testEntity);
+    session1.prepare();
+    session1.commit();
+
+    try {
+      session2.prepare();
+      fail("No " + StaleObjectStateException.class.getSimpleName() + " although version was increased by session1");
+    } catch (StaleObjectStateException e) {
+      //ok
+    }
+  }
+
+  @Test
+  public void testRollBack() throws Exception {
+    TestEntity testEntity = new TestEntity("Schnitzel");
+    Session session = new Session(metamodel, repository, index);
+
+    session.persist(testEntity);
+    session.prepare();
+    SessionEntry entry = session.entriesById.values().iterator().next();
+    File[] files = entry.getFolder().toFile().listFiles();
+    assertThat(files, Matchers.not(Matchers.emptyArray()));
+    assertThat(files[0].getName(), Matchers.startsWith("."));
+
+    session.rollback();
+    files = entry.getFolder().toFile().listFiles();
+    assertThat(files, Matchers.emptyArray());
+  }
+
+  @Test
+  public void testVersionIncrement() throws Exception {
+    TestEntity testEntity = new TestEntity("Schnitzel");
+
+    Session session1 = new Session(metamodel, repository, index);
+    session1.persist(testEntity);
+    session1.prepare();
+    session1.commit();
+
+    session1 = new Session(metamodel, repository, index);
+    Session session2 = new Session(metamodel, repository, index);
+
+    TestEntity first = session1.findById(TestEntity.class, testEntity.getId()).get();
+    TestEntity second = session2.findById(TestEntity.class, testEntity.getId()).get();
+
+    second.setAttribute("bla");
+    session2.prepare();
+    session2.commit();
+
+    first.setAttribute("bla");
+    try {
+      session1.prepare();
+      fail("No " + StaleObjectStateException.class.getSimpleName() + " although version was increased by session2");
+    } catch (StaleObjectStateException e) {
+      //ok
+    }
   }
 }

@@ -31,8 +31,6 @@ public class DefaultFileGenerator implements FileGenerator {
 
   @Override
   public String getFileName(Repository repository, EntityDescriptor descriptor, Object object) {
-//    String extension = object.getClass().getSimpleName();
-
     Object naturalId = descriptor.getNaturalId(object);
     if (naturalId != null) {
       String naturalIdString = parseNaturalId(String.valueOf(naturalId));
@@ -55,7 +53,8 @@ public class DefaultFileGenerator implements FileGenerator {
   }
 
   protected String parseNaturalId(String naturalIdString) {
-    String parsed = naturalIdString.chars().map(c -> Character.isWhitespace((char) c) ? '_' : c)//
+    String parsed = naturalIdString.chars()//
+      .map(c -> Character.isWhitespace((char) c) ? '_' : c)//
       .filter(c -> Character.isLetterOrDigit((char) c) || c == '_')//
       .mapToObj(c -> String.valueOf((char) c)).collect(Collectors.joining());
     return parsed;

@@ -18,6 +18,9 @@ package de.ks.flatadocdb.entity;
 
 import de.ks.flatadocdb.annotation.Id;
 import de.ks.flatadocdb.annotation.Version;
+import de.ks.flatadocdb.annotation.lifecycle.PreUpdate;
+
+import java.time.LocalDateTime;
 
 /**
  * Base class you can use. If you have your own domain model you can just add the corresponding fields and annotations.
@@ -28,11 +31,31 @@ public class BaseEntity {
   @Id
   protected String id;
 
+  protected LocalDateTime creationTime;
+  protected LocalDateTime updateTime;
+
+  protected BaseEntity() {
+    creationTime = LocalDateTime.now();
+  }
+
   public long getVersion() {
     return version;
   }
 
   public String getId() {
     return id;
+  }
+
+  @PreUpdate
+  void preUpdate() {
+    updateTime = LocalDateTime.now();
+  }
+
+  public LocalDateTime getCreationTime() {
+    return creationTime;
+  }
+
+  public LocalDateTime getUpdateTime() {
+    return updateTime;
   }
 }

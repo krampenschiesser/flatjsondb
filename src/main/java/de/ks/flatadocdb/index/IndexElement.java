@@ -42,8 +42,9 @@ public class IndexElement {
     return md5Sum;
   }
 
-  public void setMd5Sum(byte[] md5Sum) {
+  public IndexElement setMd5Sum(byte[] md5Sum) {
     this.md5Sum = md5Sum;
+    return this;
   }
 
   public Class<?> getEntityClass() {
@@ -74,8 +75,9 @@ public class IndexElement {
     return lastModified;
   }
 
-  public void setLastModified(long lastModified) {
+  public IndexElement setLastModified(long lastModified) {
     this.lastModified = lastModified;
+    return this;
   }
 
   @Override

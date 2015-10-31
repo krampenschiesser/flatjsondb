@@ -52,7 +52,7 @@ public class SessionTest {
     new DeleteDir(path).delete();
 
     repository = new Repository(path);
-    index = new GlobalIndex();
+    index = new GlobalIndex(repository, metamodel);
   }
 
   @Test

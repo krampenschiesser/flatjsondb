@@ -13,47 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.ks.flatadocdb.session;
+
+package de.ks.flatadocdb.index;
 
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.TempRepository;
-import de.ks.flatadocdb.index.GlobalIndex;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
+import de.ks.flatadocdb.session.Session;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.nio.file.Path;
+import java.util.Collection;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
 
-public class LifeCycleTest {
+public class GlobalIndexTest {
+  public static final int COUNT = 5;
   @Rule
   public TempRepository tempRepository = new TempRepository();
-  private MetaModel metamodel;
-
-  private GlobalIndex index;
   private Repository repository;
-  private Path path;
+  private MetaModel metaModel;
+  private GlobalIndex index;
 
   @Before
   public void setUp() throws Exception {
-    metamodel = new MetaModel();
-    metamodel.addEntity(TestEntity.class);
-
     repository = tempRepository.getRepository();
-    index = new GlobalIndex(repository, metamodel);
+    metaModel = new MetaModel();
+    metaModel.addEntity(TestEntity.class);
+    index = new GlobalIndex(repository, metaModel);
+
+    for (int i = 0; i < COUNT; i++) {
+      TestEntity entity = new TestEntity("test" + (i + 1));
+      Session session = new Session(metaModel, repository, index);
+      session.persist(entity);
+      session.prepare();
+      session.commit();
+    }
+    index = new GlobalIndex(repository, metaModel);
   }
 
   @Test
-  public void testPreUpdate() throws Exception {
-    TestEntity entity = new TestEntity("Steak");
+  public void testRecreateIndex() throws Exception {
+    index.recreate();
 
-    Session session = new Session(metamodel, repository, index);
-    session.persist(entity);
-    session.prepare();
-
-    assertNotNull(entity.getUpdateTime());
+    Collection<IndexElement> elements = index.getAllOf(TestEntity.class);
+    assertEquals(COUNT, elements.size());
   }
 }

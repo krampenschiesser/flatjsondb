@@ -173,17 +173,17 @@ public class Session {
     }
   }
 
-  protected void prepare() {
+  public void prepare() {
     Collection<SessionEntry> dirty = dirtyChecker.findDirty(this.entriesById.values());
     dirty.stream().map(e -> new EntityUpdate(repository, e)).forEach(actions::add);
     actions.forEach(a -> a.prepare(this));
   }
 
-  protected void commit() {
+  public void commit() {
     actions.forEach(a -> a.commit(this));
   }
 
-  protected void rollback() {
+  public void rollback() {
     actions.forEach(a -> a.rollback(this));
   }
 }

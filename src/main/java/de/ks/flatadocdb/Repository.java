@@ -17,8 +17,13 @@
 package de.ks.flatadocdb;
 
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Repository {
   protected final Path path;
@@ -44,6 +49,25 @@ public class Repository {
 
   public Path getPath() {
     return path;
+  }
+
+  public Set<Path> getAllFilesInRepository() {
+    HashSet<Path> filesInRepository = new HashSet<>();
+    SimpleFileVisitor<Path> fileVisitor = new SimpleFileVisitor<Path>() {
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        if (file.toFile().exists()) {
+          filesInRepository.add(file);
+        }
+        return super.visitFile(file, attrs);
+      }
+    };
+    try {
+      Files.walkFileTree(path, fileVisitor);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return filesInRepository;
   }
 
   public String getName() {

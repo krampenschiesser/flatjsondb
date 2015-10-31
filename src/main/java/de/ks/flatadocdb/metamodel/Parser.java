@@ -24,6 +24,7 @@ import de.ks.flatadocdb.ifc.FolderGenerator;
 import de.ks.flatadocdb.ifc.PropertyPersister;
 import org.reflections.ReflectionUtils;
 
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -139,6 +140,7 @@ public class Parser {
   private MethodHandle resolveNaturalIdField(Class<?> clazz, Set<Field> allFields) {
     Field naturalIdField = resolveExactlyOneField(clazz, allFields, NaturalId.class, "NaturalID", false);
     if (naturalIdField != null) {
+      check(naturalIdField, f -> !Serializable.class.isAssignableFrom(f.getType()), f -> "Type of NaturalId field is not Serializable on " + clazz.getName());
       MethodHandle versionHandle = getGetter(naturalIdField);
       return versionHandle;
     } else {

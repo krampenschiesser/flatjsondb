@@ -16,11 +16,12 @@
 
 package de.ks.flatadocdb.index;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class GlobalIndex {
-  protected Map<Object, IndexElement> naturalIdToElement = new ConcurrentHashMap<>();
+  protected Map<Serializable, IndexElement> naturalIdToElement = new ConcurrentHashMap<>();
   protected Map<String, IndexElement> idToElement = new ConcurrentHashMap<>();
 
   public void addEntry(IndexElement element) {
@@ -44,5 +45,4 @@ public class GlobalIndex {
   public IndexElement getByNaturalId(Object id) {
     return naturalIdToElement.get(id);
   }
-
 }

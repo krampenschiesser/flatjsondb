@@ -18,18 +18,19 @@ package de.ks.flatadocdb.session;
 
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 
+import java.io.Serializable;
 import java.nio.file.Path;
 
 public class SessionEntry {
   protected final Object object;
-  protected final Object naturalId;
+  protected final Serializable naturalId;
   protected final String id;
   protected long version;
   protected final Path completePath;
   private final EntityDescriptor entityDescriptor;
   protected byte[] md5;
 
-  public SessionEntry(Object object, String id, long version, Object naturalId, Path completePath, EntityDescriptor entityDescriptor) {
+  public SessionEntry(Object object, String id, long version, Serializable naturalId, Path completePath, EntityDescriptor entityDescriptor) {
     this.object = object;
     this.id = id;
     this.version = version;
@@ -46,7 +47,7 @@ public class SessionEntry {
     return id;
   }
 
-  public Object getNaturalId() {
+  public Serializable getNaturalId() {
     return naturalId;
   }
 

@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
+import java.io.Serializable;
 import java.lang.invoke.MethodHandle;
 import java.nio.file.Path;
 import java.util.*;
@@ -61,7 +62,7 @@ public class Session {
     Objects.requireNonNull(entity);
 
     EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(entity.getClass());
-    Object naturalId = entityDescriptor.getNaturalId(entity);
+    Serializable naturalId = entityDescriptor.getNaturalId(entity);
 
     Path folder = entityDescriptor.getFolderGenerator().getFolder(repository, entity);
     String fileName = entityDescriptor.getFileGenerator().getFileName(repository, entityDescriptor, entity);

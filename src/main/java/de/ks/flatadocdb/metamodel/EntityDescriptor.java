@@ -24,6 +24,7 @@ import de.ks.flatadocdb.ifc.PropertyPersister;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
+import java.io.Serializable;
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -192,7 +193,7 @@ public class EntityDescriptor {
   }
 
   @Nullable
-  public Object getNaturalId(Object entity) {
+  public Serializable getNaturalId(Object entity) {
     if (hasNaturalId()) {
       return invokeGetter(naturalIdFieldAccess, entity);
     } else {

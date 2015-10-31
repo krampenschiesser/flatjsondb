@@ -18,18 +18,19 @@ package de.ks.flatadocdb.index;
 
 import de.ks.flatadocdb.Repository;
 
+import java.io.Serializable;
 import java.nio.file.Path;
 
 public class IndexElement {
   private Repository repository;
   private Path pathInRepository;
   private String id;
-  private Object naturalId;
+  private Serializable naturalId;
   private Class<?> entityClass;
   private byte[] md5Sum;
   private long lastModified;
 
-  public IndexElement(Repository repository, Path pathInRepository, String id, Object naturalId, Class<?> entityClass) {
+  public IndexElement(Repository repository, Path pathInRepository, String id, Serializable naturalId, Class<?> entityClass) {
     this.repository = repository;
     this.pathInRepository = pathInRepository;
     this.id = id;
@@ -61,7 +62,7 @@ public class IndexElement {
     return id;
   }
 
-  public Object getNaturalId() {
+  public Serializable getNaturalId() {
     return naturalId;
   }
 

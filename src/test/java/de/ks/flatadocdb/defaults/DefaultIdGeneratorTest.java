@@ -17,7 +17,7 @@
 package de.ks.flatadocdb.defaults;
 
 import com.google.common.base.StandardSystemProperty;
-import de.ks.flatadocdb.DeleteDir;
+import de.ks.flatadocdb.util.DeleteDir;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;

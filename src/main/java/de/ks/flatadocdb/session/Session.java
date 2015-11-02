@@ -91,7 +91,18 @@ public class Session {
   public void remove(Object entity) {
     Objects.requireNonNull(entity);
     SessionEntry sessionEntry = entity2Entry.get(entity);
-    dirtyChecker.trackDelete(sessionEntry);
+    if (sessionEntry == null) {
+      EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(entity.getClass());
+      String id = entityDescriptor.getId(entity);
+      if (id != null) {
+        IndexElement indexElement = globalIndex.getById(id);
+        sessionEntry = loadSessionEntry(indexElement);
+      }
+    }
+    if (sessionEntry != null) {
+      dirtyChecker.trackDelete(sessionEntry);
+      actions.add(new EntityDelete(repository, sessionEntry));
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -131,13 +142,21 @@ public class Session {
     }
   }
 
-  private Object load(IndexElement indexElement) {
+  private SessionEntry loadSessionEntry(IndexElement indexElement) {
     Objects.requireNonNull(indexElement);
     EntityDescriptor descriptor = metaModel.getEntityDescriptor(indexElement.getEntityClass());
     EntityPersister persister = descriptor.getPersister();
     Object object = persister.load(repository, descriptor, indexElement.getPathInRepository());
     SessionEntry sessionEntry = new SessionEntry(object, indexElement.getId(), descriptor.getVersion(object), indexElement.getNaturalId(), indexElement.getPathInRepository(), descriptor);
     addToSession(sessionEntry);
+
+    return sessionEntry;
+  }
+
+  private Object load(IndexElement indexElement) {
+    SessionEntry sessionEntry = loadSessionEntry(indexElement);
+    EntityDescriptor descriptor = sessionEntry.getEntityDescriptor();
+    Object object = sessionEntry.getObject();
     dirtyChecker.trackLoad(sessionEntry);
 
     Set<MethodHandle> lifeCycleMethods = descriptor.getLifeCycleMethods(LifeCycle.POST_LOAD);
@@ -155,6 +174,12 @@ public class Session {
     this.entriesById.put(sessionEntry.getId(), sessionEntry);
     this.entriesByNaturalId.put(sessionEntry.getNaturalId(), sessionEntry);
     this.entity2Entry.put(sessionEntry.getObject(), sessionEntry);
+  }
+
+  protected void removeFromSession(SessionEntry sessionEntry) {
+    this.entriesById.remove(sessionEntry.getId());
+    this.entriesByNaturalId.remove(sessionEntry.getNaturalId());
+    this.entity2Entry.remove(sessionEntry.getObject());
   }
 
   public Optional<String> getId(Object entity) {

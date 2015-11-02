@@ -17,14 +17,15 @@
 package de.ks.flatadocdb.session;
 
 import com.google.common.base.StandardSystemProperty;
-import de.ks.flatadocdb.DeleteDir;
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.defaults.DefaultFileGenerator;
 import de.ks.flatadocdb.exception.StaleObjectFileException;
 import de.ks.flatadocdb.exception.StaleObjectStateException;
 import de.ks.flatadocdb.index.GlobalIndex;
+import de.ks.flatadocdb.index.IndexElement;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
+import de.ks.flatadocdb.util.DeleteDir;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
@@ -218,5 +219,29 @@ public class SessionTest {
     testEntity = session.findByNaturalId(TestEntity.class, "Schnitzel").get();
     TestEntity testEntity2 = session.findByNaturalId(TestEntity.class, "Schnitzel").get();
     assertSame(testEntity, testEntity2);
+  }
+
+  @Test
+  public void testRemove() throws Exception {
+    TestEntity testEntity = new TestEntity("Schnitzel");
+    Session session = new Session(metamodel, repository, index);
+    session.persist(testEntity);
+    session.prepare();
+    session.commit();
+
+    IndexElement indexElement = index.getById(testEntity.getId());
+    assertNotNull(indexElement);
+
+    Path pathInRepository = indexElement.getPathInRepository();
+    assertTrue(pathInRepository.toFile().exists());
+
+    session = new Session(metamodel, repository, index);
+    testEntity = session.findById(TestEntity.class, testEntity.getId()).get();
+    session.remove(testEntity);
+    session.prepare();
+    session.commit();
+
+    assertFalse(pathInRepository.toFile().exists());
+    assertNull(index.getById(testEntity.getId()));
   }
 }

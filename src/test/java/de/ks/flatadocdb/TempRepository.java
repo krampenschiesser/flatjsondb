@@ -16,6 +16,7 @@
 package de.ks.flatadocdb;
 
 import com.google.common.base.StandardSystemProperty;
+import de.ks.flatadocdb.util.DeleteDir;
 import org.junit.rules.ExternalResource;
 
 import java.nio.file.Path;

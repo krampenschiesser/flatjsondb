@@ -36,6 +36,7 @@ public class DirtyChecker {
   private final Repository repository;
   private final MetaModel metaModel;
   private final Set<Object> insertions = new HashSet<>();
+  private final Set<Object> deletions = new HashSet<>();
 
   public DirtyChecker(Repository repository, MetaModel metaModel) {
     this.repository = repository;
@@ -51,15 +52,19 @@ public class DirtyChecker {
   }
 
   public void trackDelete(SessionEntry sessionEntry) {
+    deletions.add(sessionEntry.getObject());
   }
 
   public Collection<SessionEntry> findDirty(Collection<SessionEntry> values) {
-    return values.stream().filter(e -> !insertions.contains(e.getObject())).filter(e -> {
-      EntityDescriptor entityDescriptor = e.getEntityDescriptor();
-      EntityPersister persister = entityDescriptor.getPersister();
-      byte[] fileContents = persister.createFileContents(repository, entityDescriptor, e.getObject());
-      byte[] md5 = DigestUtils.md5(fileContents);
-      return !Arrays.equals(md5, e.getMd5());
-    }).collect(Collectors.toSet());
+    return values.stream()//
+      .filter(e -> !insertions.contains(e.getObject()))//
+      .filter(e -> !deletions.contains(e.getObject()))//
+      .filter(e -> {
+        EntityDescriptor entityDescriptor = e.getEntityDescriptor();
+        EntityPersister persister = entityDescriptor.getPersister();
+        byte[] fileContents = persister.createFileContents(repository, entityDescriptor, e.getObject());
+        byte[] md5 = DigestUtils.md5(fileContents);
+        return !Arrays.equals(md5, e.getMd5());
+      }).collect(Collectors.toSet());
   }
 }

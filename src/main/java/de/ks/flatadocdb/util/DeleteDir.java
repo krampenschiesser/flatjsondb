@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.ks.flatadocdb;
+package de.ks.flatadocdb.util;
 
 import java.io.File;
 import java.io.IOException;

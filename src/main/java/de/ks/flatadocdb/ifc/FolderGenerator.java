@@ -22,4 +22,8 @@ import java.nio.file.Path;
 
 public interface FolderGenerator {
   Path getFolder(Repository repository, Object object);
+
+  default boolean isRemoveFolderOnDelete() {
+    return false;
+  }
 }

@@ -19,6 +19,7 @@ package de.ks.flatadocdb.session;
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.annotation.lifecycle.LifeCycle;
 import de.ks.flatadocdb.defaults.DefaultIdGenerator;
+import de.ks.flatadocdb.exception.IllegalSessionThreadException;
 import de.ks.flatadocdb.exception.NoIdField;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.index.GlobalIndex;
@@ -50,12 +51,14 @@ public class Session {
 
   protected final List<SessionAction> actions = new LinkedList<>();
   protected final DirtyChecker dirtyChecker;
+  protected final Thread thread;
 
   public Session(MetaModel metaModel, Repository repository, GlobalIndex globalIndex) {
     this.metaModel = metaModel;
     this.repository = repository;
     this.globalIndex = globalIndex;
     dirtyChecker = new DirtyChecker(repository, metaModel);
+    this.thread = Thread.currentThread();
   }
 
   public void persist(Object entity) {
@@ -64,14 +67,14 @@ public class Session {
     EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(entity.getClass());
     Serializable naturalId = entityDescriptor.getNaturalId(entity);
 
-    Path folder = entityDescriptor.getFolderGenerator().getFolder(repository, entity);
+    Path folder = entityDescriptor.getFolderGenerator().getFolder(repository, repository.getPath(), entity);
     String fileName = entityDescriptor.getFileGenerator().getFileName(repository, entityDescriptor, entity);
 
     Path complete = folder.resolve(fileName);
 
     String id = idGenerator.getSha1Hash(repository.getPath(), complete);
 
-    Optional<?> found = findById(entity.getClass(), id);
+    Optional<?> found = findById(id);
     if (found.isPresent()) {
       log.warn("Trying to persist entity {} [{}] twice", entity, complete);
       return;
@@ -126,7 +129,11 @@ public class Session {
 
   @SuppressWarnings("unchecked")
   public <E> Optional<E> findById(Class<E> clazz, String id) {
-    Objects.requireNonNull(clazz);
+    return (Optional<E>) findById(id);
+  }
+
+  @SuppressWarnings("unchecked")
+  public <E> Optional<E> findById(String id) {
     Objects.requireNonNull(id);
 
     SessionEntry sessionEntry = entriesById.get(id);
@@ -210,5 +217,12 @@ public class Session {
 
   public void rollback() {
     actions.forEach(a -> a.rollback(this));
+  }
+
+  public void checkCorrectThread() {
+    Thread currentThread = Thread.currentThread();
+    if (!currentThread.equals(this.thread)) {
+      throw new IllegalSessionThreadException("Trying to use session in thread " + currentThread + " but can only be used in " + thread);
+    }
   }
 }

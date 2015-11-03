@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.ks.flatadocdb.metamodel;
 
-import de.ks.flatadocdb.annotation.Child;
-import de.ks.flatadocdb.annotation.Entity;
-import de.ks.flatadocdb.annotation.ToMany;
-import de.ks.flatadocdb.annotation.ToOne;
+package de.ks.flatadocdb.metamodel.relation;
+
+import de.ks.flatadocdb.annotation.*;
+import de.ks.flatadocdb.metamodel.Relation;
 import org.reflections.ReflectionUtils;
 
 import java.lang.annotation.Annotation;
@@ -26,7 +25,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class RelationParser {
@@ -40,21 +42,11 @@ public class RelationParser {
 
     Set<Field> toOneFields = getFields(clazz, ToOne.class, this::checkToOneFields);
     Set<Field> toManyFields = getFields(clazz, ToMany.class, this::checkToManyFields);
-    Set<Field> childFields = getFields(clazz, Child.class, this::checkChildRelation);
+    Set<Field> childToOneFields = getFields(clazz, Child.class, this::checkToOneFields);
+    Set<Field> childToManyFields = getFields(clazz, Children.class, this::checkToManyFields);
 
 
     return retval;
-  }
-
-  private void checkChildRelation(Set<Field> fields) {
-    for (Field field : fields) {
-      Class<?> type = field.getType();
-      if (allowedCollectionTypes.contains(type)) {
-        checkToManyFields(Collections.singleton(field));
-      } else {
-        checkToOneFields(Collections.singleton(field));
-      }
-    }
   }
 
   private void checkToManyFields(Set<Field> fields) {

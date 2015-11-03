@@ -16,6 +16,7 @@
 package de.ks.flatadocdb.session;
 
 import de.ks.flatadocdb.annotation.Child;
+import de.ks.flatadocdb.annotation.Children;
 import de.ks.flatadocdb.annotation.Entity;
 import de.ks.flatadocdb.annotation.ToMany;
 import de.ks.flatadocdb.entity.NamedEntity;
@@ -31,8 +32,10 @@ public class RelationOwner extends NamedEntity {
   protected List<Related> relatedList = new ArrayList<>();
   @ToMany
   protected Set<Related> relatedSet = new HashSet<>();
-  @Child
+  @Children
   protected List<Related> relatedChildren = new ArrayList<>();
+  @Child
+  protected Related child;
 
   public RelationOwner(String name) {
     super(name);

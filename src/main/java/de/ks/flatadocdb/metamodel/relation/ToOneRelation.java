@@ -13,24 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.ks.flatadocdb.metamodel;
 
-import de.ks.flatadocdb.session.Related;
-import de.ks.flatadocdb.session.RelationOwner;
-import org.junit.Test;
+package de.ks.flatadocdb.metamodel.relation;
 
-import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-
-public class RelationParserTest {
-  @Test
-  public void testName() throws Exception {
-    Set<Relation> relations = new RelationParser().parse(RelationOwner.class);
-    assertEquals(3, relations.size());
-
-    relations = new RelationParser().parse(Related.class);
-    assertEquals(1, relations.size());
-
-  }
+public class ToOneRelation {
 }

@@ -27,7 +27,7 @@ import java.nio.file.Path;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class DefaultFolderGeneratorTest {
+public class JoinedRootFolderGeneratorTest {
   @Rule
   public final TempRepository tempRepository = new TempRepository();
 
@@ -35,7 +35,7 @@ public class DefaultFolderGeneratorTest {
   public void testDefaultFolderGeneration() throws Exception {
     Repository repo = tempRepository.getRepository();
     JoinedRootFolderGenerator defaultFolderGenerator = new JoinedRootFolderGenerator();
-    Path path = defaultFolderGenerator.getFolder(repo, new TestEntity("test"));
+    Path path = defaultFolderGenerator.getFolder(repo, null, new TestEntity("test"));
     assertEquals(tempRepository.getPath().resolve(TestEntity.class.getSimpleName()), path);
     assertTrue(path.toFile().exists());
   }
@@ -46,6 +46,6 @@ public class DefaultFolderGeneratorTest {
 
     Repository repo = tempRepository.getRepository();
     JoinedRootFolderGenerator defaultFolderGenerator = new JoinedRootFolderGenerator();
-    defaultFolderGenerator.getFolder(repo, new TestEntity("test"));
+    defaultFolderGenerator.getFolder(repo, null, new TestEntity("test"));
   }
 }

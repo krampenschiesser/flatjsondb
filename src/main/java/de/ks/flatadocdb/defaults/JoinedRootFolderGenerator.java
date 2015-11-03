@@ -23,7 +23,7 @@ import java.nio.file.Path;
 
 public class JoinedRootFolderGenerator implements FolderGenerator {
   @Override
-  public Path getFolder(Repository repository, Object object) {
+  public Path getFolder(Repository repository, Path ownerPath, Object object) {
     Path path = repository.getPath();
     Path resolve = path.resolve(object.getClass().getSimpleName());
     if (!resolve.toFile().exists()) {

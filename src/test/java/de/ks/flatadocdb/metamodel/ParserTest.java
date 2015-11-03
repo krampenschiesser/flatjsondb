@@ -106,7 +106,7 @@ public class ParserTest {
 
     Repository repo = Mockito.mock(Repository.class);
     Mockito.when(repo.getPath()).thenReturn(Paths.get(StandardSystemProperty.JAVA_IO_TMPDIR.value()));
-    assertThat(result.folderGenerator.getFolder(repo, entity).toString(), Matchers.endsWith(CorrectEntity.class.getSimpleName()));
+    assertThat(result.folderGenerator.getFolder(repo, null, entity).toString(), Matchers.endsWith(CorrectEntity.class.getSimpleName()));
 
     EntityDescriptor desc = Mockito.mock(EntityDescriptor.class);
     Mockito.when(desc.getNaturalId(entity)).thenReturn("test");

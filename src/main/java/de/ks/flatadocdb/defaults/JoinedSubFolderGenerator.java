@@ -13,18 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package de.ks.flatadocdb.ifc;
+package de.ks.flatadocdb.defaults;
 
 import de.ks.flatadocdb.Repository;
+import de.ks.flatadocdb.ifc.FolderGenerator;
 
-import javax.annotation.Nullable;
 import java.nio.file.Path;
+import java.util.Objects;
 
-public interface FolderGenerator {
-  Path getFolder(Repository repository, @Nullable Path ownerPath, Object object);
+public class JoinedSubFolderGenerator implements FolderGenerator {
+  @Override
+  public Path getFolder(Repository repository, Path ownerPath, Object object) {
+    Objects.requireNonNull(ownerPath, "No owner path given");
 
-  default boolean isRemoveFolderOnDelete() {
-    return false;
+    Path resolve = ownerPath.resolve(object.getClass().getSimpleName());
+    if (!resolve.toFile().exists()) {
+      resolve.toFile().mkdir();
+    } else if (!resolve.toFile().isDirectory()) {
+      throw new IllegalStateException("File " + resolve + " needs to be a directory.");
+    }
+    return resolve;
   }
 }

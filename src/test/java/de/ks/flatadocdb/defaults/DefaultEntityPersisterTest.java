@@ -49,7 +49,7 @@ public class DefaultEntityPersisterTest {
     TestEntity testEntity = new TestEntity("Hallo welt");
 
     String fileName = entityDescriptor.getFileGenerator().getFileName(tempRepository.getRepository(), entityDescriptor, testEntity);
-    Path folder = entityDescriptor.getFolderGenerator().getFolder(tempRepository.getRepository(), testEntity);
+    Path folder = entityDescriptor.getFolderGenerator().getFolder(tempRepository.getRepository(), null, testEntity);
 
     Path target = folder.resolve(fileName);
     byte[] contents = persister.createFileContents(tempRepository.getRepository(), entityDescriptor, testEntity);

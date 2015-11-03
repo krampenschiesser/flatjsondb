@@ -16,8 +16,8 @@
 
 package de.ks.flatadocdb.session;
 
-import com.google.common.base.StandardSystemProperty;
 import de.ks.flatadocdb.Repository;
+import de.ks.flatadocdb.TempRepository;
 import de.ks.flatadocdb.defaults.DefaultFileGenerator;
 import de.ks.flatadocdb.exception.StaleObjectFileException;
 import de.ks.flatadocdb.exception.StaleObjectStateException;
@@ -25,14 +25,13 @@ import de.ks.flatadocdb.index.GlobalIndex;
 import de.ks.flatadocdb.index.IndexElement;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
-import de.ks.flatadocdb.util.DeleteDir;
 import org.hamcrest.Matchers;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
 
 import static org.junit.Assert.*;
@@ -44,15 +43,16 @@ public class SessionTest {
   private Repository repository;
   private Path path;
 
+  @Rule
+  public TempRepository tempRepository = new TempRepository();
+
   @Before
   public void setUp() throws Exception {
     metamodel = new MetaModel();
     metamodel.addEntity(TestEntity.class);
 
-    path = Paths.get(StandardSystemProperty.JAVA_IO_TMPDIR.value(), "testRepository");
-    new DeleteDir(path).delete();
-
-    repository = new Repository(path);
+    repository = tempRepository.getRepository();
+    path = tempRepository.getPath();
     index = new GlobalIndex(repository, metamodel);
   }
 

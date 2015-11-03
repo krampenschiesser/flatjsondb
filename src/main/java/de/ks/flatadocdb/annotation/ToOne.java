@@ -16,11 +16,6 @@
 
 package de.ks.flatadocdb.annotation;
 
-import de.ks.flatadocdb.defaults.DefaultFileGenerator;
-import de.ks.flatadocdb.defaults.JoinedSubFolderGenerator;
-import de.ks.flatadocdb.ifc.FileGenerator;
-import de.ks.flatadocdb.ifc.FolderGenerator;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -28,10 +23,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface Child {
+public @interface ToOne {
   boolean lazy() default true;
-
-  Class<? extends FolderGenerator> folderGenerator() default JoinedSubFolderGenerator.class;
-
-  Class<? extends FileGenerator> fileGenerator() default DefaultFileGenerator.class;
 }

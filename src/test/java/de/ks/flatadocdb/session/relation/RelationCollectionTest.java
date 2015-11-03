@@ -26,7 +26,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -37,7 +36,6 @@ public class RelationCollectionTest {
   private MetaModel metamodel;
   private GlobalIndex index;
   private Repository repository;
-  private Path path;
 
   @Rule
   public TempRepository tempRepository = new TempRepository();
@@ -48,7 +46,6 @@ public class RelationCollectionTest {
     metamodel.addEntity(TestEntity.class);
 
     repository = tempRepository.getRepository();
-    path = tempRepository.getPath();
     index = new GlobalIndex(repository, metamodel);
   }
 

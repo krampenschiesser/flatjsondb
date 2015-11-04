@@ -30,7 +30,7 @@ import java.util.Set;
 public class RelationOwner extends NamedEntity {
   @ToMany
   protected List<Related> relatedList = new ArrayList<>();
-  @ToMany
+  @ToMany(lazy = false)
   protected Set<Related> relatedSet = new HashSet<>();
   @Children
   protected List<Related> relatedChildren = new ArrayList<>();

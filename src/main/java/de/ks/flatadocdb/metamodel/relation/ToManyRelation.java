@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package de.ks.flatadocdb.metamodel.relation;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 
-public class ToOneRelation {
+public class ToManyRelation {
   protected final Class<?> relationType;
+  protected final Class<?> collectionType;
   protected final Field relationField;
   protected final boolean lazy;
   protected final MethodHandle getterHandle;
   protected final MethodHandle setterHandle;
 
-  public ToOneRelation(Class<?> relationType, Field relationField, boolean lazy) {
+  public ToManyRelation(Class<?> relationType, Class<?> collectionType, Field relationField, boolean lazy) {
     this.relationType = relationType;
+    this.collectionType = collectionType;
     this.relationField = relationField;
     this.lazy = lazy;
     try {
@@ -45,6 +46,10 @@ public class ToOneRelation {
     return relationType;
   }
 
+  public Class<?> getCollectionType() {
+    return collectionType;
+  }
+
   public Field getRelationField() {
     return relationField;
   }
@@ -52,4 +57,5 @@ public class ToOneRelation {
   public boolean isLazy() {
     return lazy;
   }
+
 }

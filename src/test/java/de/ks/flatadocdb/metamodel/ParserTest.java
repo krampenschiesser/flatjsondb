@@ -44,42 +44,42 @@ public class ParserTest {
     parser = new Parser();
   }
 
-  @Test(expected = Parser.ParseException.class)
+  @Test(expected = ParseException.class)
   public void testNoEntity() throws Exception {
     parser.parse(NoEntity.class);
   }
 
-  @Test(expected = Parser.ParseException.class)
+  @Test(expected = ParseException.class)
   public void testMultipleId() throws Exception {
     parser.parse(MultipleId.class);
   }
 
-  @Test(expected = Parser.ParseException.class)
+  @Test(expected = ParseException.class)
   public void testWrongIdType() throws Exception {
     parser.parse(WrongIdType.class);
   }
 
-  @Test(expected = Parser.ParseException.class)
+  @Test(expected = ParseException.class)
   public void testNoVersion() throws Exception {
     parser.parse(NoVersion.class);
   }
 
-  @Test(expected = Parser.ParseException.class)
+  @Test(expected = ParseException.class)
   public void testMultipleVersion() throws Exception {
     parser.parse(MultipleVersion.class);
   }
 
-  @Test(expected = Parser.ParseException.class)
+  @Test(expected = ParseException.class)
   public void testWrongVersionType() throws Exception {
     parser.parse(WrongVersionType.class);
   }
 
-  @Test(expected = Parser.ParseException.class)
+  @Test(expected = ParseException.class)
   public void testBadPersister() throws Exception {
     parser.parse(BadPersisterEntity.class);
   }
 
-  @Test(expected = Parser.ParseException.class)
+  @Test(expected = ParseException.class)
   public void testPrivatePersister() throws Exception {
     parser.parse(PrivatePersisterEntity.class);
   }

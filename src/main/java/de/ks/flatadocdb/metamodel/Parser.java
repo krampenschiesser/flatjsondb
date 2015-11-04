@@ -28,32 +28,14 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class Parser {
-  public static class ParseException extends RuntimeException {
-    private static final long serialVersionUID = 1L;
-
-    public ParseException(String msg) {
-      super(msg);
-    }
-
-    public ParseException(Throwable cause) {
-      super(cause);
-    }
-
-    public ParseException(String message, Throwable cause) {
-      super(message, cause);
-    }
-  }
+public class Parser extends BaseParser {
 
   public EntityDescriptor parse(Class<?> clazz) throws ParseException {
     Entity annotation = checkEntityAnnotation(clazz);
@@ -89,19 +71,7 @@ public class Parser {
   }
 
   @SuppressWarnings("unchecked")
-  private <T> T getInstance(Class<?> clazz) {
-    Set<Constructor> persisterConstructors = ReflectionUtils.getConstructors(clazz, ctor -> ctor.getParameterCount() == 0 && Modifier.isPublic(ctor.getModifiers()));
-    try {
-      if (persisterConstructors.size() > 0) {
-        check(persisterConstructors, c -> c.size() != 1, c -> "Found no matching default constructor on given implementation " + clazz.getName());
-        return (T) persisterConstructors.iterator().next().newInstance();
-      } else {
-        return (T) clazz.newInstance();
-      }
-    } catch (Exception e) {
-      throw new ParseException("Could not instantiate default constructor on " + clazz);
-    }
-  }
+
 
   private <T extends EntityPersister> Entity checkEntityAnnotation(Class<?> clazz) {
     check(clazz, c -> !c.isAnnotationPresent(Entity.class), c -> "Annotation " + Entity.class.getName() + " not found on class " + c);
@@ -186,9 +156,4 @@ public class Parser {
     return !Modifier.isStatic(modifiers);
   }
 
-  protected <T> void check(T t, Predicate<T> filter, Function<T, String> errorMsg) {
-    if (filter.test(t)) {
-      throw new ParseException(errorMsg.apply(t));
-    }
-  }
 }

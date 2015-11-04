@@ -17,7 +17,9 @@
 package de.ks.flatadocdb.metamodel.relation;
 
 import de.ks.flatadocdb.annotation.*;
-import de.ks.flatadocdb.metamodel.Relation;
+import de.ks.flatadocdb.ifc.FileGenerator;
+import de.ks.flatadocdb.ifc.FolderGenerator;
+import de.ks.flatadocdb.metamodel.BaseParser;
 import org.reflections.ReflectionUtils;
 
 import java.lang.annotation.Annotation;
@@ -31,21 +33,67 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class RelationParser {
-  static final List<Class<?>> allowedCollectionTypes = new ArrayList<Class<?>>() {{
-    add(List.class);
-    add(Set.class);
-  }};
+public class RelationParser extends BaseParser {
+  static final List<Class<?>> allowedCollectionTypes = new ArrayList<Class<?>>() {
+    private static final long serialVersionUID = 1L;
 
-  public Set<Relation> parse(Class<?> clazz) {
-    HashSet<Relation> retval = new HashSet<>();
+    {
+      add(List.class);
+      add(Set.class);
+    }
+  };
 
+  public Set<ToOneChildRelation> parseToOneChildRelations(Class<?> clazz) {
+    HashSet<ToOneChildRelation> retval = new HashSet<>();
+    Set<Field> toOneFields = getFields(clazz, Child.class, this::checkToOneFields);
+    for (Field toOneField : toOneFields) {
+      Class<?> type = toOneField.getType();
+      Child annotation = toOneField.getAnnotation(Child.class);
+      boolean lazy = annotation.lazy();
+      FileGenerator fileGenerator = getInstance(annotation.fileGenerator());
+      FolderGenerator folderGenerator = getInstance(annotation.folderGenerator());
+      retval.add(new ToOneChildRelation(type, toOneField, lazy, folderGenerator, fileGenerator));
+    }
+    return retval;
+  }
+
+  public Set<ToManyChildRelation> parseToManyChildRelations(Class<?> clazz) {
+    HashSet<ToManyChildRelation> retval = new HashSet<>();
+    Set<Field> toManyFields = getFields(clazz, Children.class, this::checkToManyFields);
+    for (Field toManyField : toManyFields) {
+      Class<?> collectionType = toManyField.getType();
+      ParameterizedType genericType = (ParameterizedType) toManyField.getGenericType();
+      Class<?> type = (Class<?>) genericType.getActualTypeArguments()[0];
+      Children annotation = toManyField.getAnnotation(Children.class);
+      boolean lazy = annotation.lazy();
+      FileGenerator fileGenerator = getInstance(annotation.fileGenerator());
+      FolderGenerator folderGenerator = getInstance(annotation.folderGenerator());
+      retval.add(new ToManyChildRelation(type, collectionType, toManyField, lazy, folderGenerator, fileGenerator));
+    }
+    return retval;
+  }
+
+  public Set<ToOneRelation> parseToOneRelations(Class<?> clazz) {
+    HashSet<ToOneRelation> retval = new HashSet<>();
     Set<Field> toOneFields = getFields(clazz, ToOne.class, this::checkToOneFields);
+    for (Field toOneField : toOneFields) {
+      Class<?> type = toOneField.getType();
+      boolean lazy = toOneField.getAnnotation(ToOne.class).lazy();
+      retval.add(new ToOneRelation(type, toOneField, lazy));
+    }
+    return retval;
+  }
+
+  public Set<ToManyRelation> parseToManyRelations(Class<?> clazz) {
+    HashSet<ToManyRelation> retval = new HashSet<>();
     Set<Field> toManyFields = getFields(clazz, ToMany.class, this::checkToManyFields);
-    Set<Field> childToOneFields = getFields(clazz, Child.class, this::checkToOneFields);
-    Set<Field> childToManyFields = getFields(clazz, Children.class, this::checkToManyFields);
-
-
+    for (Field toManyField : toManyFields) {
+      Class<?> collectionType = toManyField.getType();
+      ParameterizedType genericType = (ParameterizedType) toManyField.getGenericType();
+      Class<?> type = (Class<?>) genericType.getActualTypeArguments()[0];
+      boolean lazy = toManyField.getAnnotation(ToMany.class).lazy();
+      retval.add(new ToManyRelation(type, collectionType, toManyField, lazy));
+    }
     return retval;
   }
 
@@ -59,6 +107,8 @@ public class RelationParser {
       Type genericType = field.getGenericType();
       if (genericType instanceof ParameterizedType) {
         checkParameterizedType(field, (ParameterizedType) genericType);
+      } else {
+        throw new IllegalArgumentException("No parameterized generic type for field " + field);
       }
     }
   }

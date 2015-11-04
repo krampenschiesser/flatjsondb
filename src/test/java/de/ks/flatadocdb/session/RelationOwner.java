@@ -40,4 +40,28 @@ public class RelationOwner extends NamedEntity {
   public RelationOwner(String name) {
     super(name);
   }
+
+  protected RelationOwner() {
+    super(null);
+  }
+
+  public List<Related> getRelatedList() {
+    return relatedList;
+  }
+
+  public Set<Related> getRelatedSet() {
+    return relatedSet;
+  }
+
+  public List<Related> getRelatedChildren() {
+    return relatedChildren;
+  }
+
+  public Related getChild() {
+    return child;
+  }
+
+  public void setChild(Related child) {
+    this.child = child;
+  }
 }

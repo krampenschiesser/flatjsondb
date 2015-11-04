@@ -60,4 +60,13 @@ public class MetaModel {
       lock.readLock().unlock();
     }
   }
+
+  public boolean isRegistered(Class<?> clazz) {
+    lock.readLock().lock();
+    try {
+      return clazz2EntityDescriptor.containsKey(clazz);
+    } finally {
+      lock.readLock().unlock();
+    }
+  }
 }

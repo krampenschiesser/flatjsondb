@@ -21,23 +21,29 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.deser.BeanDeserializerBuilder;
+import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import de.ks.flatadocdb.Repository;
+import de.ks.flatadocdb.defaults.json.RelationCollectionPropertyWriter;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DefaultEntityPersister implements EntityPersister {
+  private static final Logger log = LoggerFactory.getLogger(DefaultEntityPersister.class);
   final ObjectMapper mapper = new ObjectMapper();
 
   public DefaultEntityPersister() {
@@ -54,7 +60,7 @@ public class DefaultEntityPersister implements EntityPersister {
     mapper.registerModule(new Module() {
       @Override
       public String getModuleName() {
-        return "FlatAdocDBFilter";
+        return "JSONFilter";
       }
 
       @Override
@@ -67,12 +73,56 @@ public class DefaultEntityPersister implements EntityPersister {
         context.addBeanSerializerModifier(new BeanSerializerModifier() {
           @Override
           public List<BeanPropertyWriter> changeProperties(SerializationConfig config, BeanDescription beanDesc, List<BeanPropertyWriter> beanProperties) {
-            Set<Class<?>> entityClasses = metaModel.getEntities().stream().map(d -> d.getEntityClass()).collect(Collectors.toSet());
-            return beanProperties.stream()//
-              .filter(p -> entityClasses.contains(p.getType().getRawClass()))//fixme, need to replace with @Child, @Related and store/read ID's
-              .collect(Collectors.toList());
+            EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(beanDesc.getBeanClass());
+
+            List<BeanPropertyWriter> relationProperties = beanProperties.stream()//
+              .filter(p -> entityDescriptor.isRelation(p.getMember())).collect(Collectors.toList());
+
+            ArrayList<BeanPropertyWriter> all = new ArrayList<>(beanProperties);
+            all.removeAll(relationProperties);
+            relationProperties.stream().map(old -> new RelationCollectionPropertyWriter(old, metaModel)).forEach(n -> all.add(n));
+            return all;
           }
         });
+
+        context.addBeanDeserializerModifier(new BeanDeserializerModifier() {
+          @Override
+          public BeanDeserializerBuilder updateBuilder(DeserializationConfig config, BeanDescription beanDesc, BeanDeserializerBuilder builder) {
+            EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(beanDesc.getBeanClass());
+//builder.getProperties().next().
+            beanDesc.findProperties().stream().filter(p -> !entityDescriptor.isRelation(p.getPrimaryMember())).forEach(p -> builder.removeProperty(p.getFullName()));
+            return super.updateBuilder(config, beanDesc, builder);
+          }
+        });
+//        context.addBeanDeserializerModifier(new BeanDeserializerModifier() {
+//          @Override
+//          public BeanDeserializerBuilder updateBuilder(DeserializationConfig config, BeanDescription beanDesc, BeanDeserializerBuilder builder) {
+//            EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(beanDesc.getBeanClass());
+//
+//            List<BeanPropertyDefinition> properties = beanDesc.findProperties().stream().filter(p -> entityDescriptor.isCollectionRelation(p.getPrimaryMember())).collect(Collectors.toList());
+//            for (BeanPropertyDefinition property : properties) {
+//              CollectionType javaType = context.getTypeFactory().constructCollectionType((Class<? extends Collection>) property.getField().getRawType(), String.class);
+//              FieldProperty fieldProperty = new FieldProperty(property, javaType, null, null, property.getField());
+//              builder.addOrReplaceProperty(fieldProperty, true);
+//            }
+//
+//            log.info("updateBuilder for {}", beanDesc.getBeanClass());
+//            return super.updateBuilder(config, beanDesc, builder);
+//          }
+//
+//          @Override
+//          public List<BeanPropertyDefinition> updateProperties(DeserializationConfig config, BeanDescription beanDesc, List<BeanPropertyDefinition> propDefs) {
+//
+//            log.info("updateProperties for {}", beanDesc.getBeanClass());
+//            return super.updateProperties(config, beanDesc, propDefs);
+//          }
+//
+//          @Override
+//          public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
+//            log.info("modifyDeserializer for {}", beanDesc.getBeanClass());
+//            return super.modifyDeserializer(config, beanDesc, deserializer);
+//          }
+//        });
       }
     });
   }
@@ -80,6 +130,16 @@ public class DefaultEntityPersister implements EntityPersister {
   @Override
   public Object load(Repository repository, EntityDescriptor descriptor, Path path) {
     try {
+      JsonNode jsonNode = mapper.readTree(path.toFile());
+      descriptor.getAllRelations().forEach(rel -> {
+        String name = rel.getRelationField().getName();
+        JsonNode jsonValue = jsonNode.findValue(name);
+        if (jsonValue.elements().hasNext()) {
+          jsonValue = jsonValue.elements().next();
+        }
+        String text = jsonValue.asText();
+        text.toCharArray();
+      });
       return mapper.readValue(path.toFile(), descriptor.getEntityClass());
     } catch (IOException e) {
       throw new RuntimeException(e);

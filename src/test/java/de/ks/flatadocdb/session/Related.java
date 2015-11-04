@@ -24,7 +24,16 @@ public class Related extends NamedEntity {
   @ToOne
   protected RelationOwner owner;
 
+  protected Related() {
+    super(null);
+  }
+
   public Related(String name) {
     super(name);
+  }
+
+  public Related setId(String id) {
+    this.id = id;
+    return this;
   }
 }

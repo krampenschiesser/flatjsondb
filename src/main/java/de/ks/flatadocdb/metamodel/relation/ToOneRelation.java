@@ -16,40 +16,10 @@
 
 package de.ks.flatadocdb.metamodel.relation;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 
-public class ToOneRelation {
-  protected final Class<?> relationType;
-  protected final Field relationField;
-  protected final boolean lazy;
-  protected final MethodHandle getterHandle;
-  protected final MethodHandle setterHandle;
-
+public class ToOneRelation extends Relation {
   public ToOneRelation(Class<?> relationType, Field relationField, boolean lazy) {
-    this.relationType = relationType;
-    this.relationField = relationField;
-    this.lazy = lazy;
-    try {
-      relationField.setAccessible(true);
-      MethodHandles.Lookup lookup = MethodHandles.lookup();
-      getterHandle = lookup.unreflectGetter(relationField);
-      setterHandle = lookup.unreflectSetter(relationField);
-    } catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public Class<?> getRelationType() {
-    return relationType;
-  }
-
-  public Field getRelationField() {
-    return relationField;
-  }
-
-  public boolean isLazy() {
-    return lazy;
+    super(relationType, relationField, lazy);
   }
 }

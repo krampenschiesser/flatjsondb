@@ -16,15 +16,18 @@
 
 package de.ks.flatadocdb.metamodel;
 
+import com.fasterxml.jackson.databind.introspect.AnnotatedField;
+import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
+import de.ks.flatadocdb.annotation.Child;
+import de.ks.flatadocdb.annotation.Children;
+import de.ks.flatadocdb.annotation.ToMany;
+import de.ks.flatadocdb.annotation.ToOne;
 import de.ks.flatadocdb.annotation.lifecycle.LifeCycle;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.ifc.FileGenerator;
 import de.ks.flatadocdb.ifc.FolderGenerator;
 import de.ks.flatadocdb.ifc.PropertyPersister;
-import de.ks.flatadocdb.metamodel.relation.ToManyChildRelation;
-import de.ks.flatadocdb.metamodel.relation.ToManyRelation;
-import de.ks.flatadocdb.metamodel.relation.ToOneChildRelation;
-import de.ks.flatadocdb.metamodel.relation.ToOneRelation;
+import de.ks.flatadocdb.metamodel.relation.*;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
@@ -155,6 +158,7 @@ public class EntityDescriptor {
   protected final Set<ToManyRelation> toManyRelations;
   protected final Set<ToOneChildRelation> toOneChildRelations;
   protected final Set<ToManyChildRelation> toManyChildRelations;
+  protected final Set<Relation> allRelations;
 
   public EntityDescriptor(Builder b) {
     this.entityClass = b.entityClass;
@@ -172,6 +176,13 @@ public class EntityDescriptor {
     this.toManyChildRelations = Collections.unmodifiableSet(b.toManyChildRelations);
     this.folderGenerator = b.folderGenerator;
     this.fileGenerator = b.fileGenerator;
+
+    HashSet<Relation> allRels = new HashSet<>();
+    allRels.addAll(toManyChildRelations);
+    allRels.addAll(toManyRelations);
+    allRels.addAll(toOneChildRelations);
+    allRels.addAll(toOneRelations);
+    this.allRelations = Collections.unmodifiableSet(allRels);
   }
 
   public Class<?> getEntityClass() {
@@ -275,6 +286,25 @@ public class EntityDescriptor {
     return idGetterAccess != null;
   }
 
+  public boolean isCollectionRelation(AnnotatedMember member) {
+    if (member instanceof AnnotatedField) {
+      Field field = ((AnnotatedField) member).getAnnotated();
+      return field.isAnnotationPresent(Children.class) || field.isAnnotationPresent(ToMany.class);
+    }
+    return false;
+  }
+
+  public boolean isRelation(AnnotatedMember member) {
+    if (member instanceof AnnotatedField) {
+      Field field = ((AnnotatedField) member).getAnnotated();
+      return field.isAnnotationPresent(Child.class) ||
+        field.isAnnotationPresent(Children.class) ||
+        field.isAnnotationPresent(ToOne.class) ||
+        field.isAnnotationPresent(ToMany.class);
+    }
+    return false;
+  }
+
   /**
    * @param property field name
    * @return the persister if present
@@ -299,6 +329,10 @@ public class EntityDescriptor {
     Set<MethodHandle> methodHandles = this.lifecycleMethods.get(lifeCycle);
     methodHandles = methodHandles == null ? Collections.emptySet() : methodHandles;
     return methodHandles;
+  }
+
+  public Set<Relation> getAllRelations() {
+    return allRelations;
   }
 
   @Override

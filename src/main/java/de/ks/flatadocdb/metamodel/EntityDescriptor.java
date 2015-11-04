@@ -21,6 +21,10 @@ import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.ifc.FileGenerator;
 import de.ks.flatadocdb.ifc.FolderGenerator;
 import de.ks.flatadocdb.ifc.PropertyPersister;
+import de.ks.flatadocdb.metamodel.relation.ToManyChildRelation;
+import de.ks.flatadocdb.metamodel.relation.ToManyRelation;
+import de.ks.flatadocdb.metamodel.relation.ToOneChildRelation;
+import de.ks.flatadocdb.metamodel.relation.ToOneRelation;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
@@ -49,6 +53,10 @@ public class EntityDescriptor {
     private Class<?> entityClass;
     private Map<LifeCycle, Set<MethodHandle>> lifecycleMethods;
     private final Map<Field, PropertyPersister> propertyPersisters = new HashMap<>();
+    private final Set<ToOneRelation> toOneRelations = new HashSet<>();
+    private final Set<ToManyRelation> toManyRelations = new HashSet<>();
+    private final Set<ToOneChildRelation> toOneChildRelations = new HashSet<>();
+    private final Set<ToManyChildRelation> toManyChildRelations = new HashSet<>();
 
     private Builder() {
       //
@@ -106,6 +114,26 @@ public class EntityDescriptor {
       return this;
     }
 
+    public Builder toOnes(Set<ToOneRelation> relations) {
+      this.toOneRelations.addAll(relations);
+      return this;
+    }
+
+    public Builder toMany(Set<ToManyRelation> relations) {
+      this.toManyRelations.addAll(relations);
+      return this;
+    }
+
+    public Builder toOneChild(Set<ToOneChildRelation> relations) {
+      this.toOneChildRelations.addAll(relations);
+      return this;
+    }
+
+    public Builder toManyChild(Set<ToManyChildRelation> relations) {
+      this.toManyChildRelations.addAll(relations);
+      return this;
+    }
+
     public EntityDescriptor build() {
       return new EntityDescriptor(this);
     }
@@ -123,6 +151,10 @@ public class EntityDescriptor {
   protected final FileGenerator fileGenerator;
   protected final Map<LifeCycle, Set<MethodHandle>> lifecycleMethods;
   protected final Map<Field, PropertyPersister> propertyPersisters;
+  protected final Set<ToOneRelation> toOneRelations;
+  protected final Set<ToManyRelation> toManyRelations;
+  protected final Set<ToOneChildRelation> toOneChildRelations;
+  protected final Set<ToManyChildRelation> toManyChildRelations;
 
   public EntityDescriptor(Builder b) {
     this.entityClass = b.entityClass;
@@ -134,6 +166,10 @@ public class EntityDescriptor {
     this.versionSetterAccess = b.versionSetterAccess;
     this.lifecycleMethods = Collections.unmodifiableMap(b.lifecycleMethods);
     this.propertyPersisters = Collections.unmodifiableMap(b.propertyPersisters);
+    this.toOneRelations = Collections.unmodifiableSet(b.toOneRelations);
+    this.toManyRelations = Collections.unmodifiableSet(b.toManyRelations);
+    this.toOneChildRelations = Collections.unmodifiableSet(b.toOneChildRelations);
+    this.toManyChildRelations = Collections.unmodifiableSet(b.toManyChildRelations);
     this.folderGenerator = b.folderGenerator;
     this.fileGenerator = b.fileGenerator;
   }
@@ -172,6 +208,22 @@ public class EntityDescriptor {
 
   public MethodHandle getIdSetterAccess() {
     return idSetterAccess;
+  }
+
+  public Set<ToOneRelation> getToOneRelations() {
+    return toOneRelations;
+  }
+
+  public Set<ToManyRelation> getToManyRelations() {
+    return toManyRelations;
+  }
+
+  public Set<ToOneChildRelation> getToOneChildRelations() {
+    return toOneChildRelations;
+  }
+
+  public Set<ToManyChildRelation> getToManyChildRelations() {
+    return toManyChildRelations;
   }
 
   @Nullable

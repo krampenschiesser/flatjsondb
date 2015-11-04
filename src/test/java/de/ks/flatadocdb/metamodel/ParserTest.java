@@ -26,6 +26,7 @@ import de.ks.flatadocdb.entity.BaseEntity;
 import de.ks.flatadocdb.entity.NamedEntity;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.ifc.PropertyPersister;
+import de.ks.flatadocdb.session.RelationOwner;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
@@ -111,6 +112,14 @@ public class ParserTest {
     EntityDescriptor desc = Mockito.mock(EntityDescriptor.class);
     Mockito.when(desc.getNaturalId(entity)).thenReturn("test");
     assertEquals("test.json", result.fileGenerator.getFileName(repo, desc, entity));
+  }
+
+  @Test
+  public void testParseRelations() throws Exception {
+    EntityDescriptor result = parser.parse(RelationOwner.class);
+    assertEquals(2, result.getToManyRelations().size());
+    assertEquals(1, result.getToManyChildRelations().size());
+    assertEquals(1, result.getToOneChildRelations().size());
   }
 
   @Test

@@ -22,6 +22,7 @@ import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.ifc.FileGenerator;
 import de.ks.flatadocdb.ifc.FolderGenerator;
 import de.ks.flatadocdb.ifc.PropertyPersister;
+import de.ks.flatadocdb.metamodel.relation.RelationParser;
 import org.reflections.ReflectionUtils;
 
 import java.io.Serializable;
@@ -54,8 +55,23 @@ public class Parser extends BaseParser {
     Map<Field, PropertyPersister> propertyPersisters = resolvePropertyPersisters(clazz, allFields);
     Map<LifeCycle, Set<MethodHandle>> lifecycleMethods = new LifeCycleParser().parseMethods(clazz);
 
-    return EntityDescriptor.Builder.create().entity(clazz).id(idGetterHandle, idSetterHandle).version(versionGetterHandle, versionSetterHandle).natural(naturalIdHandle)//
-      .persister(persister).fileGenerator(fileGenerator).folderGenerator(folderGenerator).properties(propertyPersisters).lifecycle(lifecycleMethods).build();
+    RelationParser relationParser = new RelationParser();
+
+    EntityDescriptor.Builder builder = EntityDescriptor.Builder.create();
+    builder.entity(clazz);
+    builder.id(idGetterHandle, idSetterHandle);
+    builder.version(versionGetterHandle, versionSetterHandle);
+    builder.natural(naturalIdHandle);
+    builder.persister(persister);
+    builder.fileGenerator(fileGenerator);
+    builder.folderGenerator(folderGenerator);
+    builder.properties(propertyPersisters);
+    builder.lifecycle(lifecycleMethods);
+    builder.toOnes(relationParser.parseToOneRelations(clazz));
+    builder.toMany(relationParser.parseToManyRelations(clazz));
+    builder.toOneChild(relationParser.parseToOneChildRelations(clazz));
+    builder.toManyChild(relationParser.parseToManyChildRelations(clazz));
+    return builder.build();
   }
 
   private Map<Field, PropertyPersister> resolvePropertyPersisters(Class<?> clazz, Set<Field> allFields) {

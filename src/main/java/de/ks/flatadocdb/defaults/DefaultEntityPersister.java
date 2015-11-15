@@ -21,8 +21,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.deser.BeanDeserializerBuilder;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
+import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import de.ks.flatadocdb.Repository;
@@ -53,6 +53,7 @@ public class DefaultEntityPersister implements EntityPersister {
     mapper.enableDefaultTyping();
     mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.WRAPPER_OBJECT);
     mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   }
 
   //FIXME need to add this to initialization cycle
@@ -87,42 +88,11 @@ public class DefaultEntityPersister implements EntityPersister {
 
         context.addBeanDeserializerModifier(new BeanDeserializerModifier() {
           @Override
-          public BeanDeserializerBuilder updateBuilder(DeserializationConfig config, BeanDescription beanDesc, BeanDeserializerBuilder builder) {
+          public List<BeanPropertyDefinition> updateProperties(DeserializationConfig config, BeanDescription beanDesc, List<BeanPropertyDefinition> propDefs) {
             EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(beanDesc.getBeanClass());
-//builder.getProperties().next().
-            beanDesc.findProperties().stream().filter(p -> !entityDescriptor.isRelation(p.getPrimaryMember())).forEach(p -> builder.removeProperty(p.getFullName()));
-            return super.updateBuilder(config, beanDesc, builder);
+            return propDefs.stream().filter(p -> !entityDescriptor.isRelation(p.getPrimaryMember())).collect(Collectors.toList());
           }
         });
-//        context.addBeanDeserializerModifier(new BeanDeserializerModifier() {
-//          @Override
-//          public BeanDeserializerBuilder updateBuilder(DeserializationConfig config, BeanDescription beanDesc, BeanDeserializerBuilder builder) {
-//            EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(beanDesc.getBeanClass());
-//
-//            List<BeanPropertyDefinition> properties = beanDesc.findProperties().stream().filter(p -> entityDescriptor.isCollectionRelation(p.getPrimaryMember())).collect(Collectors.toList());
-//            for (BeanPropertyDefinition property : properties) {
-//              CollectionType javaType = context.getTypeFactory().constructCollectionType((Class<? extends Collection>) property.getField().getRawType(), String.class);
-//              FieldProperty fieldProperty = new FieldProperty(property, javaType, null, null, property.getField());
-//              builder.addOrReplaceProperty(fieldProperty, true);
-//            }
-//
-//            log.info("updateBuilder for {}", beanDesc.getBeanClass());
-//            return super.updateBuilder(config, beanDesc, builder);
-//          }
-//
-//          @Override
-//          public List<BeanPropertyDefinition> updateProperties(DeserializationConfig config, BeanDescription beanDesc, List<BeanPropertyDefinition> propDefs) {
-//
-//            log.info("updateProperties for {}", beanDesc.getBeanClass());
-//            return super.updateProperties(config, beanDesc, propDefs);
-//          }
-//
-//          @Override
-//          public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
-//            log.info("modifyDeserializer for {}", beanDesc.getBeanClass());
-//            return super.modifyDeserializer(config, beanDesc, deserializer);
-//          }
-//        });
       }
     });
   }

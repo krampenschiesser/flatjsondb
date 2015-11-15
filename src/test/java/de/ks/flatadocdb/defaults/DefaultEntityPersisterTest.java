@@ -93,7 +93,6 @@ public class DefaultEntityPersisterTest {
     Related child = new Related("child").setId("childId");
 
     owner.setChild(child);
-    ;
     owner.getRelatedSet().add(related);
     owner.getRelatedList().add(related);
     owner.getRelatedList().add(related);
@@ -105,8 +104,5 @@ public class DefaultEntityPersisterTest {
     assertThat(json, Matchers.containsString("\"child\" : \"childId\""));
     assertThat(json, Matchers.containsString("\"relatedList\" : {\n" + "      \"java.util.ArrayList\" : [ \"relatedId\", \"relatedId\" ]"));
     assertThat(json, Matchers.containsString("\"relatedSet\" : {\n" + "      \"java.util.HashSet\" : [ \"relatedId\" ]"));
-
-    Path write = Files.write(tempRepository.getPath().resolve(RelationOwner.class.getSimpleName()), fileContents);
-    persister.load(tempRepository.getRepository(), ownerDescriptor, write);
   }
 }

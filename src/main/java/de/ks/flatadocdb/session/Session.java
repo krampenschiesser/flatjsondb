@@ -39,6 +39,7 @@ import java.io.Serializable;
 import java.lang.invoke.MethodHandle;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @NotThreadSafe//can only be used as ThreadLocal
 public class Session {
@@ -113,7 +114,7 @@ public class Session {
 
   protected void persistRelations(Collection<Relation> relations, Object parent, SessionEntry sessionEntry) {
     for (Relation relation : relations) {
-      Collection<Object> relatedEntities = relation.getRelated(parent);
+      Collection<Object> relatedEntities = relation.getRelatedEntities(parent);
 
       for (Object related : relatedEntities) {
         EntityDescriptor descriptor = metaModel.getEntityDescriptor(related.getClass());
@@ -210,6 +211,12 @@ public class Session {
     for (Map.Entry<Relation, Collection<String>> entry : relationIds.entrySet()) {
       Relation relation = entry.getKey();
       Collection<String> ids = entry.getValue();
+      if (relation.isLazy()) {
+        relation.setupLazy(object, ids, this);
+      } else {
+        List<Object> relatedEntities = ids.stream().sequential().map(this::findById).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+        relation.setRelatedEntities(object, relatedEntities);
+      }
     }
     return sessionEntry;
   }

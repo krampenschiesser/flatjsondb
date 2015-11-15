@@ -16,13 +16,15 @@
 
 package de.ks.flatadocdb.metamodel.relation;
 
+import de.ks.flatadocdb.session.Session;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Collections;
 
-public class Relation {
+public abstract class Relation {
   protected final Class<?> relationType;
   protected final Field relationField;
   protected final boolean lazy;
@@ -43,6 +45,9 @@ public class Relation {
     }
   }
 
+  /**
+   * @return the actual type of the relation, in a ToOne this would be the fields type, in a collection this would be the generic element type
+   */
   public Class<?> getRelationType() {
     return relationType;
   }
@@ -55,8 +60,16 @@ public class Relation {
     return lazy;
   }
 
+  public Object getFieldInstance() {
+    return null;
+  }
+
+  public abstract boolean isCollection();
+
+  public abstract void setupLazy(Object entity, Collection<String> ids, Session session);
+
   @SuppressWarnings("unchecked")
-  public Collection<Object> getRelated(Object entity) {
+  public Collection<Object> getRelatedEntities(Object entity) {
     try {
       Object value = getterHandle.invoke(entity);
       if (value instanceof Collection) {
@@ -66,6 +79,29 @@ public class Relation {
       } else {
         return Collections.emptyList();
       }
+    } catch (Throwable throwable) {
+      throw new RuntimeException(throwable);
+    }
+  }
+
+  public void setRelatedEntities(Object owner, Collection<Object> relatedEntitities) {
+    Object value = null;
+    if (isCollection()) {
+      @SuppressWarnings("unchecked")
+      Collection<Object> collectionInstance = (Collection<Object>) getFieldInstance();
+      collectionInstance.addAll(relatedEntitities);
+      value = collectionInstance;
+    } else {
+      if (relatedEntitities.size() == 1) {
+        value = relatedEntitities.iterator().next();
+      }
+    }
+    setValue(owner, value);
+  }
+
+  protected void setValue(Object owner, Object value) {
+    try {
+      setterHandle.invoke(owner, value);
     } catch (Throwable throwable) {
       throw new RuntimeException(throwable);
     }
@@ -87,4 +123,5 @@ public class Relation {
   public int hashCode() {
     return relationField.hashCode();
   }
+
 }

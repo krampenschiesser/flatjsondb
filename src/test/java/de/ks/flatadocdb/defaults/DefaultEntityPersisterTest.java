@@ -90,7 +90,7 @@ public class DefaultEntityPersisterTest {
   @Test
   public void testPersistRelation() throws Exception {
     DefaultEntityPersister persister = new DefaultEntityPersister();
-    persister.initialize(tempRepository.getRepository(), metaModel);
+    persister.initialize(metaModel);
     RelationOwner owner = new RelationOwner("owner");
     Related related = new Related("related").setId("relatedId");
     Related child = new Related("child").setId("childId");
@@ -112,7 +112,7 @@ public class DefaultEntityPersisterTest {
   @Test
   public void testLoadRelation() throws Exception {
     DefaultEntityPersister persister = new DefaultEntityPersister();
-    persister.initialize(tempRepository.getRepository(), metaModel);
+    persister.initialize(metaModel);
     RelationOwner owner = new RelationOwner("owner");
     Related related = new Related("related").setId("relatedId");
     Related child = new Related("child").setId("childId");

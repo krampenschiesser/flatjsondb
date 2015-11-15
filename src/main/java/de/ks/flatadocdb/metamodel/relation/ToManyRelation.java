@@ -15,7 +15,12 @@
  */
 package de.ks.flatadocdb.metamodel.relation;
 
+import de.ks.flatadocdb.session.Session;
+import de.ks.flatadocdb.session.relation.RelationList;
+import de.ks.flatadocdb.session.relation.RelationSet;
+
 import java.lang.reflect.Field;
+import java.util.*;
 
 public class ToManyRelation extends Relation {
   protected final Class<?> collectionType;
@@ -23,11 +28,38 @@ public class ToManyRelation extends Relation {
   public ToManyRelation(Class<?> relationType, Class<?> collectionType, Field relationField, boolean lazy) {
     super(relationType, relationField, lazy);
     this.collectionType = collectionType;
-
   }
 
   public Class<?> getCollectionType() {
     return collectionType;
   }
 
+  @Override
+  public Object getFieldInstance() {
+    if (collectionType.equals(List.class)) {
+      return new ArrayList<>();
+    } else if (collectionType.equals(Set.class)) {
+      return new HashSet<>();
+    } else {
+      throw new IllegalArgumentException("Unkown collection type " + collectionType);
+    }
+  }
+
+  @Override
+  public boolean isCollection() {
+    return true;
+  }
+
+  @Override
+  public void setupLazy(Object entity, Collection<String> ids, Session session) {
+    if (collectionType.equals(List.class)) {
+      RelationList<Object> relation = new RelationList<>(new ArrayList<>(ids), session);
+      setValue(entity, relation);
+    } else if (collectionType.equals(Set.class)) {
+      RelationSet<Object> relation = new RelationSet<>(new HashSet<>(ids), session);
+      setValue(entity, relation);
+    } else {
+      throw new IllegalArgumentException("Unkown collection type " + collectionType);
+    }
+  }
 }

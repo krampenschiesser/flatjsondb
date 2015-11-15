@@ -123,10 +123,28 @@ public class RelationTest {
     owner = session.findById(RelationOwner.class, owner.getId()).get();
     assertEquals(1, new SessionFriend(session).getEntries().size());
 
-    owner.getRelatedList().toString();//lazy load
+    assertEquals(2, owner.getRelatedList().size());
     assertEquals(2, new SessionFriend(session).getEntries().size());
 
     owner.getChild().toString();//lazy load
     assertEquals(3, new SessionFriend(session).getEntries().size());
+    assertNotNull(owner.getChild());
+    assertEquals("child", owner.getChild().getName());
+  }
+
+  @Test
+  public void testLoadEagerRelation() throws Exception {
+    RelationOwner owner = new RelationOwner("owner");
+    Related related = new Related("related");
+    owner.getRelatedSet().add(related);
+
+    Session session = new Session(metamodel, repository, index);
+    session.persist(owner);
+    session.prepare();
+    session.commit();
+
+    session = new Session(metamodel, repository, index);
+    owner = session.findById(RelationOwner.class, owner.getId()).get();
+    assertEquals(2, new SessionFriend(session).getEntries().size());
   }
 }

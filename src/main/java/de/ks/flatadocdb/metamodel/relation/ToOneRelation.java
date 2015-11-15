@@ -16,10 +16,27 @@
 
 package de.ks.flatadocdb.metamodel.relation;
 
+import de.ks.flatadocdb.session.Session;
+import de.ks.flatadocdb.session.relation.LazyEntity;
+
 import java.lang.reflect.Field;
+import java.util.Collection;
 
 public class ToOneRelation extends Relation {
   public ToOneRelation(Class<?> relationType, Field relationField, boolean lazy) {
     super(relationType, relationField, lazy);
+  }
+
+  @Override
+  public boolean isCollection() {
+    return false;
+  }
+
+  @Override
+  public void setupLazy(Object entity, Collection<String> ids, Session session) {
+    if (ids.size() == 1) {
+      Object value = LazyEntity.proxyFor(getRelationType(), ids.iterator().next(), session, entity, getRelationField());
+      setValue(entity, value);
+    }
   }
 }

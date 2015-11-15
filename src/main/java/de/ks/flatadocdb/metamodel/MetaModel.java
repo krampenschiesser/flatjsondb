@@ -41,6 +41,7 @@ public class MetaModel {
     lock.writeLock().lock();
     try {
       EntityDescriptor entityDescriptor = new Parser().parse(clazz);
+      entityDescriptor.getPersister().initialize(this);
       clazz2EntityDescriptor.put(entityDescriptor.getEntityClass(), entityDescriptor);
     } finally {
       lock.writeLock().unlock();

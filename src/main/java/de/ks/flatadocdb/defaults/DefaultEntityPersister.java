@@ -52,8 +52,8 @@ public class DefaultEntityPersister implements EntityPersister {
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   }
 
-  //FIXME need to add this to initialization cycle
-  public void initialize(Repository repository, MetaModel metaModel) {
+  @Override
+  public void initialize(MetaModel metaModel) {
     Module module = new SerializationModule(metaModel);
     mapper.registerModule(module);
   }
@@ -74,7 +74,7 @@ public class DefaultEntityPersister implements EntityPersister {
 
         if (jsonValue.isContainerNode()) {
           jsonValue.elements().forEachRemaining(id -> ids.add(id.asText()));
-        } else {
+        } else if (!jsonValue.isNull()) {
           ids.add(jsonValue.asText());
         }
       });

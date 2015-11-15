@@ -32,7 +32,7 @@ import java.util.Map;
  */
 @ThreadSafe
 public interface EntityPersister {
-  default void initialize(Repository repository, MetaModel metaModel) {
+  default void initialize(MetaModel metaModel) {
     //
   }
 

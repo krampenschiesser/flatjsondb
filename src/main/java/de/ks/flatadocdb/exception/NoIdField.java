@@ -17,6 +17,8 @@
 package de.ks.flatadocdb.exception;
 
 public class NoIdField extends RuntimeException {
+  private static final long serialVersionUID = 1L;
+  
   public NoIdField(Class<?> clazz) {
     super("Found no id field in " + clazz.getName());
   }

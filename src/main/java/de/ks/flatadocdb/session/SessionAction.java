@@ -97,7 +97,7 @@ public abstract class SessionAction {
   protected void checkAppendToComplete(Path complete) {
     if (complete.toFile().exists()) {
       try {
-        Files.write(complete, Arrays.asList(""), StandardOpenOption.APPEND);
+        Files.write(complete, Collections.singleton(""), StandardOpenOption.APPEND);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }

@@ -23,7 +23,7 @@ import java.util.function.UnaryOperator;
 
 public class RelationList<E> extends RelationCollection<E, List<E>, List<String>> implements List<E> {
   public RelationList(List<String> ids, Session session) {
-    super(new ArrayList<E>(), ids, session);
+    super(new ArrayList<>(), ids, session);
   }
 
   @Override

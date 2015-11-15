@@ -116,25 +116,29 @@ public class Session {
     for (Relation relation : relations) {
       Collection<Object> relatedEntities = relation.getRelatedEntities(parent);
 
-      for (Object related : relatedEntities) {
-        EntityDescriptor descriptor = metaModel.getEntityDescriptor(related.getClass());
-        String relationId = descriptor.getId(related);
-        if (relationId == null) {
-          if (relation instanceof ChildRelation) {
-            ChildRelation childRelation = (ChildRelation) relation;
+      persistSingleRelation(sessionEntry, relation, relatedEntities);
+    }
+  }
 
-            Path parentFolder = sessionEntry.getFolder();
+  private void persistSingleRelation(SessionEntry sessionEntry, Relation relation, Collection<Object> relatedEntities) {
+    for (Object related : relatedEntities) {
+      EntityDescriptor descriptor = metaModel.getEntityDescriptor(related.getClass());
+      String relationId = descriptor.getId(related);
+      if (relationId == null) {
+        if (relation instanceof ChildRelation) {
+          ChildRelation childRelation = (ChildRelation) relation;
 
-            FileGenerator fileGenerator = childRelation.getFileGenerator();
-            FolderGenerator folderGenerator = childRelation.getFolderGenerator();
+          Path parentFolder = sessionEntry.getFolder();
 
-            Path folder = folderGenerator.getFolder(repository, parentFolder, related);
-            String fileName = fileGenerator.getFileName(repository, descriptor, related);
+          FileGenerator fileGenerator = childRelation.getFileGenerator();
+          FolderGenerator folderGenerator = childRelation.getFolderGenerator();
 
-            persist(related, descriptor, folder, fileName);
-          } else {
-            persist(related);
-          }
+          Path folder = folderGenerator.getFolder(repository, parentFolder, related);
+          String fileName = fileGenerator.getFileName(repository, descriptor, related);
+
+          persist(related, descriptor, folder, fileName);
+        } else {
+          persist(related);
         }
       }
     }

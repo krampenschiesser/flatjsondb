@@ -18,6 +18,7 @@ package de.ks.flatadocdb.exception;
 import java.util.List;
 
 public class AggregateException extends RuntimeException {
+  private static final long serialVersionUID = 1L;
   private final List<Exception> exceptions;
 
   public AggregateException(List<Exception> exceptions) {

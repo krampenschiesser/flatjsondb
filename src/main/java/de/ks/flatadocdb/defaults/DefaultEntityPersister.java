@@ -103,11 +103,7 @@ public class DefaultEntityPersister implements EntityPersister {
           String line2 = reader.readLine();
           line1 = line1 == null ? "" : line1.trim();
           line2 = line2 == null ? "" : line2.trim();
-          if (checkLine(line1, line2, descriptor.getEntityClass())) {
-            return true;
-          } else {
-            return false;
-          }
+          return checkLine(line1, line2, descriptor.getEntityClass());
         }
       } catch (IOException e) {
         return false;
@@ -117,13 +113,16 @@ public class DefaultEntityPersister implements EntityPersister {
   }
 
   private boolean checkLine(String line1, String line2, Class<?> clazz) {
-    if (line2.startsWith("\"" + clazz.getName() + "\"")) {
-      return true;
-    } else if (line1.startsWith("{\"" + clazz.getName() + "\":")) {
+    boolean prettyPrintedLine = line2.startsWith("\"" + clazz.getName() + "\"");
+    boolean inlineDeclaration = line1.startsWith("{\"" + clazz.getName() + "\":");
+    if (prettyPrintedLine) {
       return true;
     } else {
-      return false;
+      if (inlineDeclaration) {
+        return true;
+      } else {
+        return false;
+      }
     }
   }
-
 }

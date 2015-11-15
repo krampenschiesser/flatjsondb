@@ -40,7 +40,7 @@ public class RelationCollectionPropertyWriter extends BeanPropertyWriter {
   public void serializeAsField(Object bean, JsonGenerator gen, SerializerProvider prov) throws Exception {
     Object value = (_accessorMethod == null) ? _field.get(bean) : _accessorMethod.invoke(bean);
     if (value instanceof Collection) {
-      Collection<String> ids = null;
+      Collection<String> ids;
       if (value instanceof List) {
         ids = new ArrayList<>();
       } else {

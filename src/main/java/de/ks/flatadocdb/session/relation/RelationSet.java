@@ -22,7 +22,7 @@ import java.util.*;
 
 public class RelationSet<E> extends RelationCollection<E, Set<E>, Set<String>> implements Set<E> {
   public RelationSet(Set<String> ids, Session session) {
-    super(new HashSet<E>(), ids, session);
+    super(new HashSet<>(), ids, session);
   }
 
   @Override

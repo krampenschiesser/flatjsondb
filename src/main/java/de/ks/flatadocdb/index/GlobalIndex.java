@@ -42,8 +42,8 @@ import java.util.stream.Collectors;
 public class GlobalIndex {
   private static final Logger log = LoggerFactory.getLogger(GlobalIndex.class);
 
-  protected Map<Serializable, IndexElement> naturalIdToElement = new ConcurrentHashMap<>();
-  protected Map<String, IndexElement> idToElement = new ConcurrentHashMap<>();
+  protected final Map<Serializable, IndexElement> naturalIdToElement = new ConcurrentHashMap<>();
+  protected final Map<String, IndexElement> idToElement = new ConcurrentHashMap<>();
 
   protected final Repository repository;
   protected final MetaModel metaModel;

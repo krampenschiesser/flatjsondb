@@ -61,7 +61,7 @@ public class SerializationModule extends Module {
 
         ArrayList<BeanPropertyWriter> all = new ArrayList<>(beanProperties);
         all.removeAll(relationProperties);
-        relationProperties.stream().map(old -> new RelationCollectionPropertyWriter(old, metaModel)).forEach(n -> all.add(n));
+        relationProperties.stream().map(old -> new RelationCollectionPropertyWriter(old, metaModel)).forEach(all::add);
         return all;
       }
     });

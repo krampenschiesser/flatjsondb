@@ -331,7 +331,7 @@ public class EntityDescriptor {
    * @throws IllegalStateException when 2 fields have the same name.
    */
   public Optional<PropertyPersister> getPropertyPersister(String property) throws IllegalStateException {
-    Set<PropertyPersister> persisters = this.propertyPersisters.entrySet().stream().filter(e -> e.getKey().getName().equals(property)).map(e -> e.getValue()).collect(Collectors.toSet());
+    Set<PropertyPersister> persisters = this.propertyPersisters.entrySet().stream().filter(e -> e.getKey().getName().equals(property)).map(Map.Entry::getValue).collect(Collectors.toSet());
     if (persisters.size() > 1) {
       throw new IllegalStateException("Found multiple property persisters for property " + property + " on " + entityClass.getName());
     } else if (persisters.size() == 1) {

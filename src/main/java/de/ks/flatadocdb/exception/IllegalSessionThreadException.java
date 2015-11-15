@@ -19,6 +19,8 @@ package de.ks.flatadocdb.exception;
  * Session is used in a different thread, it has to be handled as thread-local
  */
 public class IllegalSessionThreadException extends RuntimeException {
+  private static final long serialVersionUID = 1L;
+
   public IllegalSessionThreadException(String message) {
     super(message);
   }

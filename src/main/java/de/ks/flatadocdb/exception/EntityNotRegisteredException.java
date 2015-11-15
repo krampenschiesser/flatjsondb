@@ -19,6 +19,7 @@ package de.ks.flatadocdb.exception;
 import java.util.Set;
 
 public class EntityNotRegisteredException extends RuntimeException {
+  private static final long serialVersionUID = 1L;
   private final Class<?> requestedClass;
   private final Set<Class<?>> registeredClasses;
 

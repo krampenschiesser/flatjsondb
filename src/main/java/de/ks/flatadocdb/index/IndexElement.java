@@ -22,11 +22,11 @@ import java.io.Serializable;
 import java.nio.file.Path;
 
 public class IndexElement {
-  private Repository repository;
-  private Path pathInRepository;
-  private String id;
-  private Serializable naturalId;
-  private Class<?> entityClass;
+  private final Repository repository;
+  private final Path pathInRepository;
+  private final String id;
+  private final Serializable naturalId;
+  private final Class<?> entityClass;
   private byte[] md5Sum;
   private long lastModified;
 
@@ -75,8 +75,8 @@ public class IndexElement {
     return lastModified;
   }
 
-  public IndexElement setLastModified(long lastModified) {
-    this.lastModified = lastModified;
+  public IndexElement setLastModified(long time) {
+    this.lastModified = time;
     return this;
   }
 

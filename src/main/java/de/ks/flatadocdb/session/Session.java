@@ -26,6 +26,7 @@ import de.ks.flatadocdb.index.GlobalIndex;
 import de.ks.flatadocdb.index.IndexElement;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
+import de.ks.flatadocdb.metamodel.relation.Relation;
 import de.ks.flatadocdb.session.dirtycheck.DirtyChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,7 @@ import java.io.Serializable;
 import java.lang.invoke.MethodHandle;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.BiConsumer;
 
 @NotThreadSafe//can only be used as ThreadLocal
 public class Session {
@@ -90,11 +92,16 @@ public class Session {
     EntityInsertion singleEntityInsertion = new EntityInsertion(repository, sessionEntry);
     actions.add(singleEntityInsertion);
 
-    persistRelations(entity, entityDescriptor);
+    persistRelations(entityDescriptor.getNormalRelations(), entity, (owner, related) -> persist(related));
+    persistRelations(entityDescriptor.getChildRelations(), entity, (owner, related) -> persistChild(owner, related));
   }
 
-  protected void persistRelations(Object entity, EntityDescriptor entityDescriptor) {
-    entityDescriptor.getAllRelations().stream().map(r -> r.getRelated(entity))//
+  private void persistChild(Object owner, Object child) {
+
+  }
+
+  protected void persistRelations(Collection<Relation> relations, Object entity, BiConsumer<Object, Object> action) {
+    relations.stream().map(r -> r.getRelated(entity))//
       .reduce(new HashSet<>(), (objects, objects2) -> {
         objects.addAll(objects2);
         return objects;
@@ -102,7 +109,7 @@ public class Session {
       EntityDescriptor descriptor = metaModel.getEntityDescriptor(related.getClass());
       String relationId = descriptor.getId(related);
       if (relationId == null) {
-        persist(related);
+        action.accept(entity, related);
       }
     });
   }

@@ -89,6 +89,22 @@ public class Session {
 
     EntityInsertion singleEntityInsertion = new EntityInsertion(repository, sessionEntry);
     actions.add(singleEntityInsertion);
+
+    persistRelations(entity, entityDescriptor);
+  }
+
+  protected void persistRelations(Object entity, EntityDescriptor entityDescriptor) {
+    entityDescriptor.getAllRelations().stream().map(r -> r.getRelated(entity))//
+      .reduce(new HashSet<>(), (objects, objects2) -> {
+        objects.addAll(objects2);
+        return objects;
+      }).forEach(related -> {
+      EntityDescriptor descriptor = metaModel.getEntityDescriptor(related.getClass());
+      String relationId = descriptor.getId(related);
+      if (relationId == null) {
+        persist(related);
+      }
+    });
   }
 
   public void remove(Object entity) {

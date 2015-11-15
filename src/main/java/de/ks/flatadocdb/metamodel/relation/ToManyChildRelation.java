@@ -21,7 +21,7 @@ import de.ks.flatadocdb.ifc.FolderGenerator;
 
 import java.lang.reflect.Field;
 
-public class ToManyChildRelation extends ToManyRelation {
+public class ToManyChildRelation extends ToManyRelation implements ChildRelation {
   protected final FolderGenerator folderGenerator;
   protected final FileGenerator fileGenerator;
 
@@ -31,10 +31,12 @@ public class ToManyChildRelation extends ToManyRelation {
     this.fileGenerator = fileGenerator;
   }
 
+  @Override
   public FolderGenerator getFolderGenerator() {
     return folderGenerator;
   }
 
+  @Override
   public FileGenerator getFileGenerator() {
     return fileGenerator;
   }

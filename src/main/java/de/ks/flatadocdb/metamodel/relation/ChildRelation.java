@@ -18,25 +18,8 @@ package de.ks.flatadocdb.metamodel.relation;
 import de.ks.flatadocdb.ifc.FileGenerator;
 import de.ks.flatadocdb.ifc.FolderGenerator;
 
-import java.lang.reflect.Field;
+public interface ChildRelation {
+  FolderGenerator getFolderGenerator();
 
-public class ToOneChildRelation extends ToOneRelation implements ChildRelation {
-  protected final FolderGenerator folderGenerator;
-  protected final FileGenerator fileGenerator;
-
-  public ToOneChildRelation(Class<?> relationType, Field relationField, boolean lazy, FolderGenerator folderGenerator, FileGenerator fileGenerator) {
-    super(relationType, relationField, lazy);
-    this.folderGenerator = folderGenerator;
-    this.fileGenerator = fileGenerator;
-  }
-
-  @Override
-  public FolderGenerator getFolderGenerator() {
-    return folderGenerator;
-  }
-
-  @Override
-  public FileGenerator getFileGenerator() {
-    return fileGenerator;
-  }
+  FileGenerator getFileGenerator();
 }

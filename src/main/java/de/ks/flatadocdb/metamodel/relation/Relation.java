@@ -19,6 +19,8 @@ package de.ks.flatadocdb.metamodel.relation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.Collections;
 
 public class Relation {
   protected final Class<?> relationType;
@@ -51,6 +53,22 @@ public class Relation {
 
   public boolean isLazy() {
     return lazy;
+  }
+
+  @SuppressWarnings("unchecked")
+  public Collection<Object> getRelated(Object entity) {
+    try {
+      Object value = getterHandle.invoke(entity);
+      if (value instanceof Collection) {
+        return (Collection<Object>) value;
+      } else if (value != null) {
+        return Collections.singleton(value);
+      } else {
+        return Collections.emptyList();
+      }
+    } catch (Throwable throwable) {
+      throw new RuntimeException(throwable);
+    }
   }
 
   @Override

@@ -159,6 +159,8 @@ public class EntityDescriptor {
   protected final Set<ToOneChildRelation> toOneChildRelations;
   protected final Set<ToManyChildRelation> toManyChildRelations;
   protected final Set<Relation> allRelations;
+  protected final Set<Relation> childRelations;
+  protected final Set<Relation> normalRelations;
 
   public EntityDescriptor(Builder b) {
     this.entityClass = b.entityClass;
@@ -183,6 +185,16 @@ public class EntityDescriptor {
     allRels.addAll(toOneChildRelations);
     allRels.addAll(toOneRelations);
     this.allRelations = Collections.unmodifiableSet(allRels);
+
+    HashSet<Relation> childRelations = new HashSet<>();
+    childRelations.addAll(toManyChildRelations);
+    childRelations.addAll(toOneChildRelations);
+    this.childRelations = Collections.unmodifiableSet(childRelations);
+
+    HashSet<Relation> normalRelations = new HashSet<>();
+    normalRelations.addAll(toManyRelations);
+    normalRelations.addAll(toOneRelations);
+    this.normalRelations = Collections.unmodifiableSet(normalRelations);
   }
 
   public Class<?> getEntityClass() {
@@ -235,6 +247,14 @@ public class EntityDescriptor {
 
   public Set<ToManyChildRelation> getToManyChildRelations() {
     return toManyChildRelations;
+  }
+
+  public Set<Relation> getNormalRelations() {
+    return normalRelations;
+  }
+
+  public Set<Relation> getChildRelations() {
+    return childRelations;
   }
 
   @Nullable

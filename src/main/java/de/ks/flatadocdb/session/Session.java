@@ -22,10 +22,13 @@ import de.ks.flatadocdb.defaults.DefaultIdGenerator;
 import de.ks.flatadocdb.exception.IllegalSessionThreadException;
 import de.ks.flatadocdb.exception.NoIdField;
 import de.ks.flatadocdb.ifc.EntityPersister;
+import de.ks.flatadocdb.ifc.FileGenerator;
+import de.ks.flatadocdb.ifc.FolderGenerator;
 import de.ks.flatadocdb.index.GlobalIndex;
 import de.ks.flatadocdb.index.IndexElement;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
+import de.ks.flatadocdb.metamodel.relation.ChildRelation;
 import de.ks.flatadocdb.metamodel.relation.Relation;
 import de.ks.flatadocdb.session.dirtycheck.DirtyChecker;
 import org.slf4j.Logger;
@@ -36,7 +39,6 @@ import java.io.Serializable;
 import java.lang.invoke.MethodHandle;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.BiConsumer;
 
 @NotThreadSafe//can only be used as ThreadLocal
 public class Session {
@@ -67,10 +69,15 @@ public class Session {
     Objects.requireNonNull(entity);
 
     EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(entity.getClass());
-    Serializable naturalId = entityDescriptor.getNaturalId(entity);
 
     Path folder = entityDescriptor.getFolderGenerator().getFolder(repository, repository.getPath(), entity);
     String fileName = entityDescriptor.getFileGenerator().getFileName(repository, entityDescriptor, entity);
+
+    persist(entity, entityDescriptor, folder, fileName);
+  }
+
+  protected void persist(Object entity, EntityDescriptor entityDescriptor, Path folder, String fileName) {
+    Serializable naturalId = entityDescriptor.getNaturalId(entity);
 
     Path complete = folder.resolve(fileName);
 
@@ -92,26 +99,36 @@ public class Session {
     EntityInsertion singleEntityInsertion = new EntityInsertion(repository, sessionEntry);
     actions.add(singleEntityInsertion);
 
-    persistRelations(entityDescriptor.getNormalRelations(), entity, (owner, related) -> persist(related));
-    persistRelations(entityDescriptor.getChildRelations(), entity, (owner, related) -> persistChild(owner, related));
+    persistRelations(entityDescriptor.getNormalRelations(), entity, sessionEntry);
+    persistRelations(entityDescriptor.getChildRelations(), entity, sessionEntry);
   }
 
-  private void persistChild(Object owner, Object child) {
+  protected void persistRelations(Collection<Relation> relations, Object parent, SessionEntry sessionEntry) {
+    for (Relation relation : relations) {
+      Collection<Object> relatedEntities = relation.getRelated(parent);
 
-  }
+      for (Object related : relatedEntities) {
+        EntityDescriptor descriptor = metaModel.getEntityDescriptor(related.getClass());
+        String relationId = descriptor.getId(related);
+        if (relationId == null) {
+          if (relation instanceof ChildRelation) {
+            ChildRelation childRelation = (ChildRelation) relation;
 
-  protected void persistRelations(Collection<Relation> relations, Object entity, BiConsumer<Object, Object> action) {
-    relations.stream().map(r -> r.getRelated(entity))//
-      .reduce(new HashSet<>(), (objects, objects2) -> {
-        objects.addAll(objects2);
-        return objects;
-      }).forEach(related -> {
-      EntityDescriptor descriptor = metaModel.getEntityDescriptor(related.getClass());
-      String relationId = descriptor.getId(related);
-      if (relationId == null) {
-        action.accept(entity, related);
+            Path parentFolder = sessionEntry.getFolder();
+
+            FileGenerator fileGenerator = childRelation.getFileGenerator();
+            FolderGenerator folderGenerator = childRelation.getFolderGenerator();
+
+            Path folder = folderGenerator.getFolder(repository, parentFolder, related);
+            String fileName = fileGenerator.getFileName(repository, descriptor, related);
+
+            persist(related, descriptor, folder, fileName);
+          } else {
+            persist(related);
+          }
+        }
       }
-    });
+    }
   }
 
   public void remove(Object entity) {

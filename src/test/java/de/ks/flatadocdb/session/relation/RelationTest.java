@@ -22,6 +22,7 @@ import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.session.Related;
 import de.ks.flatadocdb.session.RelationOwner;
 import de.ks.flatadocdb.session.Session;
+import de.ks.flatadocdb.session.SessionFriend;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -101,5 +102,31 @@ public class RelationTest {
 
     Path childPath = repository.getPath().resolve(RelationOwner.class.getSimpleName()).resolve(Related.class.getSimpleName()).resolve("child.json");
     assertFalse(childPath.toFile().exists());
+  }
+
+  @Test
+  public void testLoadLazyRelation() throws Exception {
+    RelationOwner owner = new RelationOwner("owner");
+    Related related = new Related("related");
+    Related child = new Related("child");
+    owner.setChild(child);
+    owner.getRelatedList().add(related);
+    owner.getRelatedList().add(related);
+
+
+    Session session = new Session(metamodel, repository, index);
+    session.persist(owner);
+    session.prepare();
+    session.commit();
+
+    session = new Session(metamodel, repository, index);
+    owner = session.findById(RelationOwner.class, owner.getId()).get();
+    assertEquals(1, new SessionFriend(session).getEntries().size());
+
+    owner.getRelatedList().toString();//lazy load
+    assertEquals(2, new SessionFriend(session).getEntries().size());
+
+    owner.getChild().toString();//lazy load
+    assertEquals(3, new SessionFriend(session).getEntries().size());
   }
 }

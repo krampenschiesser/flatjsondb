@@ -26,6 +26,7 @@ import de.ks.flatadocdb.entity.BaseEntity;
 import de.ks.flatadocdb.entity.NamedEntity;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.ifc.PropertyPersister;
+import de.ks.flatadocdb.metamodel.relation.Relation;
 import de.ks.flatadocdb.session.RelationOwner;
 import org.hamcrest.Matchers;
 import org.junit.Before;
@@ -34,6 +35,8 @@ import org.mockito.Mockito;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -165,7 +168,7 @@ public class ParserTest {
     }
 
     @Override
-    public Object load(Repository repository, EntityDescriptor descriptor, Path path) {
+    public Object load(Repository repository, EntityDescriptor descriptor, Path path, Map<Relation, Collection<String>> relationIds) {
       return null;
     }
 
@@ -186,7 +189,7 @@ public class ParserTest {
     }
 
     @Override
-    public Object load(Repository repository, EntityDescriptor descriptor, Path path) {
+    public Object load(Repository repository, EntityDescriptor descriptor, Path path, Map<Relation, Collection<String>> relationIds) {
       return null;
     }
 

@@ -101,7 +101,7 @@ public class GlobalIndex {
           String id = idGenerator.getSha1Hash(repository.getPath(), path);
           byte[] md5 = readMd5(path);
           long lastModified = getLastModified(path);
-          Object loaded = descriptor.getPersister().load(repository, descriptor, path);
+          Object loaded = descriptor.getPersister().load(repository, descriptor, path, new HashMap<>());
           Serializable naturalId = descriptor.getNaturalId(loaded);
           IndexElement indexElement = new IndexElement(repository, path, id, naturalId, descriptor.getEntityClass());
           indexElement.setMd5Sum(md5).setLastModified(lastModified);

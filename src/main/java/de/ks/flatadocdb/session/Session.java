@@ -65,6 +65,14 @@ public class Session {
     this.thread = Thread.currentThread();
   }
 
+  public Repository getRepository() {
+    return repository;
+  }
+
+  public MetaModel getMetaModel() {
+    return metaModel;
+  }
+
   public void persist(Object entity) {
     Objects.requireNonNull(entity);
 
@@ -192,11 +200,17 @@ public class Session {
   private SessionEntry loadSessionEntry(IndexElement indexElement) {
     Objects.requireNonNull(indexElement);
     EntityDescriptor descriptor = metaModel.getEntityDescriptor(indexElement.getEntityClass());
+    HashMap<Relation, Collection<String>> relationIds = new HashMap<>();
+    descriptor.getAllRelations().forEach(rel -> relationIds.put(rel, new ArrayList<>()));
     EntityPersister persister = descriptor.getPersister();
-    Object object = persister.load(repository, descriptor, indexElement.getPathInRepository());
+    Object object = persister.load(repository, descriptor, indexElement.getPathInRepository(), relationIds);
     SessionEntry sessionEntry = new SessionEntry(object, indexElement.getId(), descriptor.getVersion(object), indexElement.getNaturalId(), indexElement.getPathInRepository(), descriptor);
     addToSession(sessionEntry);
 
+    for (Map.Entry<Relation, Collection<String>> entry : relationIds.entrySet()) {
+      Relation relation = entry.getKey();
+      Collection<String> ids = entry.getValue();
+    }
     return sessionEntry;
   }
 

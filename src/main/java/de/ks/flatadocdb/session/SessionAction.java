@@ -79,7 +79,7 @@ public abstract class SessionAction {
   protected void checkVersionIncrement(Path completePath, long version) {
     if (completePath.toFile().exists()) {
       EntityDescriptor entityDescriptor = sessionEntry.getEntityDescriptor();
-      Object load = entityDescriptor.getPersister().load(repository, entityDescriptor, completePath);
+      Object load = entityDescriptor.getPersister().load(repository, entityDescriptor, completePath, new HashMap<>());
       long currentVersion = entityDescriptor.getVersion(load);
       if (currentVersion > version) {
         throw new StaleObjectStateException("Entity version changed, file=" + currentVersion + ", session=" + version + ". Path:" + completePath);

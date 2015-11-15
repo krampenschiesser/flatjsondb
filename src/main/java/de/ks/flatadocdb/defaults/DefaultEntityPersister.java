@@ -25,6 +25,7 @@ import de.ks.flatadocdb.defaults.json.SerializationModule;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
+import de.ks.flatadocdb.metamodel.relation.Relation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
 
 public class DefaultEntityPersister implements EntityPersister {
   private static final Logger log = LoggerFactory.getLogger(DefaultEntityPersister.class);
@@ -55,7 +59,7 @@ public class DefaultEntityPersister implements EntityPersister {
   }
 
   @Override
-  public Object load(Repository repository, EntityDescriptor descriptor, Path path) {
+  public Object load(Repository repository, EntityDescriptor descriptor, Path path, Map<Relation, Collection<String>> relationIds) {
     try {
       JsonNode jsonNode = mapper.readTree(path.toFile());
       descriptor.getAllRelations().forEach(rel -> {
@@ -64,8 +68,15 @@ public class DefaultEntityPersister implements EntityPersister {
         if (jsonValue.elements().hasNext()) {
           jsonValue = jsonValue.elements().next();
         }
-        String text = jsonValue.asText();
-        text.toCharArray();
+
+        ArrayList<String> ids = new ArrayList<>();
+        relationIds.put(rel, ids);
+
+        if (jsonValue.isContainerNode()) {
+          jsonValue.elements().forEachRemaining(id -> ids.add(id.asText()));
+        } else {
+          ids.add(jsonValue.asText());
+        }
       });
       return mapper.readValue(path.toFile(), descriptor.getEntityClass());
     } catch (IOException e) {

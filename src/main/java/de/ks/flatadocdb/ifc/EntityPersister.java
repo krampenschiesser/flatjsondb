@@ -19,9 +19,12 @@ package de.ks.flatadocdb.ifc;
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
+import de.ks.flatadocdb.metamodel.relation.Relation;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * A persister is local for each entity and can store stateful information.
@@ -33,7 +36,15 @@ public interface EntityPersister {
     //
   }
 
-  Object load(Repository repository, EntityDescriptor descriptor, Path path);
+  /**
+   * @param repository
+   * @param descriptor
+   * @param path
+   * @param relationIds always filled with all relations that are present in the entity,
+   *                    the implementation has to add the corresponding ids to the relations
+   * @return
+   */
+  Object load(Repository repository, EntityDescriptor descriptor, Path path, Map<Relation, Collection<String>> relationIds);
 
   /**
    * Generates the file contents for the given object

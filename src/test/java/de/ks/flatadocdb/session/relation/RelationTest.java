@@ -28,8 +28,7 @@ import org.junit.Test;
 
 import java.nio.file.Path;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class RelationTest {
 
@@ -51,7 +50,7 @@ public class RelationTest {
   }
 
   @Test
-  public void testPersistLoadRelation() throws Exception {
+  public void testPersistRelation() throws Exception {
     RelationOwner owner = new RelationOwner("owner");
     Related related = new Related("related");
     Related child = new Related("child");
@@ -75,5 +74,32 @@ public class RelationTest {
 
     Path childPath = repository.getPath().resolve(RelationOwner.class.getSimpleName()).resolve(Related.class.getSimpleName()).resolve("child.json");
     assertTrue(childPath.toFile().exists());
+  }
+
+  /**
+   * if same entity added as child and normal relation we only persist it as normal entity, not as child
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testPersistNoChild() throws Exception {
+    RelationOwner owner = new RelationOwner("owner");
+    Related child = new Related("child");
+    owner.setChild(child);
+    owner.getRelatedList().add(child);
+
+    Session session = new Session(metamodel, repository, index);
+    session.persist(owner);
+    session.prepare();
+    session.commit();
+
+    assertNotNull(owner.getId());
+    assertNotNull(child.getId());
+
+    Path relatedPath = repository.getPath().resolve(Related.class.getSimpleName()).resolve("child.json");
+    assertTrue(relatedPath.toFile().exists());
+
+    Path childPath = repository.getPath().resolve(RelationOwner.class.getSimpleName()).resolve(Related.class.getSimpleName()).resolve("child.json");
+    assertFalse(childPath.toFile().exists());
   }
 }

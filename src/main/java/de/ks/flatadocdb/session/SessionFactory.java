@@ -16,37 +16,54 @@
 
 package de.ks.flatadocdb.session;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import de.ks.flatadocdb.Repository;
+import de.ks.flatadocdb.index.GlobalIndex;
+import de.ks.flatadocdb.metamodel.MetaModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 //import de.ks.flatadocdb.session.transaction.local.LocalJTAProvider;
 
 public class SessionFactory {
   private static final Logger log = LoggerFactory.getLogger(SessionFactory.class);
-//
-//  private final MetaModel metaModel = new MetaModel();
-//  private final JTAProvider jtaProvider;
-//
-//  public SessionFactory() {
-//    Optional<JTAProvider> lookup = JTAProvider.lookup();
-//    if (lookup.isPresent()) {
-//      log.info("Found custom implementation of JTAProvider {}", lookup.get());
-//      jtaProvider = lookup.get();
-//    } else {
-//      log.info("Found no custom implementation of JTAProvider. Will fallback to use local transaction management.");
-//      jtaProvider = new LocalJTAProvider();
-//    }
-//  }
-//
-//  public Session openSession() {
-//    return new Session();
-//  }
-//
-//  public MetaModel getMetaModel() {
-//    return metaModel;
-//  }
-//
-//  public boolean isLocallyManaged() {
-//    return jtaProvider instanceof LocalJTAProvider;
-//  }
+  private final LinkedHashMap<Repository, GlobalIndex> repositories = new LinkedHashMap<>();
+  private final MetaModel metaModel = new MetaModel();
+  private final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(),//
+    new ThreadFactoryBuilder().setDaemon(true).setNameFormat("SessionFactoryPooled-%d").build());
+
+  public List<Repository> getRepositories() {
+    return repositories.keySet().stream().collect(Collectors.toList());
+  }
+
+  public void addRepository(Repository repository) {
+    GlobalIndex index = new GlobalIndex(repository, metaModel, executorService);
+    repositories.put(repository, index);
+    index.recreate();
+  }
+
+  public Session openSession(Repository repository) {
+    if (!repositories.containsKey(repository)) {
+      addRepository(repository);
+    }
+    return new Session(metaModel, repository, repositories.get(repository));
+  }
+
+  public Session openSession() {
+    if (repositories.size() == 1) {
+      return openSession(repositories.keySet().iterator().next());
+    } else {
+      throw new IllegalStateException("Requested to open a session without a specified repository.");
+    }
+  }
+
+  public MetaModel getMetaModel() {
+    return metaModel;
+  }
 }

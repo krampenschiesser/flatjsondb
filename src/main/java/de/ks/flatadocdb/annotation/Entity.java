@@ -19,9 +19,11 @@ package de.ks.flatadocdb.annotation;
 import de.ks.flatadocdb.defaults.DefaultEntityPersister;
 import de.ks.flatadocdb.defaults.DefaultFileGenerator;
 import de.ks.flatadocdb.defaults.JoinedRootFolderGenerator;
+import de.ks.flatadocdb.defaults.ReflectionLuceneDocumentExtractor;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.ifc.FileGenerator;
 import de.ks.flatadocdb.ifc.FolderGenerator;
+import de.ks.flatadocdb.ifc.LuceneDocumentExtractor;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -36,4 +38,7 @@ public @interface Entity {
   Class<? extends FolderGenerator> folderGenerator() default JoinedRootFolderGenerator.class;
 
   Class<? extends FileGenerator> fileGenerator() default DefaultFileGenerator.class;
+
+  Class<? extends LuceneDocumentExtractor> luceneDocExtractor() default ReflectionLuceneDocumentExtractor.class;
+
 }

@@ -25,11 +25,11 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>log/idnadrev.log</file>
+        <file>log/flatadocdb.log</file>
         <append>true</append>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>log/idnadrev.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>log/flatadocdb.%d{yyyy-MM-dd}.log</fileNamePattern>
 
             <maxHistory>5</maxHistory>
         </rollingPolicy>

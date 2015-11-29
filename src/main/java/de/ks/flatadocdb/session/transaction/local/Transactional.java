@@ -31,6 +31,14 @@ public class Transactional {
     return withNewTransaction(String.format("tx%04d", counter.incrementAndGet()), supplier);
   }
 
+  public static void withNewTransaction(Runnable runnable) {
+    Supplier<Object> supplier = () -> {
+      runnable.run();
+      return null;
+    };
+    withNewTransaction(String.format("tx%04d", counter.incrementAndGet()), supplier);
+  }
+
   public static <T> T withNewTransaction(String txName, Supplier<T> supplier) {
     SimpleTransaction tx = provider.beginTransaction(txName);
     try {

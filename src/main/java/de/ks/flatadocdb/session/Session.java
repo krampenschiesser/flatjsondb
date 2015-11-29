@@ -31,6 +31,7 @@ import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.relation.ChildRelation;
 import de.ks.flatadocdb.metamodel.relation.Relation;
 import de.ks.flatadocdb.session.dirtycheck.DirtyChecker;
+import de.ks.flatadocdb.session.transaction.local.TransactionResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +43,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @NotThreadSafe//can only be used as ThreadLocal
-public class Session {
+public class Session implements TransactionResource {
   private static final Logger log = LoggerFactory.getLogger(Session.class);
 
   protected final MetaModel metaModel;
@@ -270,18 +271,26 @@ public class Session {
     }
   }
 
+  @Override
   public void prepare() {
     Collection<SessionEntry> dirty = dirtyChecker.findDirty(this.entriesById.values());
     dirty.stream().map(e -> new EntityUpdate(repository, e)).forEach(actions::add);
     actions.forEach(a -> a.prepare(this));
   }
 
+  @Override
   public void commit() {
     actions.forEach(a -> a.commit(this));
   }
 
+  @Override
   public void rollback() {
     actions.forEach(a -> a.rollback(this));
+  }
+
+  @Override
+  public void close() {
+
   }
 
   public void checkCorrectThread() {

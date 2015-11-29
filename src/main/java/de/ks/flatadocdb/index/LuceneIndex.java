@@ -16,5 +16,23 @@
 
 package de.ks.flatadocdb.index;
 
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.store.Directory;
+
+import java.io.IOException;
+
 public class LuceneIndex {
+  private final Directory directory;
+//  private final IndexWriter indexWriter;
+
+  public LuceneIndex(Directory directory) throws IOException {
+    this.directory = directory;
+    StandardAnalyzer analyzer = new StandardAnalyzer();
+    IndexWriterConfig config = new IndexWriterConfig(analyzer);
+//    indexWriter = new IndexWriter(directory, config);
+
+
+//    new IndexWriter(directory,);
+  }
 }

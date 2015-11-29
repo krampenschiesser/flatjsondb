@@ -85,9 +85,9 @@ dependencies {
         exclude module: 'javassist'
     }
 
-    compile "javax.transaction:jta:$jta"
-
     compile "org.apache.lucene:lucene-core:$lucene"
+    compile "org.apache.lucene:lucene-analyzers-common:$lucene"
+
     compile "org.eclipse.jgit:org.eclipse.jgit:$jgit"
 
     compile "com.fasterxml.jackson.core:jackson-databind:$jackson"

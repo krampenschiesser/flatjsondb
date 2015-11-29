@@ -85,6 +85,10 @@ public class MetaModel {
       packages.add(otherPackage);
     }
 
+    return scanClassPath(packages);
+  }
+
+  public Set<Class<?>> scanClassPath(Collection<String> packages) {
     ConfigurationBuilder builder = new ConfigurationBuilder();
     builder.forPackages(packages.toArray(new String[packages.size()]));
     builder.setInputsFilter(input -> filterPackage(input, packages));
@@ -99,7 +103,7 @@ public class MetaModel {
     return entityClasses;
   }
 
-  protected boolean filterPackage(String input, List<String> includePackages) {
+  protected boolean filterPackage(String input, Collection<String> includePackages) {
     if (input.contains("$")) {
       return false;
     } else {

@@ -17,7 +17,7 @@ package de.ks.flatadocdb.integration;
 
 import com.google.common.base.StandardSystemProperty;
 import de.ks.flatadocdb.Repository;
-import de.ks.flatadocdb.session.Session;
+import de.ks.flatadocdb.metamodel.TestEntity;
 import de.ks.flatadocdb.session.SessionFactory;
 import de.ks.flatadocdb.util.DeleteDir;
 import org.junit.Before;
@@ -27,7 +27,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static org.junit.Assert.assertEquals;
+
 public class BasicIntegrationTest {
+
+  private SessionFactory sessionFactory;
+  private Repository repository;
 
   @Before
   public void setUp() throws Exception {
@@ -35,12 +40,19 @@ public class BasicIntegrationTest {
     new DeleteDir(repoPath).delete();
     Files.createDirectories(repoPath);
 
-    Repository repository = new Repository(repoPath);
-    Session session = new SessionFactory().openSession(repository);
+    repository = new Repository(repoPath);
+    sessionFactory = new SessionFactory(repository, TestEntity.class.getPackage().getName());
   }
 
   @Test
   public void testBasicIntegration() throws Exception {
+    sessionFactory.transactedSession(repository, session -> {
+      TestEntity entity = new TestEntity("blubber").setAttribute("Steak");
+      session.persist(entity);
+    });
 
+    TestEntity entity = sessionFactory.transactedSessionRead(repository, session -> session.findByNaturalId(TestEntity.class, "blubber").get());
+    assertEquals("blubber", entity.getName());
+    assertEquals("Steak", entity.getAttribute());
   }
 }

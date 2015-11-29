@@ -20,13 +20,16 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.index.GlobalIndex;
 import de.ks.flatadocdb.metamodel.MetaModel;
+import de.ks.flatadocdb.session.transaction.local.TransactionProvider;
+import de.ks.flatadocdb.session.transaction.local.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 //import de.ks.flatadocdb.session.transaction.local.LocalJTAProvider;
@@ -34,21 +37,48 @@ import java.util.stream.Collectors;
 public class SessionFactory {
   private static final Logger log = LoggerFactory.getLogger(SessionFactory.class);
   private final LinkedHashMap<Repository, GlobalIndex> repositories = new LinkedHashMap<>();
+  private final Map<String, Repository> repositoryByName = new HashMap<>();
   private final MetaModel metaModel = new MetaModel();
   private final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(),//
     new ThreadFactoryBuilder().setDaemon(true).setNameFormat("SessionFactoryPooled-%d").build());
+
+  public SessionFactory(Repository repository, String entityPackage) {
+    this(Collections.singleton(repository), Collections.singleton(entityPackage));
+  }
+
+  public SessionFactory(Collection<Repository> repositories, Collection<String> packages) {
+    checkSize(repositories, 1);
+    checkSize(packages, 1);
+
+    repositories.forEach(this::addRepository);
+    metaModel.scanClassPath(packages);
+  }
+
+  private void checkSize(Collection<?> collection, int expectedSize) {
+    if (collection.size() != expectedSize) {
+      throw new IllegalArgumentException("Expected a collection with " + expectedSize + " elements, but got " + collection.size());
+    }
+  }
 
   public List<Repository> getRepositories() {
     return repositories.keySet().stream().collect(Collectors.toList());
   }
 
   public void addRepository(Repository repository) {
+    Objects.requireNonNull(repository, "Repository is required");
+    log.info("Added repository {}", repository.getPath());
     GlobalIndex index = new GlobalIndex(repository, metaModel, executorService);
     repositories.put(repository, index);
+    repositoryByName.put(repository.getName(), repository);
     index.recreate();
   }
 
+  public Repository getRepository(String name) {
+    return repositoryByName.get(name);
+  }
+
   public Session openSession(Repository repository) {
+    Objects.requireNonNull(repository, "Repository is required");
     if (!repositories.containsKey(repository)) {
       addRepository(repository);
     }
@@ -65,5 +95,21 @@ public class SessionFactory {
 
   public MetaModel getMetaModel() {
     return metaModel;
+  }
+
+  public void transactedSession(Repository repository, Consumer<Session> sessionConsumer) {
+    Transactional.withNewTransaction(() -> {
+      Session session = openSession(repository);
+      TransactionProvider.instance.registerResource(session);
+      sessionConsumer.accept(session);
+    });
+  }
+
+  public <T> T transactedSessionRead(Repository repository, Function<Session, T> sessionFunction) {
+    return Transactional.withNewTransaction(() -> {
+      Session session = openSession(repository);
+      TransactionProvider.instance.registerResource(session);
+      return sessionFunction.apply(session);
+    });
   }
 }

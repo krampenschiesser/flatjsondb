@@ -16,7 +16,12 @@
 
 package de.ks.flatadocdb.metamodel;
 
+import de.ks.flatadocdb.annotation.Entity;
 import de.ks.flatadocdb.exception.EntityNotRegisteredException;
+import org.reflections.Reflections;
+import org.reflections.util.ConfigurationBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.*;
@@ -25,6 +30,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @ThreadSafe
 public class MetaModel {
+  private static final Logger log = LoggerFactory.getLogger(MetaModel.class);
   protected final ReadWriteLock lock = new ReentrantReadWriteLock();
   protected final Map<Class<?>, EntityDescriptor> clazz2EntityDescriptor = new HashMap<>();
 
@@ -68,6 +74,41 @@ public class MetaModel {
       return clazz2EntityDescriptor.containsKey(clazz);
     } finally {
       lock.readLock().unlock();
+    }
+  }
+
+  public Set<Class<?>> scanClassPath(String packageToScanRecursive, String... otherPackages) {
+    Objects.requireNonNull(packageToScanRecursive, "Define the main package to scan.");
+    ArrayList<String> packages = new ArrayList<>();
+    packages.add(packageToScanRecursive);
+    for (String otherPackage : otherPackages) {
+      packages.add(otherPackage);
+    }
+
+    ConfigurationBuilder builder = new ConfigurationBuilder();
+    builder.forPackages(packages.toArray(new String[packages.size()]));
+    builder.setInputsFilter(input -> filterPackage(input, packages));
+    builder.useParallelExecutor();
+
+    Reflections reflections = new Reflections(builder);
+    Set<Class<?>> entityClasses = reflections.getTypesAnnotatedWith(Entity.class);
+    for (Class<?> entityClass : entityClasses) {
+      log.info("Found entity class {}", entityClass);
+      addEntity(entityClass);
+    }
+    return entityClasses;
+  }
+
+  protected boolean filterPackage(String input, List<String> includePackages) {
+    if (input.contains("$")) {
+      return false;
+    } else {
+      for (String includePackage : includePackages) {
+        if (input.startsWith(includePackage)) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 }

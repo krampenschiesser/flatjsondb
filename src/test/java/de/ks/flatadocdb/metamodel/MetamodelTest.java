@@ -16,9 +16,12 @@
 
 package de.ks.flatadocdb.metamodel;
 
+import de.ks.flatadocdb.session.Related;
+import de.ks.flatadocdb.session.RelationOwner;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class MetamodelTest {
   @Test
@@ -26,5 +29,28 @@ public class MetamodelTest {
     MetaModel metamodel = new MetaModel();
     metamodel.addEntity(TestEntity.class);
     assertEquals(1, metamodel.getEntities().size());
+  }
+
+  @Test
+  public void testScanClassPathForPackages() throws Exception {
+    MetaModel metaModel = new MetaModel();
+    int found = metaModel.scanClassPath(RelationOwner.class.getPackage().getName()).size();
+    assertEquals(2, found);
+    assertNotNull(metaModel.getEntityDescriptor(RelationOwner.class));
+    assertNotNull(metaModel.getEntityDescriptor(Related.class));
+
+    found = metaModel.scanClassPath(TestEntity.class.getPackage().getName()).size();
+    assertEquals(1, found);
+    assertNotNull(metaModel.getEntityDescriptor(TestEntity.class));
+  }
+
+  @Test
+  public void testScanClassPath() throws Exception {
+    MetaModel metaModel = new MetaModel();
+    int found = metaModel.scanClassPath(RelationOwner.class.getPackage().getName(), TestEntity.class.getPackage().getName()).size();
+    assertEquals(3, found);
+    assertNotNull(metaModel.getEntityDescriptor(RelationOwner.class));
+    assertNotNull(metaModel.getEntityDescriptor(Related.class));
+    assertNotNull(metaModel.getEntityDescriptor(TestEntity.class));
   }
 }

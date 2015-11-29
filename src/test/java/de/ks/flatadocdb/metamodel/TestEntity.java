@@ -34,7 +34,8 @@ public class TestEntity extends NamedEntity {
     return attribute;
   }
 
-  public void setAttribute(String attribute) {
+  public TestEntity setAttribute(String attribute) {
     this.attribute = attribute;
+    return this;
   }
 }

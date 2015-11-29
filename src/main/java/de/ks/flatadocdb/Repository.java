@@ -18,6 +18,8 @@ package de.ks.flatadocdb;
 
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -28,8 +30,10 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Repository {
+public class Repository implements AutoCloseable {
   public static final String LUCENE_DIR = ".lucene";
+  private static final Logger log = LoggerFactory.getLogger(Repository.class);
+
   protected final Path path;
   protected final String name;
   protected final EncryptionMode encryption;
@@ -94,5 +98,14 @@ public class Repository {
 
   public EncryptionMode getEncryption() {
     return encryption;
+  }
+
+  @Override
+  public void close() {
+    try {
+      luceneDirectory.close();
+    } catch (IOException e) {
+      log.error("Could not close lucene index {}", luceneDirectory, e);
+    }
   }
 }

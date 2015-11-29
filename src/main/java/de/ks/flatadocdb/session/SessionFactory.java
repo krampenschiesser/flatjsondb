@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 
 //import de.ks.flatadocdb.session.transaction.local.LocalJTAProvider;
 
-public class SessionFactory {
+public class SessionFactory implements AutoCloseable {
   private static final Logger log = LoggerFactory.getLogger(SessionFactory.class);
   private final LinkedHashMap<Repository, GlobalIndex> repositories = new LinkedHashMap<>();
   private final Map<String, Repository> repositoryByName = new HashMap<>();
@@ -111,5 +111,10 @@ public class SessionFactory {
       TransactionProvider.instance.registerResource(session);
       return sessionFunction.apply(session);
     });
+  }
+
+  @Override
+  public void close() {
+    repositories.keySet().forEach(Repository::close);
   }
 }

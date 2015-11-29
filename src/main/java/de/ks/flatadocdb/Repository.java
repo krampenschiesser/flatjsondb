@@ -16,6 +16,9 @@
 
 package de.ks.flatadocdb;
 
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
+
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -26,9 +29,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Repository {
+  public static final String LUCENE_DIR = ".lucene";
   protected final Path path;
   protected final String name;
   protected final EncryptionMode encryption;
+  protected final Directory luceneDirectory;
 
   public Repository(Path path) {
     this(path, EncryptionMode.NONE);
@@ -44,6 +49,19 @@ public class Repository {
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
+    }
+    Path subPath = path.resolve(LUCENE_DIR);
+    if (!Files.exists(subPath)) {
+      try {
+        Files.createDirectories(subPath);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    try {
+      luceneDirectory = FSDirectory.open(subPath);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 

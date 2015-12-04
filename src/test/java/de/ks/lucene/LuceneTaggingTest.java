@@ -60,10 +60,9 @@ public class LuceneTaggingTest {
     }
     writer.close();
 
-
     DirectoryReader directoryReader = DirectoryReader.open(directory);
     IndexSearcher searcher = new IndexSearcher(directoryReader);
-    String term = "BLA";
+    String term = "blubb";
     TermQuery termQuery = new TermQuery(new Term("tags", term));
     TopDocs search = searcher.search(termQuery, 50);
     log("TermQuery", searcher, search);

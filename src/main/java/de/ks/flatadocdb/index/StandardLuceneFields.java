@@ -15,13 +15,14 @@
  */
 package de.ks.flatadocdb.index;
 
-import org.apache.lucene.document.TextField;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.IndexableField;
 
 public enum StandardLuceneFields {
   ID, NATURAL_ID, FILENAME;
 
   public IndexableField create(String value) {
-    return new TextField(name(), value, null);
+    return new StringField(name(), value, Field.Store.YES);
   }
 }

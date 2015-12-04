@@ -30,15 +30,34 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Main annotation to mark a class as entity.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Entity {
+  /**
+   * Used to load/save the entity
+   * @return
+   */
   Class<? extends EntityPersister> persister() default DefaultEntityPersister.class;
 
+  /**
+   * Used to determine and generate the target folder of the entity
+   * @return
+   */
   Class<? extends FolderGenerator> folderGenerator() default JoinedRootFolderGenerator.class;
 
+  /**
+   * Used to determine and generate the target file of the entity
+   * @return
+   */
   Class<? extends FileGenerator> fileGenerator() default DefaultFileGenerator.class;
 
+  /**
+   * Used to extract the indexable fields for lucene from the entity
+   * @return
+   */
   Class<? extends LuceneDocumentExtractor> luceneDocExtractor() default ReflectionLuceneDocumentExtractor.class;
 
 }

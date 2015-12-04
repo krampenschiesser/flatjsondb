@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.impl.PropertySerializerMap;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 
 public class RelationCollectionPropertyWriter extends BeanPropertyWriter {
+  private static final Logger log = LoggerFactory.getLogger(RelationCollectionPropertyWriter.class);
   private final MetaModel metaModel;
 
   public RelationCollectionPropertyWriter(BeanPropertyWriter base, MetaModel metaModel) {
@@ -50,6 +53,7 @@ public class RelationCollectionPropertyWriter extends BeanPropertyWriter {
         if (object != null) {
           EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(object.getClass());
           String id = entityDescriptor.getId(object);
+          log.trace("Replaced object {} of collection by relation id {}.", object, id);
           ids.add(id);
         }
       }
@@ -58,6 +62,7 @@ public class RelationCollectionPropertyWriter extends BeanPropertyWriter {
       EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(value.getClass());
       String id = entityDescriptor.getId(value);
       value = id;
+      log.trace("Replaced single object {} by relation id {}.", value, id);
     }
     // Null handling is bit different, check that first
     if (value == null) {

@@ -27,12 +27,16 @@ import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class SerializationModule extends Module {
+  private static final Logger log = LoggerFactory.getLogger(SerializationModule.class);
+
   private final MetaModel metaModel;
 
   public SerializationModule(MetaModel metaModel) {
@@ -60,6 +64,7 @@ public class SerializationModule extends Module {
           .filter(p -> entityDescriptor.isRelation(p.getMember())).collect(Collectors.toList());
 
         ArrayList<BeanPropertyWriter> all = new ArrayList<>(beanProperties);
+        log.trace("Removing {} relation properties fron {}: {}", relationProperties.size(), beanDesc.getBeanClass(), relationProperties);
         all.removeAll(relationProperties);
         relationProperties.stream().map(old -> new RelationCollectionPropertyWriter(old, metaModel)).forEach(all::add);
         return all;

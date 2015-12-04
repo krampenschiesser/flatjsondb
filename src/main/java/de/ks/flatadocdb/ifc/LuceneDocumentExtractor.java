@@ -18,6 +18,10 @@ package de.ks.flatadocdb.ifc;
 import org.apache.lucene.document.Document;
 
 @FunctionalInterface
+/**
+ * Used to extract a document containing the indexable fields for lucene.
+ */
 public interface LuceneDocumentExtractor<E> {
+
   Document createDocument(E instance);
 }

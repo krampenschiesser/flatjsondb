@@ -23,8 +23,25 @@ import java.nio.file.Path;
 
 @FunctionalInterface
 public interface FolderGenerator {
+  /**
+   * Returns the folder used to store the content of the given object.
+   * This folder needs to exist(be created by the implementation)
+   *
+   * If an entity is persisted as a child the ownerPath is given and needs to be taking into consideration by the implementation.
+   *
+   * @param repository
+   * @param ownerPath  present if the given object is a child of another entity
+   * @param object
+   * @return existing path to a directory
+   */
   Path getFolder(Repository repository, @Nullable Path ownerPath, Object object);
 
+  /**
+   * Implementations can define if the whole folder shalle be deleted with its entity.
+   * This might be useful to cleanup related resources that are not known to the program.
+   *
+   * @return default false
+   */
   default boolean isRemoveFolderOnDelete() {
     return false;
   }

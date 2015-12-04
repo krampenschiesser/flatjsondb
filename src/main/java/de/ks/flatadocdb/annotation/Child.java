@@ -26,6 +26,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Marks a field as a child of a given entity.
+ * This will cause the annotated field to be persisted in the same or a subfolder of the parent entity.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Child {

@@ -18,6 +18,9 @@ package de.ks.flatadocdb.entity;
 
 import de.ks.flatadocdb.annotation.NaturalId;
 
+/**
+ * Class supporting a natural id that is the name.
+ */
 public class NamedEntity extends BaseEntity {
   @NaturalId
   protected final String name;

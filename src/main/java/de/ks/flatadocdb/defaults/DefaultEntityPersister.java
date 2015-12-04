@@ -38,6 +38,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
+/**
+ * Default JSON entity persister.
+ * Used to store and load json files.
+ * Also handles reading/saving relations correctly.
+ */
 public class DefaultEntityPersister implements EntityPersister {
   private static final Logger log = LoggerFactory.getLogger(DefaultEntityPersister.class);
   final ObjectMapper mapper = new ObjectMapper();
@@ -70,6 +75,7 @@ public class DefaultEntityPersister implements EntityPersister {
         }
 
         ArrayList<String> ids = new ArrayList<>();
+
         relationIds.put(rel, ids);
 
         if (jsonValue.isContainerNode()) {
@@ -77,6 +83,7 @@ public class DefaultEntityPersister implements EntityPersister {
         } else if (!jsonValue.isNull()) {
           ids.add(jsonValue.asText());
         }
+        log.debug("Found {} relation id's in {}: {}", ids.size(), name, ids);
       });
       return mapper.readValue(path.toFile(), descriptor.getEntityClass());
     } catch (IOException e) {
@@ -87,7 +94,7 @@ public class DefaultEntityPersister implements EntityPersister {
   @Override
   public byte[] createFileContents(Repository repository, EntityDescriptor descriptor, Object object) {
     try {
-//      return mapper.writeValueAsBytes(object);
+//      return mapper.writeValueAsBytes(object); change with below to avoid pretty printing, nah ;)
       return mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(object);
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -103,9 +110,14 @@ public class DefaultEntityPersister implements EntityPersister {
           String line2 = reader.readLine();
           line1 = line1 == null ? "" : line1.trim();
           line2 = line2 == null ? "" : line2.trim();
-          return checkLine(line1, line2, descriptor.getEntityClass());
+          boolean valid = checkLine(line1, line2, descriptor.getEntityClass());
+          if (valid) {
+            log.debug("Found valid file {} to parse as {}", path, descriptor.getEntityClass().getSimpleName());
+          }
+          return valid;
         }
       } catch (IOException e) {
+        log.debug("Unable to parse {} as {}", path, descriptor.getEntityClass(), e);
         return false;
       }
     }

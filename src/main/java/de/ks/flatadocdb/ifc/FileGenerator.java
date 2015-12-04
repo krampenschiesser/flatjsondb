@@ -20,7 +20,24 @@ import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 
 public interface FileGenerator {
+  /**
+   * Generates a filename used for the given object
+   *
+   * @param repository
+   * @param descriptor
+   * @param object
+   * @return
+   */
   String getFileName(Repository repository, EntityDescriptor descriptor, Object object);
+
+  /**
+   * Generates a filename used during the flush phase of the transaction.
+   *
+   * @param repository
+   * @param descriptor
+   * @param object
+   * @return
+   */
 
   String getFlushFileName(Repository repository, EntityDescriptor descriptor, Object object);
 }

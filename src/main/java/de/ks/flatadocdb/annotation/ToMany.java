@@ -21,8 +21,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Marks a collection as a relation. All elements are persisted separately and only referenced via an id.
+ * By default this relation is lazy.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface ToMany {
+  /**
+   * @return true if the elements should be loaded on demand(which requires an active session), or false if they shall be loaded inmmediatly
+   */
   boolean lazy() default true;
 }

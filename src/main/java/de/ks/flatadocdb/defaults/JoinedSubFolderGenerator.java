@@ -17,18 +17,27 @@ package de.ks.flatadocdb.defaults;
 
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.ifc.FolderGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.Objects;
 
+/**
+ * Default rule to create one folder for each single entity of a given type
+ */
 public class JoinedSubFolderGenerator implements FolderGenerator {
+  private static final Logger log = LoggerFactory.getLogger(JoinedSubFolderGenerator.class);
+
   @Override
   public Path getFolder(Repository repository, Path ownerPath, Object object) {
     Objects.requireNonNull(ownerPath, "No owner path given");
 
     Path resolve = ownerPath.resolve(object.getClass().getSimpleName());
     if (!resolve.toFile().exists()) {
-      resolve.toFile().mkdir();
+      if (resolve.toFile().mkdir()) {
+        log.debug("Create new root folder {}", resolve);
+      }
     } else if (!resolve.toFile().isDirectory()) {
       throw new IllegalStateException("File " + resolve + " needs to be a directory.");
     }

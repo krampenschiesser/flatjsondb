@@ -41,6 +41,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
+/**
+ * Extracts indexable fields from a class via reflection.
+ * The following dataTypes are valid:
+ *
+ * * primitives
+ * * enums
+ * * Strings
+ * * LocalDate
+ * * LocalTime
+ * * LocalDateTime
+ *
+ * And all collections and arrays of the above types.
+ */
 public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtractor {
   private static final Logger log = LoggerFactory.getLogger(ReflectionLuceneDocumentExtractor.class);
   public static final int MAX_LENGHT_STRINGFIELD = 75;
@@ -63,6 +76,7 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
       @SuppressWarnings("unchecked")
       Set<Field> allFields = ReflectionUtils.getAllFields(clazz, this::filterField);
       Set<DocField> docFields = allFields.stream().map(this::createDocField).filter(Objects::nonNull).collect(Collectors.toSet());
+      docFields.forEach(f -> log.debug("Found field {} for {} which will be indexed by lucene", f.getField(), clazz.getSimpleName()));
       cache.putIfAbsent(clazz, docFields);
     }
     return cache.get(clazz);
@@ -189,9 +203,12 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
       try {
         Object value = handle.invoke(instance);
         if (value == null) {
+          log.trace("Ignoring null value for {}", field);
           return null;
         } else {
-          return fieldSupplier.apply(field.getName(), value);
+          IndexableField apply = fieldSupplier.apply(field.getName(), value);
+          log.trace("Indexing value for {}. name={}, value={} ", field, apply.name(), apply.stringValue().length() > 100 ? apply.stringValue().substring(0, 100) : apply.stringValue());
+          return apply;
         }
       } catch (Throwable t) {
         log.error("Could not get value from field", t);

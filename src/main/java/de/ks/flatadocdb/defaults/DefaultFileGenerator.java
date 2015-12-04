@@ -20,12 +20,16 @@ import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.ifc.FileGenerator;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import org.apache.commons.codec.binary.Hex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.management.ManagementFactory;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class DefaultFileGenerator implements FileGenerator {
+  private static final Logger log = LoggerFactory.getLogger(DefaultFileGenerator.class);
+
   public final String pidAndHost = ManagementFactory.getRuntimeMXBean().getName();
   public static final String EXTENSION = "json";
 
@@ -34,10 +38,14 @@ public class DefaultFileGenerator implements FileGenerator {
     Object naturalId = descriptor.getNaturalId(object);
     if (naturalId != null) {
       String naturalIdString = parseNaturalId(String.valueOf(naturalId));
-      return naturalIdString + "." + EXTENSION;
+      String retval = naturalIdString + "." + EXTENSION;
+      log.trace("Generated file name \"{}\" via natural id for {}", retval, object);
+      return retval;
     } else {
       String hexString = parseHashCode(object);
-      return hexString + "." + EXTENSION;
+      String retval = hexString + "." + EXTENSION;
+      log.trace("Generated file name \"{}\" via hashcode for {}", retval, object);
+      return retval;
     }
   }
 

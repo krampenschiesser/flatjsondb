@@ -21,8 +21,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Marks an object as a relation.It is persisted separately and only referenced via an id.
+ * By default this object is lazily loaded.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface ToOne {
+  /**
+   * @return true if the object should be loaded on demand(which requires an active session), or false if it should be loaded inmmediatly
+   */
   boolean lazy() default true;
 }

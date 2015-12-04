@@ -45,7 +45,7 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
   private static final Logger log = LoggerFactory.getLogger(ReflectionLuceneDocumentExtractor.class);
   public static final int MAX_LENGHT_STRINGFIELD = 75;
 
-  static ConcurrentHashMap<Class<?>, Set<DocField>> cache = new ConcurrentHashMap<>();
+  static final ConcurrentHashMap<Class<?>, Set<DocField>> cache = new ConcurrentHashMap<>();
 
   @Override
   public Document createDocument(Object instance) {
@@ -73,6 +73,7 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
       Class<?> type = f.getType();
       f.setAccessible(true);
       MethodHandle getter = MethodHandles.lookup().unreflectGetter(f);
+
       if (TypeUtils.isArrayType(type)) {
         return createArrayDocField(f, getter);
       } else if (Collection.class.isAssignableFrom(type)) {

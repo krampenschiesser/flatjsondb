@@ -17,6 +17,7 @@ package de.ks.flatadocdb.ifc;
 
 import org.apache.lucene.document.Document;
 
+@FunctionalInterface
 public interface LuceneDocumentExtractor<E> {
   Document createDocument(E instance);
 }

@@ -60,6 +60,7 @@ public class GlobalIndex implements Index {
     this.executorService = executorService;
   }
 
+  @Override
   public void addEntry(SessionEntry sessionEntry) {
     IndexElement element = new IndexElement(repository, sessionEntry.getCompletePath(), sessionEntry.getId(), sessionEntry.getNaturalId(), sessionEntry.getObject().getClass());
     idToElement.put(element.getId(), element);
@@ -68,11 +69,13 @@ public class GlobalIndex implements Index {
     }
   }
 
+  @Override
   public void updateEntry(SessionEntry sessionEntry) {
     removeEntry(sessionEntry);
     addEntry(sessionEntry);
   }
 
+  @Override
   public void removeEntry(SessionEntry sessionEntry) {
     IndexElement element = new IndexElement(repository, sessionEntry.getCompletePath(), sessionEntry.getId(), sessionEntry.getNaturalId(), sessionEntry.getObject().getClass());
     idToElement.remove(element.getId());

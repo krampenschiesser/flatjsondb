@@ -42,6 +42,7 @@ public class Parser extends BaseParser {
     FolderGenerator folderGenerator = getInstance(annotation.folderGenerator());
     LuceneDocumentExtractor luceneDocumentExtractor = getInstance(annotation.luceneDocExtractor());
 
+    @SuppressWarnings("unchecked")
     Set<Field> allFields = ReflectionUtils.getAllFields(clazz, this::filterField);
 
     MethodHandle idGetterHandle = resolveIdFieldGetter(clazz, allFields);
@@ -50,7 +51,7 @@ public class Parser extends BaseParser {
     MethodHandle versionSetterHandle = resolveVersionFieldSetter(clazz, allFields);
     MethodHandle naturalIdHandle = resolveNaturalIdField(clazz, allFields);
 
-    Map<Field, PropertyPersister> propertyPersisters = resolvePropertyPersisters(clazz, allFields);
+    Map<Field, PropertyPersister> propertyPersisters = resolvePropertyPersisters(allFields);
     Map<LifeCycle, Set<MethodHandle>> lifecycleMethods = new LifeCycleParser().parseMethods(clazz);
 
     RelationParser relationParser = new RelationParser();
@@ -73,7 +74,7 @@ public class Parser extends BaseParser {
     return builder.build();
   }
 
-  private Map<Field, PropertyPersister> resolvePropertyPersisters(Class<?> clazz, Set<Field> allFields) {
+  private Map<Field, PropertyPersister> resolvePropertyPersisters(Set<Field> allFields) {
     HashMap<Field, PropertyPersister> retval = new HashMap<>();
     Set<Field> fields = allFields.stream().filter(f -> f.isAnnotationPresent(Property.class)).collect(Collectors.toSet());
     for (Field field : fields) {

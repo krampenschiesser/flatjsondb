@@ -115,14 +115,6 @@ public class DefaultEntityPersister implements EntityPersister {
   private boolean checkLine(String line1, String line2, Class<?> clazz) {
     boolean prettyPrintedLine = line2.startsWith("\"" + clazz.getName() + "\"");
     boolean inlineDeclaration = line1.startsWith("{\"" + clazz.getName() + "\":");
-    if (prettyPrintedLine) {
-      return true;
-    } else {
-      if (inlineDeclaration) {
-        return true;
-      } else {
-        return false;
-      }
-    }
+    return prettyPrintedLine || inlineDeclaration;
   }
 }

@@ -24,6 +24,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class BaseParser {
+  @SuppressWarnings("unchecked")
   protected <T> T getInstance(Class<?> clazz) {
     Set<Constructor> persisterConstructors = ReflectionUtils.getConstructors(clazz, ctor -> ctor.getParameterCount() == 0 && Modifier.isPublic(ctor.getModifiers()));
     try {

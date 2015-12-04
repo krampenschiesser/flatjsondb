@@ -81,10 +81,7 @@ public class MetaModel {
     Objects.requireNonNull(packageToScanRecursive, "Define the main package to scan.");
     ArrayList<String> packages = new ArrayList<>();
     packages.add(packageToScanRecursive);
-    for (String otherPackage : otherPackages) {
-      packages.add(otherPackage);
-    }
-
+    Collections.addAll(packages, otherPackages);
     return scanClassPath(packages);
   }
 

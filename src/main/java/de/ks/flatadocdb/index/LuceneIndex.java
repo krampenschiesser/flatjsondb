@@ -46,12 +46,12 @@ public class LuceneIndex implements Index {
     }
   }
 
+  @Override
   public void addEntry(SessionEntry sessionEntry) {
-    new LuceneWrite(writer -> {
-      writeEntry(sessionEntry, writer);
-    });
+    new LuceneWrite(writer -> writeEntry(sessionEntry, writer));
   }
 
+  @Override
   public void updateEntry(SessionEntry sessionEntry) {
     new LuceneWrite(writer -> {
       deleteEntry(sessionEntry, writer);
@@ -59,10 +59,9 @@ public class LuceneIndex implements Index {
     });
   }
 
+  @Override
   public void removeEntry(SessionEntry sessionEntry) {
-    new LuceneWrite(writer -> {
-      deleteEntry(sessionEntry, writer);
-    });
+    new LuceneWrite(writer -> deleteEntry(sessionEntry, writer));
   }
 
   protected void deleteEntry(SessionEntry sessionEntry, IndexWriter writer) throws IOException {
@@ -93,6 +92,7 @@ public class LuceneIndex implements Index {
     return directory;
   }
 
+  @FunctionalInterface
   interface LuceneWriteConsumer {
     void apply(IndexWriter writer) throws IOException;
   }

@@ -21,6 +21,7 @@ import de.ks.flatadocdb.Repository;
 import javax.annotation.Nullable;
 import java.nio.file.Path;
 
+@FunctionalInterface
 public interface FolderGenerator {
   Path getFolder(Repository repository, @Nullable Path ownerPath, Object object);
 

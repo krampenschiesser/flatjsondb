@@ -267,7 +267,6 @@ public class EntityDescriptor {
     return invokeGetter(idGetterAccess, entity);
   }
 
-  @Nullable
   public long getVersion(Object entity) {
     return invokeGetter(versionGetterAccess, entity);
   }

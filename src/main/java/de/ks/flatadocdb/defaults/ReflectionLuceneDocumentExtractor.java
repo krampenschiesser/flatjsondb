@@ -19,6 +19,7 @@ import com.google.common.primitives.Primitives;
 import de.ks.flatadocdb.ifc.LuceneDocumentExtractor;
 import org.apache.commons.lang3.reflect.TypeUtils;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexableField;
 import org.reflections.ReflectionUtils;
@@ -40,6 +41,7 @@ import java.util.stream.Collectors;
 
 public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtractor {
   private static final Logger log = LoggerFactory.getLogger(ReflectionLuceneDocumentExtractor.class);
+  public static final int MAX_LENGHT_STRINGFIELD = 75;
 
   static ConcurrentHashMap<Class<?>, Set<DocField>> cache = new ConcurrentHashMap<>();
 
@@ -81,16 +83,25 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
               builder.append(", ");
             }
           }
-          return new TextField(id, builder.toString(), null);
+          return new StringField(id, builder.toString(), null);
         });
       } else if (Collection.class.isAssignableFrom(type)) {
         return new DocField(f, getter, (id, value) -> {
           @SuppressWarnings("unchecked")
           String string = ((Collection<Object>) value).stream().map(String::valueOf).collect(Collectors.joining(", "));
-          return new TextField(id, string, null);
+          return new StringField(id, string, null);
+        });
+      } else if (String.class.equals(type)) {
+        return new DocField(f, getter, (id, value) -> {
+          String stringValue = String.valueOf(value);
+          if (stringValue.length() > MAX_LENGHT_STRINGFIELD) {
+            return new TextField(id, stringValue, null);
+          } else {
+            return new StringField(id, stringValue, null);
+          }
         });
       } else {
-        return new DocField(f, getter, (id, value) -> new TextField(id, String.valueOf(value), null));
+        return new DocField(f, getter, (id, value) -> new StringField(id, String.valueOf(value), null));
       }
     } catch (Exception e) {
       log.error("Could not extract docfield from {}", f, e);

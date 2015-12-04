@@ -74,6 +74,7 @@ public class EntityDelete extends SessionAction {
     }
     IndexElement indexElement = session.globalIndex.getById(sessionEntry.getId());
     session.globalIndex.removeEntry(indexElement);
+    session.luceneIndex.removeEntry(sessionEntry);
   }
 
   @Override

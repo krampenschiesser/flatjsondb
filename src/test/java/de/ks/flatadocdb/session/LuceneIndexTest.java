@@ -34,6 +34,7 @@ import org.junit.Test;
 
 import java.nio.file.Path;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class LuceneIndexTest {
@@ -76,5 +77,50 @@ public class LuceneIndexTest {
       return doc;
     });
     assertNotNull(document);
+  }
+
+  @Test
+  public void testUpdate() throws Exception {
+    TestEntity testEntity = new TestEntity("Schnitzel").setAttribute("Saftig");
+    Session session = new Session(metamodel, repository, index, luceneIndex);
+    session.persist(testEntity);
+    session.prepare();
+    session.commit();
+
+
+    session = new Session(metamodel, repository, index, luceneIndex);
+    TestEntity read = session.findById(TestEntity.class, testEntity.getId()).get();
+    read.setAttribute("Zaeh");
+    session.prepare();
+    session.commit();
+
+    Document document = session.lucene(searcher -> {
+      TermQuery termQuery = new TermQuery(new Term(StandardLuceneFields.NATURAL_ID.name(), "Schnitzel"));
+      TopDocs search = searcher.search(termQuery, 1);
+      ScoreDoc scoreDoc = search.scoreDocs[0];
+      Document doc = searcher.doc(scoreDoc.doc);
+      return doc;
+    });
+    assertNotNull(document);
+    assertEquals("Zaeh", document.get("attribute"));
+  }
+
+  @Test
+  public void testDelete() throws Exception {
+    TestEntity testEntity = new TestEntity("Schnitzel").setAttribute("Saftig");
+    Session session = new Session(metamodel, repository, index, luceneIndex);
+    session.persist(testEntity);
+    session.prepare();
+    session.commit();
+
+
+    session = new Session(metamodel, repository, index, luceneIndex);
+    TestEntity read = session.findById(TestEntity.class, testEntity.getId()).get();
+    session.remove(read);
+    session.prepare();
+    session.commit();
+
+    int documentAmount = session.lucene(searcher -> searcher.getIndexReader().maxDoc());
+    assertEquals(0, documentAmount);
   }
 }

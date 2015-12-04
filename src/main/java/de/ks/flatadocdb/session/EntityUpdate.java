@@ -55,5 +55,7 @@ public class EntityUpdate extends SessionAction {
     moveFlushFile(getFlushPath());
 
     executeLifecycleAction(LifeCycle.POST_UPDATE);
+
+    session.luceneIndex.updateEntry(sessionEntry);
   }
 }

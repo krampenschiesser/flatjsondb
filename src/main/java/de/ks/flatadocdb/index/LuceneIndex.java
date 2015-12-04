@@ -23,6 +23,7 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
@@ -46,34 +47,73 @@ public class LuceneIndex {
   }
 
   public void addEntry(SessionEntry sessionEntry) {
+    new LuceneWrite(writer -> {
+      writeEntry(sessionEntry, writer);
+    });
+  }
+
+  public void updateEntry(SessionEntry sessionEntry) {
+    new LuceneWrite(writer -> {
+      deleteEntry(sessionEntry, writer);
+      writeEntry(sessionEntry, writer);
+    });
+  }
+
+  public void removeEntry(SessionEntry sessionEntry) {
+    new LuceneWrite(writer -> {
+      deleteEntry(sessionEntry, writer);
+    });
+  }
+
+  protected void deleteEntry(SessionEntry sessionEntry, IndexWriter writer) throws IOException {
+    writer.deleteDocuments(new Term(StandardLuceneFields.ID.name(), sessionEntry.getId()));
+  }
+
+  protected void writeEntry(SessionEntry sessionEntry, IndexWriter writer) throws IOException {
     LuceneDocumentExtractor luceneExtractor = sessionEntry.getEntityDescriptor().getLuceneExtractor();
-
-    try (StandardAnalyzer analyzer = new StandardAnalyzer()) {
-      IndexWriterConfig config = new IndexWriterConfig(analyzer);
-      try (IndexWriter indexWriter = new IndexWriter(directory, config)) {
-        @SuppressWarnings("unchecked")
-        Document document = luceneExtractor.createDocument(sessionEntry.getObject());
-        if (document == null) {
-          document = new Document();
-        }
-        for (StandardLuceneFields luceneField : StandardLuceneFields.values()) {
-          String key = luceneField.name();
-          if (document.getField(key) != null) {
-            document.removeField(key);
-          }
-        }
-        document.add(StandardLuceneFields.ID.create(sessionEntry.getId()));
-        document.add(StandardLuceneFields.FILENAME.create(sessionEntry.getFileName()));
-        document.add(StandardLuceneFields.NATURAL_ID.create(String.valueOf(sessionEntry.getNaturalId())));
-
-        indexWriter.addDocument(document);
-      } catch (Exception e) {
-        throw new RuntimeException(e);
+    @SuppressWarnings("unchecked")
+    Document document = luceneExtractor.createDocument(sessionEntry.getObject());
+    if (document == null) {
+      document = new Document();
+    }
+    for (StandardLuceneFields luceneField : StandardLuceneFields.values()) {
+      String key = luceneField.name();
+      if (document.getField(key) != null) {
+        document.removeField(key);
       }
     }
+    document.add(StandardLuceneFields.ID.create(sessionEntry.getId()));
+    document.add(StandardLuceneFields.FILENAME.create(sessionEntry.getFileName()));
+    document.add(StandardLuceneFields.NATURAL_ID.create(String.valueOf(sessionEntry.getNaturalId())));
+
+    writer.addDocument(document);
   }
 
   public Directory getDirectory() {
     return directory;
+  }
+
+  interface LuceneWriteConsumer {
+    void apply(IndexWriter writer) throws IOException;
+  }
+
+  class LuceneWrite {
+    private final LuceneWriteConsumer consumer;
+
+    public LuceneWrite(LuceneWriteConsumer consumer) {
+      this.consumer = consumer;
+      execute();
+    }
+
+    private void execute() {
+      try (StandardAnalyzer analyzer = new StandardAnalyzer()) {
+        IndexWriterConfig config = new IndexWriterConfig(analyzer);
+        try (IndexWriter indexWriter = new IndexWriter(directory, config)) {
+          consumer.apply(indexWriter);
+        }
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 }

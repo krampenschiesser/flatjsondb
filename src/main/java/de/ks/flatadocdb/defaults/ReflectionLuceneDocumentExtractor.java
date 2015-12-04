@@ -19,6 +19,7 @@ import com.google.common.primitives.Primitives;
 import de.ks.flatadocdb.ifc.LuceneDocumentExtractor;
 import org.apache.commons.lang3.reflect.TypeUtils;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexableField;
@@ -32,6 +33,7 @@ import java.lang.reflect.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
@@ -77,6 +79,8 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
         return createCollectionDocField(f, getter);
       } else if (String.class.equals(type)) {
         return createStringDocField(f, getter);
+      } else if (LocalDateTime.class.equals(type)) {
+        return createLocalDateTimeDocField(f, getter);
       } else {
         return new DocField(f, getter, (id, value) -> new StringField(id, String.valueOf(value), null));
       }
@@ -84,6 +88,14 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
       log.error("Could not extract docfield from {}", f, e);
       throw new RuntimeException(e);
     }
+  }
+
+  private DocField createLocalDateTimeDocField(Field f, MethodHandle getter) {
+    return new DocField(f, getter, (id, value) -> {
+      LocalDateTime localDateTime = (LocalDateTime) value;
+      long utcTime = localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
+      return new LongField(id, utcTime, org.apache.lucene.document.Field.Store.YES);
+    });
   }
 
   private ReflectionLuceneDocumentExtractor.DocField createStringDocField(Field f, MethodHandle getter) {

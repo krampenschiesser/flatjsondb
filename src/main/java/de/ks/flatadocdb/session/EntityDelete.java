@@ -16,7 +16,6 @@
 package de.ks.flatadocdb.session;
 
 import de.ks.flatadocdb.Repository;
-import de.ks.flatadocdb.index.IndexElement;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 
 import java.io.IOException;
@@ -72,8 +71,7 @@ public class EntityDelete extends SessionAction {
         throw new RuntimeException(e);
       }
     }
-    IndexElement indexElement = session.globalIndex.getById(sessionEntry.getId());
-    session.globalIndex.removeEntry(indexElement);
+    session.globalIndex.removeEntry(sessionEntry);
     session.luceneIndex.removeEntry(sessionEntry);
   }
 

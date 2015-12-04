@@ -40,7 +40,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-public class GlobalIndex {
+public class GlobalIndex implements Index {
   private static final Logger log = LoggerFactory.getLogger(GlobalIndex.class);
 
   protected final Map<Serializable, IndexElement> naturalIdToElement = new ConcurrentHashMap<>();
@@ -61,16 +61,20 @@ public class GlobalIndex {
   }
 
   public void addEntry(SessionEntry sessionEntry) {
-    addEntry(new IndexElement(repository, sessionEntry.getCompletePath(), sessionEntry.getId(), sessionEntry.getNaturalId(), sessionEntry.getObject().getClass()));
-  }
-  public void addEntry(IndexElement element) {
+    IndexElement element = new IndexElement(repository, sessionEntry.getCompletePath(), sessionEntry.getId(), sessionEntry.getNaturalId(), sessionEntry.getObject().getClass());
     idToElement.put(element.getId(), element);
     if (element.hasNaturalId()) {
       naturalIdToElement.put(element.getNaturalId(), element);
     }
   }
 
-  public void removeEntry(IndexElement element) {
+  public void updateEntry(SessionEntry sessionEntry) {
+    removeEntry(sessionEntry);
+    addEntry(sessionEntry);
+  }
+
+  public void removeEntry(SessionEntry sessionEntry) {
+    IndexElement element = new IndexElement(repository, sessionEntry.getCompletePath(), sessionEntry.getId(), sessionEntry.getNaturalId(), sessionEntry.getObject().getClass());
     idToElement.remove(element.getId());
     if (element.hasNaturalId()) {
       naturalIdToElement.remove(element.getNaturalId());

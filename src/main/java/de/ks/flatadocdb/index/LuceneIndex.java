@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class LuceneIndex {
+public class LuceneIndex implements Index {
   public static final String LUCENE_INDEX_FOLDER = ".lucene";
   private final Directory directory;
 

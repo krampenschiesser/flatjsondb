@@ -27,15 +27,12 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
@@ -52,7 +49,7 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
     Set<DocField> fields = getFields(clazz);
 
     Document doc = new Document();
-    fields.stream().map(f -> f.apply(instance)).forEach(doc::add);
+    fields.stream().map(f -> f.apply(instance)).filter(Objects::nonNull).forEach(doc::add);
     return doc;
   }
 
@@ -61,7 +58,7 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
     if (!cache.containsKey(clazz)) {
       @SuppressWarnings("unchecked")
       Set<Field> allFields = ReflectionUtils.getAllFields(clazz, this::filterField);
-      Set<DocField> docFields = allFields.stream().map(this::createDocField).collect(Collectors.toSet());
+      Set<DocField> docFields = allFields.stream().map(this::createDocField).filter(Objects::nonNull).collect(Collectors.toSet());
       cache.putIfAbsent(clazz, docFields);
     }
     return cache.get(clazz);
@@ -73,7 +70,19 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
       f.setAccessible(true);
       MethodHandle getter = MethodHandles.lookup().unreflectGetter(f);
       if (TypeUtils.isArrayType(type)) {
-        return new DocField(f, getter, (id, value) -> new TextField(id, Arrays.toString((Object[]) value), null));
+        return new DocField(f, getter, (id, value) -> {
+          StringBuilder builder = new StringBuilder();
+
+          int length = Array.getLength(value);
+          for (int i = 0; i < length; i++) {
+            Object element = Array.get(value, i);
+            builder.append(element);
+            if (i != length - 1) {
+              builder.append(", ");
+            }
+          }
+          return new TextField(id, builder.toString(), null);
+        });
       } else if (Collection.class.isAssignableFrom(type)) {
         return new DocField(f, getter, (id, value) -> {
           @SuppressWarnings("unchecked")
@@ -143,7 +152,11 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
     public IndexableField apply(Object instance) {
       try {
         Object value = handle.invoke(instance);
-        return fieldSupplier.apply(field.getName(), value);
+        if (value == null) {
+          return null;
+        } else {
+          return fieldSupplier.apply(field.getName(), value);
+        }
       } catch (Throwable t) {
         log.error("Could not get value from field", t);
         return null;

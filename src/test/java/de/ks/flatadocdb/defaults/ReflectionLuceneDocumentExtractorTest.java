@@ -31,8 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.*;
 
 public class ReflectionLuceneDocumentExtractorTest {
   private static final Logger log = LoggerFactory.getLogger(ReflectionLuceneDocumentExtractorTest.class);
@@ -55,7 +54,7 @@ public class ReflectionLuceneDocumentExtractorTest {
   public void testGetArrayFields() throws Exception {
     ReflectionLuceneDocumentExtractor extractor = new ReflectionLuceneDocumentExtractor();
     Set<ReflectionLuceneDocumentExtractor.DocField> fields = extractor.getFields(ClassWithArray.class);
-    assertEquals(fields.toString(), 1, fields.size());
+    assertEquals(fields.toString(), 2, fields.size());
   }
 
   @Test
@@ -69,11 +68,20 @@ public class ReflectionLuceneDocumentExtractorTest {
   public void testDocFieldArray() throws Exception {
     ClassWithArray classWithArray = new ClassWithArray();
     classWithArray.strings = new String[]{"bla", "blubb"};
+    classWithArray.booleans = new boolean[]{true, false};
 
-    ReflectionLuceneDocumentExtractor.DocField docField = new ReflectionLuceneDocumentExtractor().getFields(ClassWithArray.class).iterator().next();
-    IndexableField indexableField = docField.apply(classWithArray);
-    assertEquals("strings", indexableField.name());
-    assertEquals("[bla, blubb]", indexableField.stringValue());
+    Set<ReflectionLuceneDocumentExtractor.DocField> fields = new ReflectionLuceneDocumentExtractor().getFields(ClassWithArray.class);
+    for (ReflectionLuceneDocumentExtractor.DocField field : fields) {
+      if (field.getField().getName().equals("strings")) {
+        IndexableField indexableField = field.apply(classWithArray);
+        assertEquals("strings", indexableField.name());
+        assertEquals("bla, blubb", indexableField.stringValue());
+      } else {
+        IndexableField indexableField = field.apply(classWithArray);
+        assertEquals("booleans", indexableField.name());
+        assertEquals("true, false", indexableField.stringValue());
+      }
+    }
   }
 
   @Test
@@ -102,11 +110,10 @@ public class ReflectionLuceneDocumentExtractorTest {
 
   @Test
   public void testCreateDocument() throws Exception {
-
     TestEntity testEntity = new TestEntity("huhu").setAttribute("bla");
     Document document = new ReflectionLuceneDocumentExtractor().createDocument(testEntity);
-    assertThat(document.getFields(), Matchers.hasSize(6));
-    assertEquals("null", document.getField("id").stringValue());
+    assertThat(document.getFields(), Matchers.hasSize(4));
+    assertNull(document.getField("id"));//class field
     assertEquals("huhu", document.getField("name").stringValue());
     assertEquals("bla", document.getField("attribute").stringValue());
   }
@@ -116,11 +123,17 @@ public class ReflectionLuceneDocumentExtractorTest {
     TestEntity testEntity = new TestEntity("huhu").setAttribute("bla");
 
     Set<ReflectionLuceneDocumentExtractor.DocField> fields = new ReflectionLuceneDocumentExtractor().getFields(TestEntity.class);
-    fields.forEach(f -> log.info(f.apply(testEntity).toString()));
+    for (ReflectionLuceneDocumentExtractor.DocField field : fields) {
+      IndexableField indexableField = field.apply(testEntity);
+      if (indexableField != null) {
+        log.info("{}", indexableField);
+      }
+    }
   }
 
   public static class ClassWithArray {
     String[] strings;
+    boolean[] booleans;
     Object[] objects;
   }
 

@@ -19,7 +19,7 @@ import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexableField;
 
 public enum StandardLuceneFields {
-  ID, FILENAME;
+  ID, NATURAL_ID, FILENAME;
 
   public IndexableField create(String value) {
     return new TextField(name(), value, null);

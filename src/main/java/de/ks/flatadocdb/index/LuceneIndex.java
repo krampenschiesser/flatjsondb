@@ -56,10 +56,12 @@ public class LuceneIndex {
         if (document == null) {
           document = new Document();
         }
-        document.removeField(StandardLuceneFields.ID.name());
-        document.removeField(StandardLuceneFields.FILENAME.name());
+        for (StandardLuceneFields luceneField : StandardLuceneFields.values()) {
+          document.removeField(luceneField.name());
+        }
         document.add(StandardLuceneFields.ID.create(sessionEntry.getId()));
         document.add(StandardLuceneFields.FILENAME.create(sessionEntry.getFileName()));
+        document.add(StandardLuceneFields.NATURAL_ID.create(String.valueOf(sessionEntry.getNaturalId())));
 
         indexWriter.addDocument(document);
       } catch (Exception e) {

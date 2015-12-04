@@ -17,13 +17,17 @@ package de.ks.flatadocdb.defaults;
 
 import com.google.common.primitives.Primitives;
 import de.ks.flatadocdb.ifc.LuceneDocumentExtractor;
+import org.apache.commons.lang3.reflect.TypeUtils;
 import org.apache.lucene.document.Document;
 import org.reflections.ReflectionUtils;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,7 +37,8 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
 
   @Override
   public Document createDocument(Object instance) {
-    Set<Field> fields = getFields(instance);
+    Class<?> clazz = instance.getClass();
+    Set<Field> fields = getFields(clazz);
     for (Field field : fields) {
 
     }
@@ -41,8 +46,7 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
     return null;
   }
 
-  protected Set<Field> getFields(Object instance) {
-    Class<?> clazz = instance.getClass();
+  protected Set<Field> getFields(Class<?> clazz) {
 
     if (!cache.containsKey(clazz)) {
       @SuppressWarnings("unchecked")
@@ -57,14 +61,33 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
     if (noStatic) {
       Class<?> type = f.getType();
 
-      boolean validType = Primitives.allPrimitiveTypes().contains(Primitives.unwrap(type));
-      validType = validType || type.equals(String.class);
-      validType = validType || type.equals(Enum.class);
+      boolean validType = isValidBaseType(type);
+
       Type genericType = f.getGenericType();
-      validType = validType || type.equals(Array.class);
-      validType = validType || Collection.class.isAssignableFrom(type);
+      if (!validType && Collection.class.isAssignableFrom(type) && genericType instanceof ParameterizedType) {
+        Type[] actualTypeArguments = ((ParameterizedType) genericType).getActualTypeArguments();
+        if (actualTypeArguments.length == 1 && actualTypeArguments[0] instanceof Class) {
+          validType = isValidBaseType((Class<?>) actualTypeArguments[0]);
+        }
+      }
+      if (!validType && TypeUtils.isArrayType(type)) {
+        Type arrayComponentType = TypeUtils.getArrayComponentType(type);
+        if (arrayComponentType instanceof Class) {
+          validType = isValidBaseType((Class<?>) arrayComponentType);
+        }
+      }
       return validType;
     }
     return false;
+  }
+
+  private boolean isValidBaseType(Class<?> type) {
+    boolean validType = Primitives.allPrimitiveTypes().contains(Primitives.unwrap(type));
+    validType = validType || type.equals(String.class);
+    validType = validType || type.equals(LocalDate.class);
+    validType = validType || type.equals(LocalTime.class);
+    validType = validType || type.equals(LocalDateTime.class);
+    validType = validType || Enum.class.isAssignableFrom(type);
+    return validType;
   }
 }

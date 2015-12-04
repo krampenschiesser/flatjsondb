@@ -82,7 +82,7 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
       } else if (LocalDateTime.class.equals(type)) {
         return createLocalDateTimeDocField(f, getter);
       } else {
-        return new DocField(f, getter, (id, value) -> new StringField(id, String.valueOf(value), null));
+        return new DocField(f, getter, (id, value) -> new StringField(id, String.valueOf(value), org.apache.lucene.document.Field.Store.YES));
       }
     } catch (Exception e) {
       log.error("Could not extract docfield from {}", f, e);
@@ -102,9 +102,9 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
     return new DocField(f, getter, (id, value) -> {
       String stringValue = String.valueOf(value);
       if (stringValue.length() > MAX_LENGHT_STRINGFIELD) {
-        return new TextField(id, stringValue, null);
+        return new TextField(id, stringValue, org.apache.lucene.document.Field.Store.YES);
       } else {
-        return new StringField(id, stringValue, null);
+        return new StringField(id, stringValue, org.apache.lucene.document.Field.Store.YES);
       }
     });
   }
@@ -113,7 +113,7 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
     return new DocField(f, getter, (id, value) -> {
       @SuppressWarnings("unchecked")
       String string = ((Collection<Object>) value).stream().map(String::valueOf).collect(Collectors.joining(", "));
-      return new StringField(id, string, null);
+      return new StringField(id, string, org.apache.lucene.document.Field.Store.YES);
     });
   }
 
@@ -129,7 +129,7 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
           builder.append(", ");
         }
       }
-      return new StringField(id, builder.toString(), null);
+      return new StringField(id, builder.toString(), org.apache.lucene.document.Field.Store.YES);
     });
   }
 

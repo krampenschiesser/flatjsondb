@@ -72,34 +72,11 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
       f.setAccessible(true);
       MethodHandle getter = MethodHandles.lookup().unreflectGetter(f);
       if (TypeUtils.isArrayType(type)) {
-        return new DocField(f, getter, (id, value) -> {
-          StringBuilder builder = new StringBuilder();
-
-          int length = Array.getLength(value);
-          for (int i = 0; i < length; i++) {
-            Object element = Array.get(value, i);
-            builder.append(element);
-            if (i != length - 1) {
-              builder.append(", ");
-            }
-          }
-          return new StringField(id, builder.toString(), null);
-        });
+        return createArrayDocField(f, getter);
       } else if (Collection.class.isAssignableFrom(type)) {
-        return new DocField(f, getter, (id, value) -> {
-          @SuppressWarnings("unchecked")
-          String string = ((Collection<Object>) value).stream().map(String::valueOf).collect(Collectors.joining(", "));
-          return new StringField(id, string, null);
-        });
+        return createCollectionDocField(f, getter);
       } else if (String.class.equals(type)) {
-        return new DocField(f, getter, (id, value) -> {
-          String stringValue = String.valueOf(value);
-          if (stringValue.length() > MAX_LENGHT_STRINGFIELD) {
-            return new TextField(id, stringValue, null);
-          } else {
-            return new StringField(id, stringValue, null);
-          }
-        });
+        return createStringDocField(f, getter);
       } else {
         return new DocField(f, getter, (id, value) -> new StringField(id, String.valueOf(value), null));
       }
@@ -107,6 +84,41 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
       log.error("Could not extract docfield from {}", f, e);
       throw new RuntimeException(e);
     }
+  }
+
+  private ReflectionLuceneDocumentExtractor.DocField createStringDocField(Field f, MethodHandle getter) {
+    return new DocField(f, getter, (id, value) -> {
+      String stringValue = String.valueOf(value);
+      if (stringValue.length() > MAX_LENGHT_STRINGFIELD) {
+        return new TextField(id, stringValue, null);
+      } else {
+        return new StringField(id, stringValue, null);
+      }
+    });
+  }
+
+  private ReflectionLuceneDocumentExtractor.DocField createCollectionDocField(Field f, MethodHandle getter) {
+    return new DocField(f, getter, (id, value) -> {
+      @SuppressWarnings("unchecked")
+      String string = ((Collection<Object>) value).stream().map(String::valueOf).collect(Collectors.joining(", "));
+      return new StringField(id, string, null);
+    });
+  }
+
+  private ReflectionLuceneDocumentExtractor.DocField createArrayDocField(Field f, MethodHandle getter) {
+    return new DocField(f, getter, (id, value) -> {
+      StringBuilder builder = new StringBuilder();
+
+      int length = Array.getLength(value);
+      for (int i = 0; i < length; i++) {
+        Object element = Array.get(value, i);
+        builder.append(element);
+        if (i != length - 1) {
+          builder.append(", ");
+        }
+      }
+      return new StringField(id, builder.toString(), null);
+    });
   }
 
   protected boolean filterField(Field f) {

@@ -18,10 +18,7 @@ package de.ks.flatadocdb.metamodel;
 
 import de.ks.flatadocdb.annotation.*;
 import de.ks.flatadocdb.annotation.lifecycle.LifeCycle;
-import de.ks.flatadocdb.ifc.EntityPersister;
-import de.ks.flatadocdb.ifc.FileGenerator;
-import de.ks.flatadocdb.ifc.FolderGenerator;
-import de.ks.flatadocdb.ifc.PropertyPersister;
+import de.ks.flatadocdb.ifc.*;
 import de.ks.flatadocdb.metamodel.relation.RelationParser;
 import org.reflections.ReflectionUtils;
 
@@ -43,6 +40,7 @@ public class Parser extends BaseParser {
     EntityPersister persister = getInstance(annotation.persister());
     FileGenerator fileGenerator = getInstance(annotation.fileGenerator());
     FolderGenerator folderGenerator = getInstance(annotation.folderGenerator());
+    LuceneDocumentExtractor luceneDocumentExtractor = getInstance(annotation.luceneDocExtractor());
 
     Set<Field> allFields = ReflectionUtils.getAllFields(clazz, this::filterField);
 
@@ -63,6 +61,7 @@ public class Parser extends BaseParser {
     builder.version(versionGetterHandle, versionSetterHandle);
     builder.natural(naturalIdHandle);
     builder.persister(persister);
+    builder.extractor(luceneDocumentExtractor);
     builder.fileGenerator(fileGenerator);
     builder.folderGenerator(folderGenerator);
     builder.properties(propertyPersisters);

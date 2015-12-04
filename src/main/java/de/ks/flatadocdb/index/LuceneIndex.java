@@ -56,6 +56,8 @@ public class LuceneIndex {
         if (document == null) {
           document = new Document();
         }
+        document.removeField(StandardLuceneFields.ID.name());
+        document.removeField(StandardLuceneFields.FILENAME.name());
         document.add(StandardLuceneFields.ID.create(sessionEntry.getId()));
         document.add(StandardLuceneFields.FILENAME.create(sessionEntry.getFileName()));
 

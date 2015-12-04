@@ -19,8 +19,14 @@ import com.google.common.primitives.Primitives;
 import de.ks.flatadocdb.ifc.LuceneDocumentExtractor;
 import org.apache.commons.lang3.reflect.TypeUtils;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.IndexableField;
 import org.reflections.ReflectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
@@ -28,32 +34,59 @@ import java.lang.reflect.Type;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtractor {
-  static ConcurrentHashMap<Class<?>, Set<Field>> cache = new ConcurrentHashMap<>();
+  private static final Logger log = LoggerFactory.getLogger(ReflectionLuceneDocumentExtractor.class);
+
+  static ConcurrentHashMap<Class<?>, Set<DocField>> cache = new ConcurrentHashMap<>();
 
   @Override
   public Document createDocument(Object instance) {
     Class<?> clazz = instance.getClass();
-    Set<Field> fields = getFields(clazz);
-    for (Field field : fields) {
+    Set<DocField> fields = getFields(clazz);
 
-    }
-
-    return null;
+    Document doc = new Document();
+    fields.stream().map(f -> f.apply(instance)).forEach(doc::add);
+    return doc;
   }
 
-  protected Set<Field> getFields(Class<?> clazz) {
+  protected Set<DocField> getFields(Class<?> clazz) {
 
     if (!cache.containsKey(clazz)) {
       @SuppressWarnings("unchecked")
       Set<Field> allFields = ReflectionUtils.getAllFields(clazz, this::filterField);
-      cache.putIfAbsent(clazz, allFields);
+      Set<DocField> docFields = allFields.stream().map(this::createDocField).collect(Collectors.toSet());
+      cache.putIfAbsent(clazz, docFields);
     }
     return cache.get(clazz);
+  }
+
+  protected DocField createDocField(Field f) {
+    try {
+      Class<?> type = f.getType();
+      f.setAccessible(true);
+      MethodHandle getter = MethodHandles.lookup().unreflectGetter(f);
+      if (TypeUtils.isArrayType(type)) {
+        return new DocField(f, getter, (id, value) -> new TextField(id, Arrays.toString((Object[]) value), null));
+      } else if (Collection.class.isAssignableFrom(type)) {
+        return new DocField(f, getter, (id, value) -> {
+          @SuppressWarnings("unchecked")
+          String string = ((Collection<Object>) value).stream().map(String::valueOf).collect(Collectors.joining(", "));
+          return new TextField(id, string, null);
+        });
+      } else {
+        return new DocField(f, getter, (id, value) -> new TextField(id, String.valueOf(value), null));
+      }
+    } catch (Exception e) {
+      log.error("Could not extract docfield from {}", f, e);
+      throw new RuntimeException(e);
+    }
   }
 
   protected boolean filterField(Field f) {
@@ -89,5 +122,36 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
     validType = validType || type.equals(LocalDateTime.class);
     validType = validType || Enum.class.isAssignableFrom(type);
     return validType;
+  }
+
+  public static class DocField {
+    private static final Logger log = LoggerFactory.getLogger(DocField.class);
+    private final Field field;
+    private final MethodHandle handle;
+    private final BiFunction<String, Object, ? extends IndexableField> fieldSupplier;
+
+    public DocField(Field field, MethodHandle handle) {
+      this(field, handle, (id, valueObject) -> new TextField(id, String.valueOf(valueObject), null));
+    }
+
+    public DocField(Field field, MethodHandle handle, BiFunction<String, Object, ? extends IndexableField> fieldSupplier) {
+      this.field = field;
+      this.handle = handle;
+      this.fieldSupplier = fieldSupplier;
+    }
+
+    public IndexableField apply(Object instance) {
+      try {
+        Object value = handle.invoke(instance);
+        return fieldSupplier.apply(field.getName(), value);
+      } catch (Throwable t) {
+        log.error("Could not get value from field", t);
+        return null;
+      }
+    }
+
+    public Field getField() {
+      return field;
+    }
   }
 }

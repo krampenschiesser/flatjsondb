@@ -18,6 +18,7 @@ package de.ks.flatadocdb.session;
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.TempRepository;
 import de.ks.flatadocdb.index.GlobalIndex;
+import de.ks.flatadocdb.index.LuceneIndex;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
 import org.junit.Before;
@@ -36,6 +37,7 @@ public class LifeCycleTest {
   private GlobalIndex index;
   private Repository repository;
   private Path path;
+  private LuceneIndex luceneIndex;
 
   @Before
   public void setUp() throws Exception {
@@ -44,13 +46,14 @@ public class LifeCycleTest {
 
     repository = tempRepository.getRepository();
     index = new GlobalIndex(repository, metamodel);
+    luceneIndex = new LuceneIndex(repository);
   }
 
   @Test
   public void testPreUpdate() throws Exception {
     TestEntity entity = new TestEntity("Steak");
 
-    Session session = new Session(metamodel, repository, index);
+    Session session = new Session(metamodel, repository, index, luceneIndex);
     session.persist(entity);
     session.prepare();
 

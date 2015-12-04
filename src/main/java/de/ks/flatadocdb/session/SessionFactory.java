@@ -19,9 +19,11 @@ package de.ks.flatadocdb.session;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.index.GlobalIndex;
+import de.ks.flatadocdb.index.LuceneIndex;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.session.transaction.local.TransactionProvider;
 import de.ks.flatadocdb.session.transaction.local.Transactional;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +38,7 @@ import java.util.stream.Collectors;
 
 public class SessionFactory implements AutoCloseable {
   private static final Logger log = LoggerFactory.getLogger(SessionFactory.class);
-  private final LinkedHashMap<Repository, GlobalIndex> repositories = new LinkedHashMap<>();
+  private final LinkedHashMap<Repository, Pair<GlobalIndex, LuceneIndex>> repository2Index = new LinkedHashMap<>();
   private final Map<String, Repository> repositoryByName = new HashMap<>();
   private final MetaModel metaModel = new MetaModel();
   private final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(),//
@@ -60,15 +62,16 @@ public class SessionFactory implements AutoCloseable {
     }
   }
 
-  public List<Repository> getRepositories() {
-    return repositories.keySet().stream().collect(Collectors.toList());
+  public List<Repository> getRepository2Index() {
+    return repository2Index.keySet().stream().collect(Collectors.toList());
   }
 
   public void addRepository(Repository repository) {
     Objects.requireNonNull(repository, "Repository is required");
     log.info("Added repository {}", repository.getPath());
     GlobalIndex index = new GlobalIndex(repository, metaModel, executorService);
-    repositories.put(repository, index);
+    LuceneIndex luceneIndex = new LuceneIndex(repository);
+    repository2Index.put(repository, Pair.of(index, luceneIndex));
     repositoryByName.put(repository.getName(), repository);
     index.recreate();
   }
@@ -79,15 +82,16 @@ public class SessionFactory implements AutoCloseable {
 
   public Session openSession(Repository repository) {
     Objects.requireNonNull(repository, "Repository is required");
-    if (!repositories.containsKey(repository)) {
+    if (!repository2Index.containsKey(repository)) {
       addRepository(repository);
     }
-    return new Session(metaModel, repository, repositories.get(repository));
+    Pair<GlobalIndex, LuceneIndex> pair = repository2Index.get(repository);
+    return new Session(metaModel, repository, pair.getLeft(), pair.getRight());
   }
 
   public Session openSession() {
-    if (repositories.size() == 1) {
-      return openSession(repositories.keySet().iterator().next());
+    if (repository2Index.size() == 1) {
+      return openSession(repository2Index.keySet().iterator().next());
     } else {
       throw new IllegalStateException("Requested to open a session without a specified repository.");
     }
@@ -115,6 +119,6 @@ public class SessionFactory implements AutoCloseable {
 
   @Override
   public void close() {
-    repositories.keySet().forEach(Repository::close);
+    repository2Index.keySet().forEach(Repository::close);
   }
 }

@@ -19,7 +19,6 @@ import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.annotation.lifecycle.LifeCycle;
 import de.ks.flatadocdb.exception.StaleObjectFileException;
 import de.ks.flatadocdb.ifc.EntityPersister;
-import de.ks.flatadocdb.index.IndexElement;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,7 +66,7 @@ public class EntityInsertion extends SessionAction {
   }
 
   private void addToIndex(Session session) {
-    session.globalIndex.addEntry(new IndexElement(repository, sessionEntry.getCompletePath(), sessionEntry.getId(), sessionEntry.getNaturalId(), sessionEntry.getObject().getClass()));
+    session.globalIndex.addEntry(sessionEntry);
+    session.luceneIndex.addEntry(sessionEntry);
   }
-
 }

@@ -26,6 +26,7 @@ import de.ks.flatadocdb.ifc.FileGenerator;
 import de.ks.flatadocdb.ifc.FolderGenerator;
 import de.ks.flatadocdb.index.GlobalIndex;
 import de.ks.flatadocdb.index.IndexElement;
+import de.ks.flatadocdb.index.LuceneIndex;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.relation.ChildRelation;
@@ -49,6 +50,7 @@ public class Session implements TransactionResource {
   protected final MetaModel metaModel;
   protected final Repository repository;
   protected final GlobalIndex globalIndex;
+  protected final LuceneIndex luceneIndex;
   protected final DefaultIdGenerator idGenerator = new DefaultIdGenerator();
 
   protected final Map<String, SessionEntry> entriesById = new HashMap<>();
@@ -59,10 +61,11 @@ public class Session implements TransactionResource {
   protected final DirtyChecker dirtyChecker;
   protected final Thread thread;
 
-  public Session(MetaModel metaModel, Repository repository, GlobalIndex globalIndex) {
+  public Session(MetaModel metaModel, Repository repository, GlobalIndex globalIndex, LuceneIndex luceneIndex) {
     this.metaModel = metaModel;
     this.repository = repository;
     this.globalIndex = globalIndex;
+    this.luceneIndex = luceneIndex;
     dirtyChecker = new DirtyChecker(repository, metaModel);
     this.thread = Thread.currentThread();
   }

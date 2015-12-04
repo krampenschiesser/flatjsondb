@@ -23,10 +23,7 @@ import de.ks.flatadocdb.annotation.Children;
 import de.ks.flatadocdb.annotation.ToMany;
 import de.ks.flatadocdb.annotation.ToOne;
 import de.ks.flatadocdb.annotation.lifecycle.LifeCycle;
-import de.ks.flatadocdb.ifc.EntityPersister;
-import de.ks.flatadocdb.ifc.FileGenerator;
-import de.ks.flatadocdb.ifc.FolderGenerator;
-import de.ks.flatadocdb.ifc.PropertyPersister;
+import de.ks.flatadocdb.ifc.*;
 import de.ks.flatadocdb.metamodel.relation.*;
 
 import javax.annotation.Nullable;
@@ -53,6 +50,7 @@ public class EntityDescriptor {
     private EntityPersister persister;
     private FolderGenerator folderGenerator;
     private FileGenerator fileGenerator;
+    private LuceneDocumentExtractor extractor;
     private Class<?> entityClass;
     private Map<LifeCycle, Set<MethodHandle>> lifecycleMethods;
     private final Map<Field, PropertyPersister> propertyPersisters = new HashMap<>();
@@ -112,6 +110,11 @@ public class EntityDescriptor {
       return this;
     }
 
+    public Builder extractor(LuceneDocumentExtractor extractor) {
+      this.extractor = extractor;
+      return this;
+    }
+
     public Builder lifecycle(Map<LifeCycle, Set<MethodHandle>> methods) {
       this.lifecycleMethods = methods;
       return this;
@@ -152,6 +155,7 @@ public class EntityDescriptor {
   protected final EntityPersister persister;
   protected final FolderGenerator folderGenerator;
   protected final FileGenerator fileGenerator;
+  protected final LuceneDocumentExtractor luceneExtractor;
   protected final Map<LifeCycle, Set<MethodHandle>> lifecycleMethods;
   protected final Map<Field, PropertyPersister> propertyPersisters;
   protected final Set<ToOneRelation> toOneRelations;
@@ -178,6 +182,7 @@ public class EntityDescriptor {
     this.toManyChildRelations = Collections.unmodifiableSet(b.toManyChildRelations);
     this.folderGenerator = b.folderGenerator;
     this.fileGenerator = b.fileGenerator;
+    this.luceneExtractor = b.extractor;
 
     HashSet<Relation> allRels = new HashSet<>();
     allRels.addAll(toManyChildRelations);
@@ -353,6 +358,10 @@ public class EntityDescriptor {
 
   public Set<Relation> getAllRelations() {
     return allRelations;
+  }
+
+  public LuceneDocumentExtractor getLuceneExtractor() {
+    return luceneExtractor;
   }
 
   @Override

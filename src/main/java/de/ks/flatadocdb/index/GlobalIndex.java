@@ -22,6 +22,7 @@ import de.ks.flatadocdb.defaults.DefaultIdGenerator;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
+import de.ks.flatadocdb.session.SessionEntry;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +60,9 @@ public class GlobalIndex {
     this.executorService = executorService;
   }
 
+  public void addEntry(SessionEntry sessionEntry) {
+    addEntry(new IndexElement(repository, sessionEntry.getCompletePath(), sessionEntry.getId(), sessionEntry.getNaturalId(), sessionEntry.getObject().getClass()));
+  }
   public void addEntry(IndexElement element) {
     idToElement.put(element.getId(), element);
     if (element.hasNaturalId()) {

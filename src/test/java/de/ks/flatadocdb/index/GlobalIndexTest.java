@@ -36,6 +36,7 @@ public class GlobalIndexTest {
   private Repository repository;
   private MetaModel metaModel;
   private GlobalIndex index;
+  private LuceneIndex luceneIndex;
 
   @Before
   public void setUp() throws Exception {
@@ -43,10 +44,11 @@ public class GlobalIndexTest {
     metaModel = new MetaModel();
     metaModel.addEntity(TestEntity.class);
     index = new GlobalIndex(repository, metaModel);
+    luceneIndex = new LuceneIndex(repository);
 
     for (int i = 0; i < COUNT; i++) {
       TestEntity entity = new TestEntity("test" + (i + 1));
-      Session session = new Session(metaModel, repository, index);
+      Session session = new Session(metaModel, repository, index, luceneIndex);
       session.persist(entity);
       session.prepare();
       session.commit();

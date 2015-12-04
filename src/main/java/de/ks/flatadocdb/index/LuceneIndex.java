@@ -16,23 +16,53 @@
 
 package de.ks.flatadocdb.index;
 
+import de.ks.flatadocdb.Repository;
+import de.ks.flatadocdb.ifc.LuceneDocumentExtractor;
+import de.ks.flatadocdb.session.SessionEntry;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class LuceneIndex {
+  public static final String LUCENE_INDEX_FOLDER = ".lucene";
   private final Directory directory;
-//  private final IndexWriter indexWriter;
 
-  public LuceneIndex(Directory directory) throws IOException {
-    this.directory = directory;
-    StandardAnalyzer analyzer = new StandardAnalyzer();
-    IndexWriterConfig config = new IndexWriterConfig(analyzer);
-//    indexWriter = new IndexWriter(directory, config);
+  public LuceneIndex(Repository repository) throws RuntimeException {
+    try {
+      Path resolve = repository.getPath().resolve(LUCENE_INDEX_FOLDER);
+      Files.createDirectories(resolve);
 
+      this.directory = FSDirectory.open(resolve);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
-//    new IndexWriter(directory,);
+  public void addEntry(SessionEntry sessionEntry) {
+    LuceneDocumentExtractor luceneExtractor = sessionEntry.getEntityDescriptor().getLuceneExtractor();
+
+    try (StandardAnalyzer analyzer = new StandardAnalyzer()) {
+      IndexWriterConfig config = new IndexWriterConfig(analyzer);
+      try (IndexWriter indexWriter = new IndexWriter(directory, config)) {
+        @SuppressWarnings("unchecked")
+        Document document = luceneExtractor.createDocument(sessionEntry);
+        if (document == null) {
+          document = new Document();
+        }
+        document.add(StandardLuceneFields.ID.create(sessionEntry.getId()));
+        document.add(StandardLuceneFields.FILENAME.create(sessionEntry.getFileName()));
+
+        indexWriter.addDocument(document);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 }

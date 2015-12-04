@@ -40,7 +40,7 @@ public class LuceneIndexTest {
     Files.createDirectories(path);
 
     FSDirectory directory = FSDirectory.open(path);
-    luceneIndex = new LuceneIndex(directory);
+//    luceneIndex = new LuceneIndex(directory);
   }
 
   @Test

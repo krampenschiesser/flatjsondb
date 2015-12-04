@@ -33,10 +33,13 @@ import de.ks.flatadocdb.metamodel.relation.ChildRelation;
 import de.ks.flatadocdb.metamodel.relation.Relation;
 import de.ks.flatadocdb.session.dirtycheck.DirtyChecker;
 import de.ks.flatadocdb.session.transaction.local.TransactionResource;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.search.IndexSearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
+import java.io.IOException;
 import java.io.Serializable;
 import java.lang.invoke.MethodHandle;
 import java.nio.file.Path;
@@ -301,5 +304,19 @@ public class Session implements TransactionResource {
     if (!currentThread.equals(this.thread)) {
       throw new IllegalSessionThreadException("Trying to use session in thread " + currentThread + " but can only be used in " + thread);
     }
+  }
+
+  public <E> E lucene(LuceneReadFunction<E> read) {
+    try (DirectoryReader reader = DirectoryReader.open(luceneIndex.getDirectory())) {
+      IndexSearcher indexSearcher = new IndexSearcher(reader);
+      return read.apply(indexSearcher);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @FunctionalInterface
+  public interface LuceneReadFunction<R> {
+    R apply(IndexSearcher searcher) throws IOException;
   }
 }

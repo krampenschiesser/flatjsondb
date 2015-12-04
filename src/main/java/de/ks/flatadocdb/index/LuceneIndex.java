@@ -52,12 +52,15 @@ public class LuceneIndex {
       IndexWriterConfig config = new IndexWriterConfig(analyzer);
       try (IndexWriter indexWriter = new IndexWriter(directory, config)) {
         @SuppressWarnings("unchecked")
-        Document document = luceneExtractor.createDocument(sessionEntry);
+        Document document = luceneExtractor.createDocument(sessionEntry.getObject());
         if (document == null) {
           document = new Document();
         }
         for (StandardLuceneFields luceneField : StandardLuceneFields.values()) {
-          document.removeField(luceneField.name());
+          String key = luceneField.name();
+          if (document.getField(key) != null) {
+            document.removeField(key);
+          }
         }
         document.add(StandardLuceneFields.ID.create(sessionEntry.getId()));
         document.add(StandardLuceneFields.FILENAME.create(sessionEntry.getFileName()));

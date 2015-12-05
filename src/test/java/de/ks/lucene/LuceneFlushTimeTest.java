@@ -17,41 +17,38 @@ package de.ks.lucene;
 
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.TempRepository;
-import de.ks.flatadocdb.index.GlobalIndex;
-import de.ks.flatadocdb.index.LuceneIndex;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
 import de.ks.flatadocdb.session.Session;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.nio.file.Path;
-
 public class LuceneFlushTimeTest {
   private MetaModel metamodel;
-  private GlobalIndex index;
-  private LuceneIndex luceneIndex;
   private Repository repository;
-  private Path path;
 
   @Rule
   public TempRepository tempRepository = new TempRepository();
 
   @Before
   public void setUp() throws Exception {
-    metamodel = new MetaModel();
-    metamodel.addEntity(TestEntity.class);
-
     repository = tempRepository.getRepository();
-    path = tempRepository.getPath();
-    index = new GlobalIndex(repository, metamodel);
-    luceneIndex = new LuceneIndex(repository);
+    metamodel = tempRepository.getMetaModel();
+    metamodel.addEntity(TestEntity.class);
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    if (repository != null) {
+      repository.close();
+    }
   }
 
   @Test
   public void testBigSession() throws Exception {
-    Session session = new Session(metamodel, repository, index, luceneIndex);
+    Session session = new Session(metamodel, repository);
     for (int i = 0; i < 1000; i++) {
       TestEntity testEntity = new TestEntity("Schnitzel" + i);
       session.persist(testEntity);

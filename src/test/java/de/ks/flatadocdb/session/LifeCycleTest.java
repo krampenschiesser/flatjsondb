@@ -17,16 +17,12 @@ package de.ks.flatadocdb.session;
 
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.TempRepository;
-import de.ks.flatadocdb.index.GlobalIndex;
-import de.ks.flatadocdb.index.LuceneIndex;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-
-import java.nio.file.Path;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -35,26 +31,17 @@ public class LifeCycleTest {
   public TempRepository tempRepository = new TempRepository();
   private MetaModel metamodel;
 
-  private GlobalIndex index;
   private Repository repository;
-  private Path path;
-  private LuceneIndex luceneIndex;
 
   @Before
   public void setUp() throws Exception {
-    metamodel = new MetaModel();
-    metamodel.addEntity(TestEntity.class);
-
     repository = tempRepository.getRepository();
-    index = new GlobalIndex(repository, metamodel);
-    luceneIndex = new LuceneIndex(repository);
+    metamodel = tempRepository.getMetaModel();
+    metamodel.addEntity(TestEntity.class);
   }
 
   @After
   public void tearDown() throws Exception {
-    if (luceneIndex != null) {
-      luceneIndex.close();
-    }
     if (repository != null) {
       repository.close();
     }
@@ -64,7 +51,7 @@ public class LifeCycleTest {
   public void testPreUpdate() throws Exception {
     TestEntity entity = new TestEntity("Steak");
 
-    Session session = new Session(metamodel, repository, index, luceneIndex);
+    Session session = new Session(metamodel, repository);
     session.persist(entity);
     session.prepare();
 

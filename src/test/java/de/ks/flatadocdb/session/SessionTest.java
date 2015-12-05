@@ -23,7 +23,6 @@ import de.ks.flatadocdb.exception.StaleObjectFileException;
 import de.ks.flatadocdb.exception.StaleObjectStateException;
 import de.ks.flatadocdb.index.GlobalIndex;
 import de.ks.flatadocdb.index.IndexElement;
-import de.ks.flatadocdb.index.LuceneIndex;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
 import org.hamcrest.Matchers;
@@ -41,30 +40,24 @@ import static org.junit.Assert.*;
 public class SessionTest {
 
   private MetaModel metamodel;
-  private GlobalIndex index;
   private Repository repository;
   private Path path;
+  private GlobalIndex index;
 
   @Rule
   public TempRepository tempRepository = new TempRepository();
-  private LuceneIndex luceneIndex;
 
   @Before
   public void setUp() throws Exception {
-    metamodel = new MetaModel();
-    metamodel.addEntity(TestEntity.class);
-
     repository = tempRepository.getRepository();
+    metamodel = tempRepository.getMetaModel();
+    metamodel.addEntity(TestEntity.class);
     path = tempRepository.getPath();
-    index = new GlobalIndex(repository, metamodel);
-    luceneIndex = new LuceneIndex(repository);
+    index = repository.getIndex();
   }
 
   @After
   public void tearDown() throws Exception {
-    if (luceneIndex != null) {
-      luceneIndex.close();
-    }
     if (repository != null) {
       repository.close();
     }
@@ -72,7 +65,7 @@ public class SessionTest {
 
   @Test
   public void testFileWriting() throws Exception {
-    Session session1 = new Session(metamodel, repository, index, luceneIndex);
+    Session session1 = new Session(metamodel, repository);
     TestEntity testEntity = new TestEntity("Schnitzel");
     session1.persist(testEntity);
 
@@ -91,8 +84,8 @@ public class SessionTest {
 
   @Test
   public void testLocalSessionView() {
-    Session session1 = new Session(metamodel, repository, index, luceneIndex);
-    Session session2 = new Session(metamodel, repository, index, luceneIndex);
+    Session session1 = new Session(metamodel, repository);
+    Session session2 = new Session(metamodel, repository);
     TestEntity testEntity = new TestEntity("Schnitzel");
 
     session1.persist(testEntity);
@@ -115,9 +108,9 @@ public class SessionTest {
   public void testFlushFileExists() throws Exception {
     TestEntity testEntity = new TestEntity("Schnitzel");
 
-    Session session1 = new Session(metamodel, repository, index, luceneIndex);
+    Session session1 = new Session(metamodel, repository);
     session1.persist(testEntity);
-    Session session2 = new Session(metamodel, repository, index, luceneIndex);
+    Session session2 = new Session(metamodel, repository);
     session2.persist(testEntity);
     session1.prepare();
     try {
@@ -131,7 +124,7 @@ public class SessionTest {
   @Test
   public void testDoublePersist() throws Exception {
     TestEntity testEntity = new TestEntity("Schnitzel");
-    Session session = new Session(metamodel, repository, index, luceneIndex);
+    Session session = new Session(metamodel, repository);
 
     session.persist(testEntity);
     session.persist(testEntity);
@@ -142,8 +135,8 @@ public class SessionTest {
   public void testTwoSessionCommit() throws Exception {
     TestEntity testEntity = new TestEntity("Schnitzel");
 
-    Session session1 = new Session(metamodel, repository, index, luceneIndex);
-    Session session2 = new Session(metamodel, repository, index, luceneIndex);
+    Session session1 = new Session(metamodel, repository);
+    Session session2 = new Session(metamodel, repository);
     session1.persist(testEntity);
     session2.persist(testEntity);
     session1.prepare();
@@ -160,7 +153,7 @@ public class SessionTest {
   @Test
   public void testRollBack() throws Exception {
     TestEntity testEntity = new TestEntity("Schnitzel");
-    Session session = new Session(metamodel, repository, index, luceneIndex);
+    Session session = new Session(metamodel, repository);
 
     session.persist(testEntity);
     session.prepare();
@@ -178,13 +171,13 @@ public class SessionTest {
   public void testVersionIncrement2Sessions() throws Exception {
     TestEntity testEntity = new TestEntity("Schnitzel");
 
-    Session session1 = new Session(metamodel, repository, index, luceneIndex);
+    Session session1 = new Session(metamodel, repository);
     session1.persist(testEntity);
     session1.prepare();
     session1.commit();
 
-    session1 = new Session(metamodel, repository, index, luceneIndex);
-    Session session2 = new Session(metamodel, repository, index, luceneIndex);
+    session1 = new Session(metamodel, repository);
+    Session session2 = new Session(metamodel, repository);
 
     TestEntity first = session1.findById(TestEntity.class, testEntity.getId()).get();
     TestEntity second = session2.findById(TestEntity.class, testEntity.getId()).get();
@@ -206,13 +199,13 @@ public class SessionTest {
   public void testVersionIncrement() throws Exception {
     TestEntity testEntity = new TestEntity("Schnitzel");
 
-    Session session = new Session(metamodel, repository, index, luceneIndex);
+    Session session = new Session(metamodel, repository);
     session.persist(testEntity);
     session.prepare();
     session.commit();
 
     for (int i = 0; i < 5; i++) {
-      session = new Session(metamodel, repository, index, luceneIndex);
+      session = new Session(metamodel, repository);
       testEntity = session.findByNaturalId(TestEntity.class, "Schnitzel").get();
       testEntity.setAttribute("att" + i);
       session.prepare();
@@ -224,12 +217,12 @@ public class SessionTest {
   @Test
   public void testSameInstance1Session() throws Exception {
     TestEntity testEntity = new TestEntity("Schnitzel");
-    Session session = new Session(metamodel, repository, index, luceneIndex);
+    Session session = new Session(metamodel, repository);
     session.persist(testEntity);
     session.prepare();
     session.commit();
 
-    session = new Session(metamodel, repository, index, luceneIndex);
+    session = new Session(metamodel, repository);
     testEntity = session.findByNaturalId(TestEntity.class, "Schnitzel").get();
     TestEntity testEntity2 = session.findByNaturalId(TestEntity.class, "Schnitzel").get();
     assertSame(testEntity, testEntity2);
@@ -238,7 +231,7 @@ public class SessionTest {
   @Test
   public void testRemove() throws Exception {
     TestEntity testEntity = new TestEntity("Schnitzel");
-    Session session = new Session(metamodel, repository, index, luceneIndex);
+    Session session = new Session(metamodel, repository);
     session.persist(testEntity);
     session.prepare();
     session.commit();
@@ -249,7 +242,7 @@ public class SessionTest {
     Path pathInRepository = indexElement.getPathInRepository();
     assertTrue(pathInRepository.toFile().exists());
 
-    session = new Session(metamodel, repository, index, luceneIndex);
+    session = new Session(metamodel, repository);
     testEntity = session.findById(TestEntity.class, testEntity.getId()).get();
     session.remove(testEntity);
     session.prepare();

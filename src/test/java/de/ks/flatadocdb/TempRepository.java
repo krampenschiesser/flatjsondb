@@ -16,6 +16,7 @@
 package de.ks.flatadocdb;
 
 import com.google.common.base.StandardSystemProperty;
+import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.util.DeleteDir;
 import org.junit.rules.ExternalResource;
 
@@ -25,12 +26,14 @@ import java.nio.file.Paths;
 public class TempRepository extends ExternalResource {
   private Path path;
   private Repository repository;
+  private MetaModel metaModel;
 
   @Override
   protected void before() throws Throwable {
     path = Paths.get(StandardSystemProperty.JAVA_IO_TMPDIR.value(), "testRepository");
     new DeleteDir(path).delete();
-    repository = new Repository(path);
+    metaModel = new MetaModel();
+    repository = new Repository(path, metaModel);
   }
 
   public Path getPath() {
@@ -39,5 +42,9 @@ public class TempRepository extends ExternalResource {
 
   public Repository getRepository() {
     return repository;
+  }
+
+  public MetaModel getMetaModel() {
+    return metaModel;
   }
 }

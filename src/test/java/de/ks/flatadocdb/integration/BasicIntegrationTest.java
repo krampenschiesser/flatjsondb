@@ -17,6 +17,7 @@ package de.ks.flatadocdb.integration;
 
 import com.google.common.base.StandardSystemProperty;
 import de.ks.flatadocdb.Repository;
+import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
 import de.ks.flatadocdb.session.SessionFactory;
 import de.ks.flatadocdb.util.DeleteDir;
@@ -41,7 +42,7 @@ public class BasicIntegrationTest {
     new DeleteDir(repoPath).delete();
     Files.createDirectories(repoPath);
 
-    repository = new Repository(repoPath);
+    repository = new Repository(repoPath, new MetaModel());
     sessionFactory = new SessionFactory(repository, TestEntity.class.getPackage().getName());
   }
 

@@ -16,6 +16,9 @@
 
 package de.ks.flatadocdb;
 
+import de.ks.flatadocdb.index.GlobalIndex;
+import de.ks.flatadocdb.index.LuceneIndex;
+import de.ks.flatadocdb.metamodel.MetaModel;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.slf4j.Logger;
@@ -29,6 +32,8 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Repository implements AutoCloseable {
   public static final String LUCENE_DIR = ".lucene";
@@ -36,17 +41,17 @@ public class Repository implements AutoCloseable {
 
   protected final Path path;
   protected final String name;
-  protected final EncryptionMode encryption;
   protected final Directory luceneDirectory;
+  protected final GlobalIndex index;
+  protected final LuceneIndex luceneIndex;
 
-  public Repository(Path path) {
-    this(path, EncryptionMode.NONE);
+  public Repository(Path path, MetaModel metaModel) {
+    this(path, metaModel, Executors.newSingleThreadExecutor());
   }
 
-  public Repository(Path path, EncryptionMode encryptionMode) {
+  public Repository(Path path, MetaModel metaModel, ExecutorService executorService) {
     this.path = path;
     this.name = path.getName(path.getNameCount() - 1).toString();
-    this.encryption = encryptionMode;
     if (!path.toFile().exists()) {
       try {
         Files.createDirectories(path);
@@ -67,6 +72,8 @@ public class Repository implements AutoCloseable {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+    index = new GlobalIndex(this, metaModel, executorService);
+    luceneIndex = new LuceneIndex(this);
   }
 
   public Path getPath() {
@@ -96,8 +103,12 @@ public class Repository implements AutoCloseable {
     return name;
   }
 
-  public EncryptionMode getEncryption() {
-    return encryption;
+  public GlobalIndex getIndex() {
+    return index;
+  }
+
+  public LuceneIndex getLuceneIndex() {
+    return luceneIndex;
   }
 
   @Override
@@ -107,5 +118,11 @@ public class Repository implements AutoCloseable {
     } catch (IOException e) {
       log.error("Could not close lucene index {}", luceneDirectory, e);
     }
+    luceneIndex.close();
+    index.close();
+  }
+
+  public void initialize() {
+
   }
 }

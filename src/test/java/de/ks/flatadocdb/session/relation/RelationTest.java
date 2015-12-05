@@ -17,8 +17,6 @@ package de.ks.flatadocdb.session.relation;
 
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.TempRepository;
-import de.ks.flatadocdb.index.GlobalIndex;
-import de.ks.flatadocdb.index.LuceneIndex;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.session.Related;
 import de.ks.flatadocdb.session.RelationOwner;
@@ -36,29 +34,22 @@ import static org.junit.Assert.*;
 public class RelationTest {
 
   private MetaModel metamodel;
-  private GlobalIndex index;
   private Repository repository;
 
   @Rule
   public TempRepository tempRepository = new TempRepository();
-  private LuceneIndex luceneIndex;
 
   @Before
   public void setUp() throws Exception {
-    metamodel = new MetaModel();
+    repository = tempRepository.getRepository();
+    metamodel = tempRepository.getMetaModel();
     metamodel.addEntity(RelationOwner.class);
     metamodel.addEntity(Related.class);
 
-    repository = tempRepository.getRepository();
-    index = new GlobalIndex(repository, metamodel);
-    luceneIndex = new LuceneIndex(repository);
   }
 
   @After
   public void tearDown() throws Exception {
-    if (luceneIndex != null) {
-      luceneIndex.close();
-    }
     if (repository != null) {
       repository.close();
     }
@@ -75,7 +66,7 @@ public class RelationTest {
     owner.getRelatedSet().add(related);
 
 
-    Session session = new Session(metamodel, repository, index, luceneIndex);
+    Session session = new Session(metamodel, repository);
     session.persist(owner);
     session.prepare();
     session.commit();
@@ -103,7 +94,7 @@ public class RelationTest {
     owner.setChild(child);
     owner.getRelatedList().add(child);
 
-    Session session = new Session(metamodel, repository, index, luceneIndex);
+    Session session = new Session(metamodel, repository);
     session.persist(owner);
     session.prepare();
     session.commit();
@@ -128,12 +119,12 @@ public class RelationTest {
     owner.getRelatedList().add(related);
 
 
-    Session session = new Session(metamodel, repository, index, luceneIndex);
+    Session session = new Session(metamodel, repository);
     session.persist(owner);
     session.prepare();
     session.commit();
 
-    session = new Session(metamodel, repository, index, luceneIndex);
+    session = new Session(metamodel, repository);
     owner = session.findById(RelationOwner.class, owner.getId()).get();
     assertEquals(1, new SessionFriend(session).getEntries().size());
 
@@ -152,12 +143,12 @@ public class RelationTest {
     Related related = new Related("related");
     owner.getRelatedSet().add(related);
 
-    Session session = new Session(metamodel, repository, index, luceneIndex);
+    Session session = new Session(metamodel, repository);
     session.persist(owner);
     session.prepare();
     session.commit();
 
-    session = new Session(metamodel, repository, index, luceneIndex);
+    session = new Session(metamodel, repository);
     owner = session.findById(RelationOwner.class, owner.getId()).get();
     assertEquals(2, new SessionFriend(session).getEntries().size());
   }

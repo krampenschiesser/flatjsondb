@@ -18,8 +18,6 @@ package de.ks.flatadocdb.session;
 
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.TempRepository;
-import de.ks.flatadocdb.index.GlobalIndex;
-import de.ks.flatadocdb.index.LuceneIndex;
 import de.ks.flatadocdb.index.StandardLuceneFields;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
@@ -33,52 +31,41 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.nio.file.Path;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class LuceneIndexTest {
 
   private MetaModel metamodel;
-  private GlobalIndex index;
-  private LuceneIndex luceneIndex;
   private Repository repository;
-  private Path path;
 
   @Rule
   public TempRepository tempRepository = new TempRepository();
 
   @Before
   public void setUp() throws Exception {
-    metamodel = new MetaModel();
-    metamodel.addEntity(TestEntity.class);
-
     repository = tempRepository.getRepository();
-    path = tempRepository.getPath();
-    index = new GlobalIndex(repository, metamodel);
-    luceneIndex = new LuceneIndex(repository);
+    metamodel = tempRepository.getMetaModel();
+    metamodel.addEntity(TestEntity.class);
   }
 
   @After
   public void tearDown() throws Exception {
-    if (luceneIndex != null) {
-      luceneIndex.close();
-    }
     if (repository != null) {
       repository.close();
     }
   }
+
   @Test
   public void testAddToIndex() throws Exception {
     TestEntity testEntity = new TestEntity("Schnitzel");
-    Session session = new Session(metamodel, repository, index, luceneIndex);
+    Session session = new Session(metamodel, repository);
     session.persist(testEntity);
     session.prepare();
     session.commit();
 
 
-    session = new Session(metamodel, repository, index, luceneIndex);
+    session = new Session(metamodel, repository);
     Document document = session.lucene(searcher -> {
       TermQuery termQuery = new TermQuery(new Term(StandardLuceneFields.NATURAL_ID.name(), "Schnitzel"));
       TopDocs search = searcher.search(termQuery, 1);
@@ -92,13 +79,13 @@ public class LuceneIndexTest {
   @Test
   public void testUpdate() throws Exception {
     TestEntity testEntity = new TestEntity("Schnitzel").setAttribute("Saftig");
-    Session session = new Session(metamodel, repository, index, luceneIndex);
+    Session session = new Session(metamodel, repository);
     session.persist(testEntity);
     session.prepare();
     session.commit();
 
 
-    session = new Session(metamodel, repository, index, luceneIndex);
+    session = new Session(metamodel, repository);
     TestEntity read = session.findById(TestEntity.class, testEntity.getId()).get();
     read.setAttribute("Zaeh");
     session.prepare();
@@ -118,13 +105,13 @@ public class LuceneIndexTest {
   @Test
   public void testDelete() throws Exception {
     TestEntity testEntity = new TestEntity("Schnitzel").setAttribute("Saftig");
-    Session session = new Session(metamodel, repository, index, luceneIndex);
+    Session session = new Session(metamodel, repository);
     session.persist(testEntity);
     session.prepare();
     session.commit();
 
 
-    session = new Session(metamodel, repository, index, luceneIndex);
+    session = new Session(metamodel, repository);
     TestEntity read = session.findById(TestEntity.class, testEntity.getId()).get();
     session.remove(read);
     session.prepare();

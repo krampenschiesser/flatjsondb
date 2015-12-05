@@ -18,8 +18,6 @@ package de.ks.flatadocdb.session.relation;
 
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.TempRepository;
-import de.ks.flatadocdb.index.GlobalIndex;
-import de.ks.flatadocdb.index.LuceneIndex;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
 import de.ks.flatadocdb.session.Session;
@@ -36,35 +34,28 @@ import static org.junit.Assert.assertEquals;
 public class RelationCollectionTest {
 
   private MetaModel metamodel;
-  private GlobalIndex index;
   private Repository repository;
 
   @Rule
   public TempRepository tempRepository = new TempRepository();
-  private LuceneIndex luceneIndex;
 
   @Before
   public void setUp() throws Exception {
-    metamodel = new MetaModel();
-    metamodel.addEntity(TestEntity.class);
-
     repository = tempRepository.getRepository();
-    index = new GlobalIndex(repository, metamodel);
-    luceneIndex = new LuceneIndex(repository);
+    metamodel = tempRepository.getMetaModel();
+    metamodel.addEntity(TestEntity.class);
   }
 
   @After
   public void tearDown() throws Exception {
-    if (luceneIndex != null) {
-      luceneIndex.close();
-    }
     if (repository != null) {
       repository.close();
     }
   }
+
   @Test
   public void testRelationList() throws Exception {
-    Session session = new Session(metamodel, repository, index, luceneIndex);
+    Session session = new Session(metamodel, repository);
     ArrayList<String> ids = new ArrayList<>();
     for (int i = 0; i < 5; i++) {
       TestEntity testEntity = new TestEntity("Schnitzel " + (i + 1));
@@ -83,7 +74,7 @@ public class RelationCollectionTest {
 
   @Test
   public void testRelationSet() throws Exception {
-    Session session = new Session(metamodel, repository, index, luceneIndex);
+    Session session = new Session(metamodel, repository);
     HashSet<String> ids = new HashSet<>();
 
     for (int i = 0; i < 5; i++) {

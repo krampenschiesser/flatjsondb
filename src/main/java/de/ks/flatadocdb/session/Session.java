@@ -66,14 +66,14 @@ public class Session implements TransactionResource {
   protected final Thread thread;
   protected final List<Index> indexes;
 
-  public Session(MetaModel metaModel, Repository repository, GlobalIndex globalIndex, LuceneIndex luceneIndex) {
+  public Session(MetaModel metaModel, Repository repository) {
     this.metaModel = metaModel;
     this.repository = repository;
-    this.globalIndex = globalIndex;
-    this.luceneIndex = luceneIndex;
+    this.globalIndex = repository.getIndex();
+    this.luceneIndex = repository.getLuceneIndex();
     dirtyChecker = new DirtyChecker(repository, metaModel);
     this.thread = Thread.currentThread();
-    indexes = Arrays.asList(luceneIndex, globalIndex);
+    indexes = Arrays.asList(this.luceneIndex, globalIndex);
   }
 
   public Repository getRepository() {

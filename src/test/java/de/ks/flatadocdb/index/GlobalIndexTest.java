@@ -37,31 +37,24 @@ public class GlobalIndexTest {
   private Repository repository;
   private MetaModel metaModel;
   private GlobalIndex index;
-  private LuceneIndex luceneIndex;
 
   @Before
   public void setUp() throws Exception {
     repository = tempRepository.getRepository();
-    metaModel = new MetaModel();
+    metaModel = tempRepository.getMetaModel();
     metaModel.addEntity(TestEntity.class);
-    index = new GlobalIndex(repository, metaModel);
-    luceneIndex = new LuceneIndex(repository);
-
     for (int i = 0; i < COUNT; i++) {
       TestEntity entity = new TestEntity("test" + (i + 1));
-      Session session = new Session(metaModel, repository, index, luceneIndex);
+      Session session = new Session(metaModel, repository);
       session.persist(entity);
       session.prepare();
       session.commit();
     }
-    index = new GlobalIndex(repository, metaModel);
+    index = repository.getIndex();
   }
 
   @After
   public void tearDown() throws Exception {
-    if (luceneIndex != null) {
-      luceneIndex.close();
-    }
     if (repository != null) {
       repository.close();
     }

@@ -28,4 +28,14 @@ public interface Index {
   void updateEntry(SessionEntry entry);
 
   void recreate();
+
+  void afterPrepare();
+
+  void beforeCommit();
+
+  void afterCommit();
+
+  void afterRollback();
+
+  void close();
 }

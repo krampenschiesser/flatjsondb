@@ -27,31 +27,7 @@ public class RelationList<E> extends RelationCollection<E, List<E>, List<String>
   private static final Logger log = LoggerFactory.getLogger(RelationList.class);
 
   public RelationList(List<String> ids, Session session) {
-    super(new ArrayList<E>() {
-      @Override
-      public boolean add(E o) {
-        log.info("Adding {}", o, new Exception());
-        return super.add(o);
-      }
-
-      @Override
-      public boolean addAll(Collection<? extends E> c) {
-        c.forEach(o -> log.info("Adding {}", o, new Exception()));
-        return super.addAll(c);
-      }
-
-      @Override
-      public boolean addAll(int index, Collection<? extends E> c) {
-        c.forEach(o -> log.info("Adding {}", o, new Exception()));
-        return super.addAll(index, c);
-      }
-
-      @Override
-      public void add(int index, E element) {
-        log.info("Adding {}", element, new Exception());
-        super.add(index, element);
-      }
-    }, ids, session);
+    super(new ArrayList<E>(), ids, session);
   }
 
   @Override

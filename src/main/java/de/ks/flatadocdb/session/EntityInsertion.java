@@ -32,7 +32,7 @@ public class EntityInsertion extends SessionAction {
       throw new StaleObjectFileException("Real file already exists" + sessionEntry.getCompletePath());
     }
     checkVersionIncrement(sessionEntry.getCompletePath(), sessionEntry.getVersion());
-    checkNoFlushFileExists(sessionEntry.getFolder(), sessionEntry.getFileName());
+    checkNoFlushFileExists(getFlushPath());
 
     EntityPersister persister = sessionEntry.getEntityDescriptor().getPersister();
     byte[] fileContents = persister.createFileContents(repository, sessionEntry.getEntityDescriptor(), sessionEntry.getObject());

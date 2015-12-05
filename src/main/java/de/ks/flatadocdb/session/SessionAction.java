@@ -25,7 +25,6 @@ import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.nio.file.Files;
@@ -93,10 +92,9 @@ public abstract class SessionAction {
     }
   }
 
-  protected void checkNoFlushFileExists(Path flushComplete, String fileName) {
-    File[] files = flushComplete.toFile().listFiles(f -> f.isFile() && f.getName().startsWith("." + fileName));
-    if (files.length != 0) {
-      throw new StaleObjectFileException("Flush file already exists" + flushComplete);
+  protected void checkNoFlushFileExists(Path flushPath) {
+    if (Files.exists(flushPath)) {
+      throw new StaleObjectFileException("Flush file already exists" + getFlushPath());
     }
   }
 

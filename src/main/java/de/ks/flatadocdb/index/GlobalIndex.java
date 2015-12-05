@@ -153,6 +153,26 @@ public class GlobalIndex implements Index {
     }
   }
 
+  @Override
+  public void afterPrepare() {
+
+  }
+
+  @Override
+  public void beforeCommit() {
+
+  }
+
+  @Override
+  public void afterCommit() {
+
+  }
+
+  @Override
+  public void afterRollback() {
+
+  }
+
   private long getLastModified(Path path) {
     try {
       return Files.getLastModifiedTime(path).toMillis();
@@ -207,5 +227,10 @@ public class GlobalIndex implements Index {
       }
       log.debug("Could not find any entity descriptor for {}", file);
     });
+  }
+
+  @Override
+  public void close() {
+
   }
 }

@@ -21,6 +21,7 @@ import de.ks.flatadocdb.index.GlobalIndex;
 import de.ks.flatadocdb.index.LuceneIndex;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -47,6 +48,16 @@ public class LifeCycleTest {
     repository = tempRepository.getRepository();
     index = new GlobalIndex(repository, metamodel);
     luceneIndex = new LuceneIndex(repository);
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    if (luceneIndex != null) {
+      luceneIndex.close();
+    }
+    if (repository != null) {
+      repository.close();
+    }
   }
 
   @Test

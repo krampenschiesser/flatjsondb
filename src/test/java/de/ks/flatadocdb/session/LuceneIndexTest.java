@@ -28,6 +28,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -59,6 +60,15 @@ public class LuceneIndexTest {
     luceneIndex = new LuceneIndex(repository);
   }
 
+  @After
+  public void tearDown() throws Exception {
+    if (luceneIndex != null) {
+      luceneIndex.close();
+    }
+    if (repository != null) {
+      repository.close();
+    }
+  }
   @Test
   public void testAddToIndex() throws Exception {
     TestEntity testEntity = new TestEntity("Schnitzel");

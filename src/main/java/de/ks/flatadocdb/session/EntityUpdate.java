@@ -32,7 +32,7 @@ public class EntityUpdate extends SessionAction {
     Object entity = sessionEntry.getObject();
 
     checkVersionIncrement(sessionEntry.getCompletePath(), sessionEntry.getVersion());
-    checkNoFlushFileExists(sessionEntry.getFolder(), sessionEntry.getFileName());
+    checkNoFlushFileExists(getFlushPath());
 
     long version = entityDescriptor.getVersion(entity);
     entityDescriptor.writeVersion(entity, version + 1);

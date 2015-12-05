@@ -24,6 +24,7 @@ import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
 import de.ks.flatadocdb.session.Session;
 import javassist.util.proxy.ProxyObject;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,6 +51,15 @@ public class LazyEntityTest {
     luceneIndex = new LuceneIndex(repository);
   }
 
+  @After
+  public void tearDown() throws Exception {
+    if (luceneIndex != null) {
+      luceneIndex.close();
+    }
+    if (repository != null) {
+      repository.close();
+    }
+  }
   @Test
   public void testLazyEntity() throws Exception {
     Session session = new Session(metamodel, repository, index, luceneIndex);

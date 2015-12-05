@@ -23,14 +23,13 @@ import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.management.ManagementFactory;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class DefaultFileGenerator implements FileGenerator {
   private static final Logger log = LoggerFactory.getLogger(DefaultFileGenerator.class);
 
-  public final String pidAndHost = ManagementFactory.getRuntimeMXBean().getName();
+  //  public final String pidAndHost = ManagementFactory.getRuntimeMXBean().getName();
   public static final String EXTENSION = "json";
 
   @Override
@@ -51,7 +50,7 @@ public class DefaultFileGenerator implements FileGenerator {
 
   @Override
   public String getFlushFileName(Repository repository, EntityDescriptor descriptor, Object object) {
-    return "." + getFileName(repository, descriptor, object) + "." + pidAndHost + ".flush";
+    return "." + getFileName(repository, descriptor, object) + "." + ".flush";
   }
 
   protected String parseHashCode(Object object) {

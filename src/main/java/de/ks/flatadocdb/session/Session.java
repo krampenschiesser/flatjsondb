@@ -25,6 +25,7 @@ import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.ifc.FileGenerator;
 import de.ks.flatadocdb.ifc.FolderGenerator;
 import de.ks.flatadocdb.index.GlobalIndex;
+import de.ks.flatadocdb.index.Index;
 import de.ks.flatadocdb.index.IndexElement;
 import de.ks.flatadocdb.index.LuceneIndex;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
@@ -63,6 +64,7 @@ public class Session implements TransactionResource {
   protected final List<SessionAction> actions = new LinkedList<>();
   protected final DirtyChecker dirtyChecker;
   protected final Thread thread;
+  protected final List<Index> indexes;
 
   public Session(MetaModel metaModel, Repository repository, GlobalIndex globalIndex, LuceneIndex luceneIndex) {
     this.metaModel = metaModel;
@@ -71,6 +73,7 @@ public class Session implements TransactionResource {
     this.luceneIndex = luceneIndex;
     dirtyChecker = new DirtyChecker(repository, metaModel);
     this.thread = Thread.currentThread();
+    indexes = Arrays.asList(luceneIndex, globalIndex);
   }
 
   public Repository getRepository() {
@@ -282,21 +285,25 @@ public class Session implements TransactionResource {
     Collection<SessionEntry> dirty = dirtyChecker.findDirty(this.entriesById.values());
     dirty.stream().map(e -> new EntityUpdate(repository, e)).forEach(actions::add);
     actions.forEach(a -> a.prepare(this));
+    indexes.forEach(Index::afterPrepare);
   }
 
   @Override
   public void commit() {
+    indexes.forEach(Index::beforeCommit);
     actions.forEach(a -> a.commit(this));
+    indexes.forEach(Index::afterCommit);
   }
 
   @Override
   public void rollback() {
     actions.forEach(a -> a.rollback(this));
+    indexes.forEach(Index::afterRollback);
   }
 
   @Override
   public void close() {
-
+    indexes.forEach(Index::close);
   }
 
   public void checkCorrectThread() {

@@ -17,7 +17,6 @@
 package de.ks.flatadocdb.defaults;
 
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -51,9 +50,4 @@ public class DefaultFileGeneratorTest {
     assertEquals("_öäana89__l", s);
   }
 
-  @Ignore
-  @Test
-  public void testPID() throws Exception {
-    log.info(new DefaultFileGenerator().pidAndHost);
-  }
 }

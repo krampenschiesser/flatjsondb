@@ -19,6 +19,8 @@ package de.ks.flatadocdb.index;
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.ifc.LuceneDocumentExtractor;
 import de.ks.flatadocdb.session.SessionEntry;
+import de.ks.flatadocdb.session.transaction.local.Transactional;
+import de.ks.flatadocdb.util.TimeProfiler;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
@@ -28,6 +30,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -42,12 +45,21 @@ public class LuceneIndex implements Index {
   public static final String LUCENE_INDEX_FOLDER = ".lucene";
   private final Directory directory;
 
+  private final StandardAnalyzer analyzer;
+  private final ThreadLocal<IndexWriter> writer = new ThreadLocal<>();
+
   public LuceneIndex(Repository repository) throws RuntimeException {
     try {
       Path resolve = repository.getPath().resolve(LUCENE_INDEX_FOLDER);
       Files.createDirectories(resolve);
 
-      this.directory = FSDirectory.open(resolve);
+      TimeProfiler profiler = new TimeProfiler("Lucene loading").start();
+      try {
+        this.directory = FSDirectory.open(resolve);
+      } finally {
+        profiler.stop().logDebug(log);
+      }
+      analyzer = new StandardAnalyzer();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -55,15 +67,25 @@ public class LuceneIndex implements Index {
 
   @Override
   public void addEntry(SessionEntry sessionEntry) {
-    new LuceneWrite(writer -> writeEntry(sessionEntry, writer));
+    profiler.get().start();
+    try {
+      writeEntry(sessionEntry, writer.get());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    profiler.get().stop();
   }
 
   @Override
   public void updateEntry(SessionEntry sessionEntry) {
-    new LuceneWrite(writer -> {
-      deleteEntry(sessionEntry, writer);
-      writeEntry(sessionEntry, writer);
-    });
+    profiler.get().start();
+    try {
+      deleteEntry(sessionEntry, writer.get());
+      writeEntry(sessionEntry, writer.get());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    profiler.get().stop();
   }
 
   @Override
@@ -73,7 +95,13 @@ public class LuceneIndex implements Index {
 
   @Override
   public void removeEntry(SessionEntry sessionEntry) {
-    new LuceneWrite(writer -> deleteEntry(sessionEntry, writer));
+    profiler.get().start();
+    try {
+      deleteEntry(sessionEntry, writer.get());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    profiler.get().stop();
   }
 
   protected void deleteEntry(SessionEntry sessionEntry, IndexWriter writer) throws IOException {
@@ -114,23 +142,69 @@ public class LuceneIndex implements Index {
     void apply(IndexWriter writer) throws IOException;
   }
 
-  class LuceneWrite {
-    private final LuceneWriteConsumer consumer;
-
-    public LuceneWrite(LuceneWriteConsumer consumer) {
-      this.consumer = consumer;
-      execute();
+  @Override
+  public void afterPrepare() {
+    try {
+      IndexWriter value = new IndexWriter(directory, new IndexWriterConfig(analyzer));
+      writer.set(value);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
+  }
 
-    private void execute() {
-      try (StandardAnalyzer analyzer = new StandardAnalyzer()) {
-        IndexWriterConfig config = new IndexWriterConfig(analyzer);
-        try (IndexWriter indexWriter = new IndexWriter(directory, config)) {
-          consumer.apply(indexWriter);
-        }
-      } catch (Exception e) {
-        throw new RuntimeException(e);
+  @Override
+  public void beforeCommit() {
+    startTimer();
+  }
+
+  @Override
+  public void afterCommit() {
+    stopTimer();
+    try {
+      writer.get().commit();
+      writer.get().close();
+      writer.set(null);
+    } catch (IOException e) {
+      log.error("Could not rollback writer", e);
+    }
+  }
+
+  @Override
+  public void afterRollback() {
+    stopTimer();
+    try {
+      writer.get().rollback();
+      writer.get().close();
+      writer.set(null);
+    } catch (IOException e) {
+      log.error("Could not rollback writer", e);
+    }
+  }
+
+  @Override
+  public void close() {
+    if (writer.get() != null) {
+      try {
+        writer.get().close();
+        writer.set(null);
+      } catch (IOException e) {
+        log.error("Could not close writer ", e);
       }
+    }
+    analyzer.close();
+  }
+
+  private final ThreadLocal<TimeProfiler> profiler = new ThreadLocal<>();
+
+  private void startTimer() {
+    String mdc = MDC.get(Transactional.TRANSACTION_MDC_KEY);
+    profiler.set(new TimeProfiler("lucene-sessionflush-" + mdc));
+  }
+
+  private void stopTimer() {
+    TimeProfiler profiler = this.profiler.get();
+    if (profiler != null) {
+      profiler.logDebug(log);
     }
   }
 }

@@ -24,6 +24,7 @@ import de.ks.flatadocdb.session.Related;
 import de.ks.flatadocdb.session.RelationOwner;
 import de.ks.flatadocdb.session.Session;
 import de.ks.flatadocdb.session.SessionFriend;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -51,6 +52,16 @@ public class RelationTest {
     repository = tempRepository.getRepository();
     index = new GlobalIndex(repository, metamodel);
     luceneIndex = new LuceneIndex(repository);
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    if (luceneIndex != null) {
+      luceneIndex.close();
+    }
+    if (repository != null) {
+      repository.close();
+    }
   }
 
   @Test

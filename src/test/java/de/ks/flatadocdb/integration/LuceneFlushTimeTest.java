@@ -50,7 +50,7 @@ public class LuceneFlushTimeTest {
   @Test
   public void testBigSession() throws Exception {
     Session session = new Session(metamodel, repository);
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 10000; i++) {
       TestEntity testEntity = new TestEntity("Schnitzel" + i);
       session.persist(testEntity);
     }

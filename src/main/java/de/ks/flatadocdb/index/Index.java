@@ -29,13 +29,12 @@ public interface Index {
 
   void recreate();
 
-  void afterPrepare();
+  void prepare();
 
-  void beforeCommit();
+  void commit();
 
-  void afterCommit();
-
-  void afterRollback();
+  void rollback();
 
   void close();
+
 }

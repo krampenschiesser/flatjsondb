@@ -82,7 +82,7 @@ public class EntityDelete extends SessionAction {
       }
     }
     session.globalIndex.removeEntry(sessionEntry);
-    session.luceneIndex.removeEntry(sessionEntry);
+    session.luceneUpdates.add(index -> index.removeEntry(sessionEntry));
   }
 
   @Override

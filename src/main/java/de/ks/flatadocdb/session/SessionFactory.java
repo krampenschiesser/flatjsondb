@@ -57,7 +57,6 @@ public class SessionFactory implements AutoCloseable {
     }
   }
 
-
   public void addRepository(Repository repository) {
     Objects.requireNonNull(repository, "Repository is required");
     log.info("Added repository {}", repository.getPath());
@@ -89,12 +88,30 @@ public class SessionFactory implements AutoCloseable {
     return metaModel;
   }
 
+  public void transactedSession(Consumer<Session> sessionConsumer) {
+    if (repositoryByName.size() == 1) {
+      Repository repository = repositoryByName.values().iterator().next();
+      transactedSession(repository, sessionConsumer);
+    } else {
+      throw new IllegalStateException("Requested to open a session without a specified repository.");
+    }
+  }
+
   public void transactedSession(Repository repository, Consumer<Session> sessionConsumer) {
     Transactional.withNewTransaction(() -> {
       Session session = openSession(repository);
       TransactionProvider.instance.registerResource(session);
       sessionConsumer.accept(session);
     });
+  }
+
+  public <T> T transactedSessionRead(Function<Session, T> sessionFunction) {
+    if (repositoryByName.size() == 1) {
+      Repository repository = repositoryByName.values().iterator().next();
+      return transactedSessionRead(repository, sessionFunction);
+    } else {
+      throw new IllegalStateException("Requested to open a session without a specified repository.");
+    }
   }
 
   public <T> T transactedSessionRead(Repository repository, Function<Session, T> sessionFunction) {

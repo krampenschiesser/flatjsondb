@@ -34,6 +34,7 @@ import de.ks.flatadocdb.metamodel.relation.ChildRelation;
 import de.ks.flatadocdb.metamodel.relation.Relation;
 import de.ks.flatadocdb.session.dirtycheck.DirtyChecker;
 import de.ks.flatadocdb.session.transaction.local.TransactionResource;
+import de.ks.flatadocdb.util.TimeProfiler;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.slf4j.Logger;
@@ -45,6 +46,7 @@ import java.io.Serializable;
 import java.lang.invoke.MethodHandle;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @NotThreadSafe//can only be used as ThreadLocal
@@ -62,6 +64,7 @@ public class Session implements TransactionResource {
   protected final Map<Object, SessionEntry> entity2Entry = new HashMap<>();
 
   protected final List<SessionAction> actions = new LinkedList<>();
+  protected final List<Consumer<LuceneIndex>> luceneUpdates = new LinkedList<>();
   protected final DirtyChecker dirtyChecker;
   protected final Thread thread;
   protected final List<Index> indexes;
@@ -285,25 +288,29 @@ public class Session implements TransactionResource {
     Collection<SessionEntry> dirty = dirtyChecker.findDirty(this.entriesById.values());
     dirty.stream().map(e -> new EntityUpdate(repository, e)).forEach(actions::add);
     actions.forEach(a -> a.prepare(this));
-    indexes.forEach(Index::afterPrepare);
+    indexes.forEach(Index::prepare);
   }
 
   @Override
   public void commit() {
-    indexes.forEach(Index::beforeCommit);
     actions.forEach(a -> a.commit(this));
-    indexes.forEach(Index::afterCommit);
+    luceneIndex.startWrite();
+    TimeProfiler profiler = new TimeProfiler("Lucene commit").start();
+    luceneUpdates.forEach(u -> u.accept(luceneIndex));
+    indexes.forEach(Index::commit);
+    profiler.stop().logInfo(log);
   }
 
   @Override
   public void rollback() {
     actions.forEach(a -> a.rollback(this));
-    indexes.forEach(Index::afterRollback);
+    luceneUpdates.clear();
+    indexes.forEach(Index::rollback);
   }
 
   @Override
   public void close() {
-    indexes.forEach(Index::close);
+    //
   }
 
   public void checkCorrectThread() {

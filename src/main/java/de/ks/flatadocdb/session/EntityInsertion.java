@@ -58,6 +58,6 @@ public class EntityInsertion extends SessionAction {
 
   private void addToIndex(Session session) {
     session.globalIndex.addEntry(sessionEntry);
-    session.luceneIndex.addEntry(sessionEntry);
+    session.luceneUpdates.add(index -> index.addEntry(sessionEntry));
   }
 }

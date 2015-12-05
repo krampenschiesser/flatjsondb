@@ -31,21 +31,23 @@ import java.security.NoSuchAlgorithmException;
  */
 public class DefaultIdGenerator {
   private static final Logger log = LoggerFactory.getLogger(DefaultIdGenerator.class);
-  static final java.security.MessageDigest sha1;
-
-  static {
-    try {
-      sha1 = MessageDigest.getInstance("SHA-1");
-    } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException(e);
+  static final ThreadLocal<java.security.MessageDigest> sha1 = new ThreadLocal<MessageDigest>() {
+    @Override
+    protected MessageDigest initialValue() {
+      try {
+        return MessageDigest.getInstance("SHA-1");
+      } catch (NoSuchAlgorithmException e) {
+        throw new RuntimeException(e);
+      }
     }
-  }
+  };
 
   public String getSha1Hash(Path repository, Path targetPath) {//for debugging and readability the string is used instead of the byte array. Also avoids possible programming errors using the byte array in equals/hashcode.
     String relative = getRelativePath(repository, targetPath);
-    byte[] checksum = sha1.digest(relative.getBytes(Charsets.UTF_16));
+    MessageDigest digest = sha1.get();
+    byte[] checksum = digest.digest(relative.getBytes(Charsets.UTF_16));
     String hexString = Hex.encodeHexString(checksum);
-    log.trace("Generated {} \"{}\" for {}", sha1.getAlgorithm(), hexString, relative);
+    log.trace("Generated {} \"{}\" for {}", digest.getAlgorithm(), hexString, relative);
     return hexString;
   }
 

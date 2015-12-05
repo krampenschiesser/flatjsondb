@@ -23,9 +23,7 @@ import de.ks.flatadocdb.session.transaction.local.Transactional;
 import de.ks.flatadocdb.util.TimeProfiler;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.Term;
+import org.apache.lucene.index.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.slf4j.Logger;
@@ -35,6 +33,7 @@ import org.slf4j.MDC;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Index managing a lucene directory.
@@ -45,8 +44,10 @@ public class LuceneIndex implements Index {
   public static final String LUCENE_INDEX_FOLDER = ".lucene";
   private final Directory directory;
 
+  private final ReentrantLock lock = new ReentrantLock(true);
   private final StandardAnalyzer analyzer;
-  private final ThreadLocal<IndexWriter> writer = new ThreadLocal<>();
+  private final IndexWriter indexWriter;
+  private volatile IndexReader indexReader;
 
   public LuceneIndex(Repository repository) throws RuntimeException {
     try {
@@ -56,20 +57,29 @@ public class LuceneIndex implements Index {
       TimeProfiler profiler = new TimeProfiler("Lucene loading").start();
       try {
         this.directory = FSDirectory.open(resolve);
+        analyzer = new StandardAnalyzer();
+        IndexWriterConfig cfg = new IndexWriterConfig(analyzer);
+        cfg.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+        indexWriter = new IndexWriter(directory, cfg);
+        reopenIndexReader();
       } finally {
         profiler.stop().logDebug(log);
       }
-      analyzer = new StandardAnalyzer();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  protected IndexReader reopenIndexReader() throws IOException {
+    indexReader = DirectoryReader.open(indexWriter, true);
+    return indexReader;
   }
 
   @Override
   public void addEntry(SessionEntry sessionEntry) {
     profiler.get().start();
     try {
-      writeEntry(sessionEntry, writer.get());
+      writeEntry(sessionEntry, indexWriter);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -79,9 +89,10 @@ public class LuceneIndex implements Index {
   @Override
   public void updateEntry(SessionEntry sessionEntry) {
     profiler.get().start();
+
     try {
-      deleteEntry(sessionEntry, writer.get());
-      writeEntry(sessionEntry, writer.get());
+      deleteEntry(sessionEntry, indexWriter);
+      writeEntry(sessionEntry, indexWriter);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -97,7 +108,7 @@ public class LuceneIndex implements Index {
   public void removeEntry(SessionEntry sessionEntry) {
     profiler.get().start();
     try {
-      deleteEntry(sessionEntry, writer.get());
+      deleteEntry(sessionEntry, indexWriter);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -137,61 +148,52 @@ public class LuceneIndex implements Index {
     return directory;
   }
 
-  @FunctionalInterface
-  interface LuceneWriteConsumer {
-    void apply(IndexWriter writer) throws IOException;
+  @Override
+  public void prepare() {
+    startTimer();
+//    try {
+//      lock.writeLock().lock();
+//      IndexWriter value = new IndexWriter(directory, new IndexWriterConfig(analyzer));
+//      writer.set(value);
+//    } catch (IOException e) {
+//      throw new RuntimeException(e);
+//    }
   }
 
   @Override
-  public void afterPrepare() {
+  public void commit() {
+    stopTimer();
     try {
-      IndexWriter value = new IndexWriter(directory, new IndexWriterConfig(analyzer));
-      writer.set(value);
+      indexWriter.commit();
+//      reopenIndexReader();
     } catch (IOException e) {
       throw new RuntimeException(e);
+    } finally {
+      lock.unlock();
     }
   }
 
   @Override
-  public void beforeCommit() {
-    startTimer();
-  }
-
-  @Override
-  public void afterCommit() {
+  public void rollback() {
     stopTimer();
     try {
-      writer.get().commit();
-      writer.get().close();
-      writer.set(null);
+      indexWriter.rollback();
     } catch (IOException e) {
-      log.error("Could not rollback writer", e);
-    }
-  }
-
-  @Override
-  public void afterRollback() {
-    stopTimer();
-    try {
-      writer.get().rollback();
-      writer.get().close();
-      writer.set(null);
-    } catch (IOException e) {
-      log.error("Could not rollback writer", e);
+      log.error("Could not rollback index writer", e);
+    } finally {
+      lock.unlock();
     }
   }
 
   @Override
   public void close() {
-    if (writer.get() != null) {
-      try {
-        writer.get().close();
-        writer.set(null);
-      } catch (IOException e) {
-        log.error("Could not close writer ", e);
-      }
+    try {
+      indexWriter.close();
+      indexReader.close();
+      analyzer.close();
+    } catch (IOException e) {
+      log.error("Could not close lucene", e);
     }
-    analyzer.close();
   }
 
   private final ThreadLocal<TimeProfiler> profiler = new ThreadLocal<>();
@@ -207,4 +209,11 @@ public class LuceneIndex implements Index {
       profiler.logDebug(log);
     }
   }
+
+  public void startWrite() {
+    TimeProfiler profiler = new TimeProfiler("WaitForLuceneLock").start();
+    lock.lock();
+    profiler.stop().logInfo(log);
+  }
+
 }

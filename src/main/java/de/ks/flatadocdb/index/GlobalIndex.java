@@ -106,6 +106,10 @@ public class GlobalIndex implements Index {
     return idToElement.values().stream().filter(v -> v.getEntityClass().equals(entity)).collect(Collectors.toSet());
   }
 
+  public Collection<String> getAllIds() {
+    return Collections.unmodifiableCollection(idToElement.keySet());
+  }
+
   @Override
   public void recreate() {
     Set<Path> allFiles = repository.getAllFilesInRepository();
@@ -154,22 +158,17 @@ public class GlobalIndex implements Index {
   }
 
   @Override
-  public void afterPrepare() {
+  public void prepare() {
+    
+  }
+
+  @Override
+  public void commit() {
 
   }
 
   @Override
-  public void beforeCommit() {
-
-  }
-
-  @Override
-  public void afterCommit() {
-
-  }
-
-  @Override
-  public void afterRollback() {
+  public void rollback() {
 
   }
 

@@ -57,6 +57,6 @@ public class EntityUpdate extends SessionAction {
     executeLifecycleAction(LifeCycle.POST_UPDATE);
 
     session.globalIndex.updateEntry(sessionEntry);
-    session.luceneIndex.updateEntry(sessionEntry);
+    session.luceneUpdates.add(index -> index.updateEntry(sessionEntry));
   }
 }

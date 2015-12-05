@@ -52,12 +52,12 @@ public class LuceneFlushTimeTest {
   @Test
   public void testBigSession() throws Exception {
     Session session = new Session(metamodel, repository, index, luceneIndex);
-    for (int i = 0; i < 5000; i++) {
+    for (int i = 0; i < 1000; i++) {
       TestEntity testEntity = new TestEntity("Schnitzel" + i);
       session.persist(testEntity);
     }
     session.prepare();
     session.commit();
-    session.toString();
+//    session.toString();
   }
 }

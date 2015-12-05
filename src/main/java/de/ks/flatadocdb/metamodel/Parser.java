@@ -33,6 +33,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Parses the entitydescriptor from a given class file.
+ */
 public class Parser extends BaseParser {
 
   public EntityDescriptor parse(Class<?> clazz) throws ParseException {

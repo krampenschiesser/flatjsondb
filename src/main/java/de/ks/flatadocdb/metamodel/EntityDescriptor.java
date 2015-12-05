@@ -34,6 +34,9 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Contains all meta inforamtion needed to store/load a given entity.
+ */
 @Immutable
 public class EntityDescriptor {
   public static class Builder {

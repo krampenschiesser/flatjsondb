@@ -26,12 +26,19 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * Index managing a lucene directory.
+ */
 public class LuceneIndex implements Index {
+  private static final Logger log = LoggerFactory.getLogger(LuceneIndex.class);
+
   public static final String LUCENE_INDEX_FOLDER = ".lucene";
   private final Directory directory;
 
@@ -60,6 +67,11 @@ public class LuceneIndex implements Index {
   }
 
   @Override
+  public void recreate() {
+    //FIXME
+  }
+
+  @Override
   public void removeEntry(SessionEntry sessionEntry) {
     new LuceneWrite(writer -> deleteEntry(sessionEntry, writer));
   }
@@ -85,6 +97,11 @@ public class LuceneIndex implements Index {
     document.add(StandardLuceneFields.FILENAME.create(sessionEntry.getFileName()));
     document.add(StandardLuceneFields.NATURAL_ID.create(String.valueOf(sessionEntry.getNaturalId())));
 
+    if (log.isTraceEnabled()) {
+      document.getFields().forEach(f -> log.trace("Extracted field {} from {}({}). Vaue={}",//
+        f.name(), sessionEntry.getObject(), sessionEntry.getFileName(), //
+        f.stringValue().length() > 70 ? f.stringValue().substring(0, 70) : f.stringValue()));
+    }
     writer.addDocument(document);
   }
 

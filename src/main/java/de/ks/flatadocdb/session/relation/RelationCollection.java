@@ -16,13 +16,22 @@
 package de.ks.flatadocdb.session.relation;
 
 import de.ks.flatadocdb.session.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * A collection wrapepr that lazily loads entities in a collection.
+ *
+ * @param <E>
+ * @param <DelegateType>
+ * @param <IdCollectionType>
+ */
 public class RelationCollection<E, DelegateType extends Collection<E>, IdCollectionType extends Collection<String>> {
-
+  private static final Logger log = LoggerFactory.getLogger(RelationCollection.class);
   protected final DelegateType delegate;
   protected final IdCollectionType ids;
   protected final AtomicBoolean loaded = new AtomicBoolean(false);
@@ -37,6 +46,7 @@ public class RelationCollection<E, DelegateType extends Collection<E>, IdCollect
   protected void checkInitialize() {
     if (!loaded.get()) {
       session.checkCorrectThread();
+      log.debug("Loading {} elements of lazy collection", ids.size());
 
       for (String id : ids) {
         Optional<Object> found = session.findById(id);
@@ -44,9 +54,13 @@ public class RelationCollection<E, DelegateType extends Collection<E>, IdCollect
           @SuppressWarnings("unchecked")
           E e = (E) found.get();
           delegate.add(e);
+          log.trace("Found related {} for id {}", e, id);
         }
       }
+      if (ids.size() != delegate.size()) {
+        log.warn("Got different collection size after loading. Expected {} elements but found {}", ids.size(), delegate.size(), new Exception());
+      }
+      loaded.set(true);
     }
-    loaded.set(true);
   }
 }

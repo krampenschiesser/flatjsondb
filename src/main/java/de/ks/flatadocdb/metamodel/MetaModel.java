@@ -27,7 +27,12 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
+/**
+ * Contains information about all entites registered.
+ * The metamodel spans all repositories.
+ */
 @ThreadSafe
 public class MetaModel {
   private static final Logger log = LoggerFactory.getLogger(MetaModel.class);
@@ -47,6 +52,7 @@ public class MetaModel {
     lock.writeLock().lock();
     try {
       EntityDescriptor entityDescriptor = new Parser().parse(clazz);
+      log.info("Parsed entity {}", clazz.getName());
       entityDescriptor.getPersister().initialize(this);
       clazz2EntityDescriptor.put(entityDescriptor.getEntityClass(), entityDescriptor);
     } finally {
@@ -86,6 +92,7 @@ public class MetaModel {
   }
 
   public Set<Class<?>> scanClassPath(Collection<String> packages) {
+    log.info("Scanning packages for entities: {}", packages.stream().collect(Collectors.joining(", ")));
     ConfigurationBuilder builder = new ConfigurationBuilder();
     builder.forPackages(packages.toArray(new String[packages.size()]));
     builder.setInputsFilter(input -> filterPackage(input, packages));

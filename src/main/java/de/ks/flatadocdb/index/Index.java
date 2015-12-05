@@ -17,10 +17,15 @@ package de.ks.flatadocdb.index;
 
 import de.ks.flatadocdb.session.SessionEntry;
 
+/**
+ * General interface class for indexes
+ */
 public interface Index {
   void addEntry(SessionEntry entry);
 
   void removeEntry(SessionEntry entry);
 
   void updateEntry(SessionEntry entry);
+
+  void recreate();
 }

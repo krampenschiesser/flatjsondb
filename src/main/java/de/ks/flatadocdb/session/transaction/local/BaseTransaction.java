@@ -16,10 +16,15 @@
 
 package de.ks.flatadocdb.session.transaction.local;
 
+import de.ks.flatadocdb.exception.AggregateException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 
 class BaseTransaction implements SimpleTransaction {
+  private static final Logger log = LoggerFactory.getLogger(BaseTransaction.class);
   private final String name;
   private final List<TransactionResource> resources = new ArrayList<>();
 
@@ -39,7 +44,19 @@ class BaseTransaction implements SimpleTransaction {
 
   @Override
   public void rollback() {
-    resources.forEach(TransactionResource::rollback);
+    ArrayList<Throwable> exceptions = new ArrayList<>();
+    resources.forEach((transactionResource) -> {
+      try {
+        transactionResource.rollback();
+
+      } catch (Throwable t) {
+        exceptions.add(t);
+        log.error("Exception occured during rollback", t);
+      }
+    });
+    if (!exceptions.isEmpty()) {
+      throw new AggregateException(exceptions);
+    }
   }
 
   public void registerResource(TransactionResource resource) {

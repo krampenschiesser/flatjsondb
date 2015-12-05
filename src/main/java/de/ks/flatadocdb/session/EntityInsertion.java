@@ -20,17 +20,8 @@ import de.ks.flatadocdb.annotation.lifecycle.LifeCycle;
 import de.ks.flatadocdb.exception.StaleObjectFileException;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.LinkedList;
-import java.util.List;
 
 public class EntityInsertion extends SessionAction {
-  private static final Logger log = LoggerFactory.getLogger(EntityInsertion.class);
-
-  private final List<Runnable> rollbacks = new LinkedList<>();
-
   public EntityInsertion(Repository repository, SessionEntry sessionEntry) {
     super(repository, sessionEntry);
   }

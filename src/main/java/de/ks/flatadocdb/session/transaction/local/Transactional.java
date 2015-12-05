@@ -18,19 +18,40 @@ package de.ks.flatadocdb.session.transaction.local;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
+/**
+ * Main class to use for using transactions.
+ * It also sets a MDC for the underlying logging framework displaying the transaction name.
+ */
 public class Transactional {
   private static final Logger log = LoggerFactory.getLogger(Transactional.class);
   private static final TransactionProvider provider = TransactionProvider.instance;
   private static final AtomicLong counter = new AtomicLong(0L);
+  public static final String TRANSACTION_NAME_PATTERN = "tx%06d";
+  public static final String TRANSACTION_MDC_KEY = "TX_MDC";//used for mdc logging
 
+  /**
+   * Read in a transactional way
+   * Automatic(incremented) transaction id.
+   *
+   * @param supplier the read function
+   * @param <T>      return value type
+   * @return anything
+   */
   public static <T> T withNewTransaction(Supplier<T> supplier) {
-    return withNewTransaction(String.format("tx%04d", counter.incrementAndGet()), supplier);
+    return withNewTransaction(String.format(TRANSACTION_NAME_PATTERN, counter.incrementAndGet()), supplier);
   }
 
+  /**
+   * Run in a transactionaly way.
+   * Automatic(incremented) transaction id.
+   *
+   * @param runnable code to be executed
+   */
   public static void withNewTransaction(Runnable runnable) {
     Supplier<Object> supplier = () -> {
       runnable.run();
@@ -39,8 +60,18 @@ public class Transactional {
     withNewTransaction(String.format("tx%04d", counter.incrementAndGet()), supplier);
   }
 
+  /**
+   * Read in a transactional way
+   * Automatic(incremented) transaction id.
+   *
+   * @param txName   give a specific name for the transaction
+   * @param supplier the read function
+   * @param <T>      return value type
+   * @return anything
+   */
   public static <T> T withNewTransaction(String txName, Supplier<T> supplier) {
     SimpleTransaction tx = provider.beginTransaction(txName);
+    MDC.put(TRANSACTION_MDC_KEY, txName);
     try {
       T retval = supplier.get();
       tx.prepare();
@@ -52,6 +83,7 @@ public class Transactional {
       tx.rollback();
       throw t;
     } finally {
+      MDC.remove(TRANSACTION_MDC_KEY);
       provider.removeTransaction(txName);
     }
   }

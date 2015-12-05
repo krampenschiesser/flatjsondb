@@ -49,4 +49,13 @@ public class NamedEntity extends BaseEntity {
   public int hashCode() {
     return name.hashCode();
   }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder(getClass().getSimpleName());
+    sb.append("{");
+    sb.append("name='").append(name).append('\'');
+    sb.append('}');
+    return sb.toString();
+  }
 }

@@ -18,6 +18,10 @@ package de.ks.flatadocdb.metamodel.relation;
 import de.ks.flatadocdb.ifc.FileGenerator;
 import de.ks.flatadocdb.ifc.FolderGenerator;
 
+/**
+ * A relation that overwrites the file and folder generator of its entity.
+ * This is needed to create children in a subfolder of a given entity.
+ */
 public interface ChildRelation {
   FolderGenerator getFolderGenerator();
 

@@ -34,6 +34,9 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 
+/**
+ * Base class for events that happen in a session.
+ */
 public abstract class SessionAction {
   private static final Logger log = LoggerFactory.getLogger(SessionAction.class);
 
@@ -51,10 +54,11 @@ public abstract class SessionAction {
   public abstract void commit(Session session);
 
   public void rollback(Session session) {
-    ArrayList<Exception> exceptions = new ArrayList<>();
+    ArrayList<Throwable> exceptions = new ArrayList<>();
 
     for (Runnable rollback : rollbacks) {
       try {
+        log.debug("Rolling back for {}", sessionEntry);
         rollback.run();
       } catch (Exception e) {
         log.error("Got exception during rollback: ", e);
@@ -70,6 +74,7 @@ public abstract class SessionAction {
     rollbacks.add(() -> {
       try {
         Files.delete(path);
+        log.debug("Deleting {} because of rollback for {}", path, sessionEntry);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -81,6 +86,7 @@ public abstract class SessionAction {
       EntityDescriptor entityDescriptor = sessionEntry.getEntityDescriptor();
       Object load = entityDescriptor.getPersister().load(repository, entityDescriptor, completePath, new HashMap<>());
       long currentVersion = entityDescriptor.getVersion(load);
+      log.trace("Got version {} from {}, session version={}. ({})", currentVersion, completePath, version, sessionEntry);
       if (currentVersion > version) {
         throw new StaleObjectStateException("Entity version changed, file=" + currentVersion + ", session=" + version + ". Path:" + completePath);
       }
@@ -98,6 +104,7 @@ public abstract class SessionAction {
     if (complete.toFile().exists()) {
       try {
         Files.write(complete, Collections.singleton(""), StandardOpenOption.APPEND);
+        log.trace("Could append to {}", complete);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -108,6 +115,7 @@ public abstract class SessionAction {
     if (StandardSystemProperty.OS_NAME.value().toLowerCase(Locale.ROOT).contains("win")) {
       try {
         Files.setAttribute(flushComplete, "dos:hidden", true);
+        log.trace("Hiding flush file {}", flushComplete);
       } catch (IOException e) {
         log.warn("Cannot set hidden attribute on {}", flushComplete, e);
       }
@@ -117,6 +125,7 @@ public abstract class SessionAction {
   protected void moveFlushFile(Path flushPath) {
     try {
       Files.move(flushPath, sessionEntry.getCompletePath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+      log.trace("Moved flush {} file to real file for {}", flushPath.getFileName(), sessionEntry);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -124,9 +133,9 @@ public abstract class SessionAction {
 
   protected void writeFlushFile(byte[] fileContents) {
     Path flushPath = getFlushPath();
-
     try {
       Files.write(flushPath, fileContents);
+      log.trace("Wrote contents of {} to flush file {}", sessionEntry, flushPath);
       addFileDeleteRollback(flushPath);
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -147,6 +156,7 @@ public abstract class SessionAction {
     Set<MethodHandle> lifeCycleMethods = descriptor.getLifeCycleMethods(lifeCycle);
     for (MethodHandle handle : lifeCycleMethods) {
       try {
+        log.trace("Invoking lifecycle method {} for {}", handle, sessionEntry);
         handle.invoke(entity);
       } catch (Throwable throwable) {
         throw new RuntimeException(throwable);

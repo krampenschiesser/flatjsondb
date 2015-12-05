@@ -40,6 +40,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+/**
+ * Stores the indexed contents of a single repository:
+ *
+ * * Id
+ * * natural id
+ * * relative path in repo
+ * * Entity class
+ * * md5sum (for rebuild checking)
+ * * last modified(for rebuild checking)
+ */
 public class GlobalIndex implements Index {
   private static final Logger log = LoggerFactory.getLogger(GlobalIndex.class);
 
@@ -88,7 +98,7 @@ public class GlobalIndex implements Index {
     return idToElement.get(id);
   }
 
-  public IndexElement getByNaturalId(Object id) {
+  public IndexElement getByNaturalId(Serializable id) {
     return naturalIdToElement.get(id);
   }
 
@@ -96,10 +106,14 @@ public class GlobalIndex implements Index {
     return idToElement.values().stream().filter(v -> v.getEntityClass().equals(entity)).collect(Collectors.toSet());
   }
 
+  @Override
   public void recreate() {
     Set<Path> allFiles = repository.getAllFilesInRepository();
 
     Map<EntityDescriptor, Set<Path>> discovered = mapToEntityDescriptors(allFiles);
+    if (log.isDebugEnabled()) {
+      discovered.entrySet().forEach(e -> log.debug("For class {} found {} elements", e.getKey().getEntityClass().getSimpleName(), e.getValue().size()));
+    }
 
     DefaultIdGenerator idGenerator = new DefaultIdGenerator();
 
@@ -116,6 +130,7 @@ public class GlobalIndex implements Index {
           Serializable naturalId = descriptor.getNaturalId(loaded);
           IndexElement indexElement = new IndexElement(repository, path, id, naturalId, descriptor.getEntityClass());
           indexElement.setMd5Sum(md5).setLastModified(lastModified);
+          log.trace("Created index element {}", indexElement);
           return indexElement;
         });
         retval.add(future);
@@ -186,6 +201,7 @@ public class GlobalIndex implements Index {
         EntityPersister persister = entityDescriptor.getPersister();
         if (persister.canParse(file, entityDescriptor)) {
           discovered.get(entityDescriptor).add(file);
+          log.debug("Found file {} which can be parsed as {}", file, entityDescriptor.getEntityClass().getSimpleName());
           return;
         }
       }

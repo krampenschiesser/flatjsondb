@@ -21,6 +21,8 @@ import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.session.SessionEntry;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,6 +35,7 @@ import java.util.stream.Collectors;
  * Need to balloon it up to something hibernate uses, storing the initial state and then comparing all fields
  */
 public class DirtyChecker {
+  private static final Logger log = LoggerFactory.getLogger(DirtyChecker.class);
   private final Repository repository;
   private final MetaModel metaModel;
   private final Set<Object> insertions = new HashSet<>();
@@ -64,7 +67,13 @@ public class DirtyChecker {
         EntityPersister persister = entityDescriptor.getPersister();
         byte[] fileContents = persister.createFileContents(repository, entityDescriptor, e.getObject());
         byte[] md5 = DigestUtils.md5(fileContents);
-        return !Arrays.equals(md5, e.getMd5());
+        boolean dirty = !Arrays.equals(md5, e.getMd5());
+        if (dirty) {
+          log.debug("Found dirty entity {} {}", e.getObject(), e.getFileName());
+        } else {
+          log.trace("Non-dirty entity {} {}", e.getObject(), e.getFileName());
+        }
+        return dirty;
       }).collect(Collectors.toSet());
   }
 }

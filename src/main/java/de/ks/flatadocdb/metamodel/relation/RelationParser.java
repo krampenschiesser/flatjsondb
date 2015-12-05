@@ -21,6 +21,8 @@ import de.ks.flatadocdb.ifc.FileGenerator;
 import de.ks.flatadocdb.ifc.FolderGenerator;
 import de.ks.flatadocdb.metamodel.BaseParser;
 import org.reflections.ReflectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -34,6 +36,8 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public class RelationParser extends BaseParser {
+  private static final Logger log = LoggerFactory.getLogger(RelationParser.class);
+
   static final List<Class<?>> allowedCollectionTypes = new ArrayList<Class<?>>() {
     private static final long serialVersionUID = 1L;
 
@@ -52,6 +56,7 @@ public class RelationParser extends BaseParser {
       boolean lazy = annotation.lazy();
       FileGenerator fileGenerator = getInstance(annotation.fileGenerator());
       FolderGenerator folderGenerator = getInstance(annotation.folderGenerator());
+      log.debug("Found {} at {} in {}", ToManyChildRelation.class.getSimpleName(), toOneField, clazz);
       retval.add(new ToOneChildRelation(type, toOneField, lazy, folderGenerator, fileGenerator));
     }
     return retval;
@@ -68,6 +73,7 @@ public class RelationParser extends BaseParser {
       boolean lazy = annotation.lazy();
       FileGenerator fileGenerator = getInstance(annotation.fileGenerator());
       FolderGenerator folderGenerator = getInstance(annotation.folderGenerator());
+      log.debug("Found {} at {} in {}", ToManyChildRelation.class.getSimpleName(), toManyField, clazz);
       retval.add(new ToManyChildRelation(type, collectionType, toManyField, lazy, folderGenerator, fileGenerator));
     }
     return retval;
@@ -79,6 +85,7 @@ public class RelationParser extends BaseParser {
     for (Field toOneField : toOneFields) {
       Class<?> type = toOneField.getType();
       boolean lazy = toOneField.getAnnotation(ToOne.class).lazy();
+      log.debug("Found {} at {} in {}", ToOneRelation.class.getSimpleName(), toOneField, clazz);
       retval.add(new ToOneRelation(type, toOneField, lazy));
     }
     return retval;
@@ -92,6 +99,7 @@ public class RelationParser extends BaseParser {
       ParameterizedType genericType = (ParameterizedType) toManyField.getGenericType();
       Class<?> type = (Class<?>) genericType.getActualTypeArguments()[0];
       boolean lazy = toManyField.getAnnotation(ToMany.class).lazy();
+      log.debug("Found {} at {} in {}", ToManyRelation.class.getSimpleName(), toManyField, clazz);
       retval.add(new ToManyRelation(type, collectionType, toManyField, lazy));
     }
     return retval;

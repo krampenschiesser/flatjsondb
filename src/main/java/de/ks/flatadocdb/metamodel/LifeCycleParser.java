@@ -17,6 +17,8 @@ package de.ks.flatadocdb.metamodel;
 
 import de.ks.flatadocdb.annotation.lifecycle.LifeCycle;
 import org.reflections.ReflectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -27,7 +29,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Parses a class for all lifecycle annotations, like @PrePersist and returns the handles
+ */
 public class LifeCycleParser {
+  private static final Logger log = LoggerFactory.getLogger(LifeCycleParser.class);
+
   public Map<LifeCycle, Set<MethodHandle>> parseMethods(Class<?> clazz) {
     HashMap<LifeCycle, Set<MethodHandle>> lifecycleMap = new HashMap<>();
 
@@ -38,6 +45,7 @@ public class LifeCycleParser {
       for (LifeCycle value : LifeCycle.values()) {
         if (method.isAnnotationPresent(value.getAnnotation())) {
           checkMethod(method);
+          log.debug("Discovered lifecycle method {} in {} annotated with {}", method, clazz.getSimpleName(), value.getAnnotation());
 
           lifecycleMap.putIfAbsent(value, new HashSet<>());
           method.setAccessible(true);

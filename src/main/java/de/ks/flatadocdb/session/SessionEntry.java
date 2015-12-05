@@ -97,4 +97,14 @@ public class SessionEntry {
   public int hashCode() {
     return id.hashCode();
   }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("SessionEntry{");
+    sb.append("naturalId=").append(naturalId);
+    sb.append(", version=").append(version);
+    sb.append(", object=").append(object);
+    sb.append('}');
+    return sb.toString();
+  }
 }

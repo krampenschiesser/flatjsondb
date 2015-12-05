@@ -169,7 +169,7 @@ public class Session implements TransactionResource {
   }
 
   @SuppressWarnings("unchecked")
-  public <E> Optional<E> findByNaturalId(Class<E> clazz, Object naturalId) {
+  public <E> Optional<E> findByNaturalId(Class<E> clazz, Serializable naturalId) {
     Objects.requireNonNull(clazz);
     Objects.requireNonNull(naturalId);
 

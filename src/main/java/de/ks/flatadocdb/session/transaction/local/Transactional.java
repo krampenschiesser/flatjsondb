@@ -31,7 +31,7 @@ public class Transactional {
   private static final Logger log = LoggerFactory.getLogger(Transactional.class);
   private static final TransactionProvider provider = TransactionProvider.instance;
   private static final AtomicLong counter = new AtomicLong(0L);
-  public static final String TRANSACTION_NAME_PATTERN = "tx%06d";
+  public static final String TRANSACTION_NAME_PATTERN = "tx-%06d";
   public static final String TRANSACTION_MDC_KEY = "TX_MDC";//used for mdc logging
 
   /**
@@ -57,7 +57,7 @@ public class Transactional {
       runnable.run();
       return null;
     };
-    withNewTransaction(String.format("tx%04d", counter.incrementAndGet()), supplier);
+    withNewTransaction(String.format(TRANSACTION_NAME_PATTERN, counter.incrementAndGet()), supplier);
   }
 
   /**
@@ -71,7 +71,7 @@ public class Transactional {
    */
   public static <T> T withNewTransaction(String txName, Supplier<T> supplier) {
     SimpleTransaction tx = provider.beginTransaction(txName);
-    MDC.put(TRANSACTION_MDC_KEY, txName);
+    MDC.put(TRANSACTION_MDC_KEY, txName.substring(3));
     try {
       T retval = supplier.get();
       tx.prepare();

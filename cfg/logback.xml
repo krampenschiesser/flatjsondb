@@ -20,7 +20,7 @@
         <!-- encoders are assigned the type
              ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%-15.15thread] %-5level - %-125msg %logger{36}:%L %n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} [%-15.15thread][%-6.6X{TX_MDC}] %-5level - %-125msg %logger{36}:%L %n</pattern>
         </encoder>
     </appender>
 
@@ -35,7 +35,7 @@
         </rollingPolicy>
 
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%-15.15thread] %-5level - %-150msg %logger{36}:%L %n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} [%-15.15thread][%-6.6X{TX_MDC}] %-5level - %-150msg %logger{36}:%L %n</pattern>
         </encoder>
     </appender>
 

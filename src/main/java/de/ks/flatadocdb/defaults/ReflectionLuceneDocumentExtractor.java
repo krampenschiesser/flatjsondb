@@ -76,7 +76,7 @@ public class ReflectionLuceneDocumentExtractor implements LuceneDocumentExtracto
       @SuppressWarnings("unchecked")
       Set<Field> allFields = ReflectionUtils.getAllFields(clazz, this::filterField);
       Set<DocField> docFields = allFields.stream().map(this::createDocField).filter(Objects::nonNull).collect(Collectors.toSet());
-      docFields.forEach(f -> log.debug("Found field {} for {} which will be indexed by lucene", f.getField(), clazz.getSimpleName()));
+      docFields.forEach(f -> log.debug("Found indexable lucene field {} for {}", f.getField(), clazz.getSimpleName()));
       cache.putIfAbsent(clazz, docFields);
     }
     return cache.get(clazz);

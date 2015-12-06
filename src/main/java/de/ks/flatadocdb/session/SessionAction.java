@@ -27,10 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.*;
 
 /**
@@ -123,7 +120,7 @@ public abstract class SessionAction {
   protected void moveFlushFile(Path flushPath) {
     try {
       Files.move(flushPath, sessionEntry.getCompletePath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-      log.trace("Moved flush {} file to real file for {}", flushPath.getFileName(), sessionEntry);
+      log.debug("Moved flush {} file to real file for {}", flushPath.getFileName(), sessionEntry);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -132,9 +129,11 @@ public abstract class SessionAction {
   protected void writeFlushFile(byte[] fileContents) {
     Path flushPath = getFlushPath();
     try {
-      Files.write(flushPath, fileContents);
-      log.trace("Wrote contents of {} to flush file {}", sessionEntry, flushPath);
+      Files.write(flushPath, fileContents, StandardOpenOption.CREATE_NEW);
+      log.debug("Wrote contents of {} to flush file {}", sessionEntry, flushPath);
       addFileDeleteRollback(flushPath);
+    } catch (FileAlreadyExistsException e) {
+      throw new StaleObjectFileException("Flush file " + flushPath + " already exists: " + e.toString());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

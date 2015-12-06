@@ -17,6 +17,7 @@ package de.ks.flatadocdb.integration;
 
 import com.google.common.base.StandardSystemProperty;
 import de.ks.flatadocdb.Repository;
+import de.ks.flatadocdb.exception.AggregateException;
 import de.ks.flatadocdb.exception.StaleObjectStateException;
 import de.ks.flatadocdb.metamodel.TestEntity;
 import de.ks.flatadocdb.session.SessionFactory;
@@ -34,10 +35,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -63,27 +61,34 @@ public class MultiThreadingTest {
 
   @Ignore
   @Test
-  public void testMultiThreading() throws Exception {
+  public void testMassiveMultiThreading() throws Exception {
     int threads = Runtime.getRuntime().availableProcessors();
 //    int threads = 1;
     int maxItems = 10000;
     int iterations = maxItems * 3;
     int batchsize = 10;
-    ExecutorService service = Executors.newFixedThreadPool(threads);
 
+    testMultithreaded(threads, maxItems, iterations, batchsize);
+  }
+
+  @Test
+  public void testReducedMultithreading() throws Exception {
+    testMultithreaded(Runtime.getRuntime().availableProcessors(), 1000, 1500, 10);
+  }
+
+  protected void testMultithreaded(int threads, int maxItems, int iterations, int batchsize) throws Exception {
+    ExecutorService service = Executors.newFixedThreadPool(threads);
     List<TestEntity> items = IntStream.range(0, maxItems).mapToObj(i -> new TestEntity("entity" + i)).collect(Collectors.toList());
     ConcurrentLinkedQueue<TestEntity> insertionQueue = new ConcurrentLinkedQueue<>(items);
     ConcurrentLinkedQueue<String> workQueue = new ConcurrentLinkedQueue<>();
 
     CountDownLatch start = new CountDownLatch(threads);
-    CountDownLatch end = new CountDownLatch(threads + 1);
-
+    ArrayList<Future<?>> futures = new ArrayList<>();
 
     for (int i = 0; i < threads; i++) {
       final int thread = i;
       Runnable runner = () -> {
         waitForBarrier(start);
-
         for (int j = 0; j < iterations; j++) {
           final String suffix = "T" + thread + "" + j;
           try {
@@ -105,15 +110,27 @@ public class MultiThreadingTest {
               }
             });
           } catch (StaleObjectStateException e) {
+            log.info("Got statel object state exception", e);
             //ok
           }
         }
 
-        waitForBarrier(end);
       };
-      service.submit(runner);
+      futures.add(service.submit(runner));
     }
-    waitForBarrier(end);
+
+    ArrayList<Throwable> exceptions = new ArrayList<>();
+    for (Future<?> future : futures) {
+      try {
+        future.get();
+      } catch (Exception e) {
+        log.error("Got exception from future: ", e);
+        exceptions.add(e);
+      }
+    }
+    if (!exceptions.isEmpty()) {
+      throw new AggregateException(exceptions);
+    }
   }
 
   protected void waitForBarrier(CountDownLatch latch) {

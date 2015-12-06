@@ -43,5 +43,5 @@
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
     </root>
-    <logger name="de.ks" level="debug"/>
+    <logger name="de.ks" level="info"/>
 </configuration>

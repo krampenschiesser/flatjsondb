@@ -73,7 +73,7 @@ public class MultiThreadingTest {
 
   @Test
   public void testReducedMultithreading() throws Exception {
-    testMultithreaded(Runtime.getRuntime().availableProcessors(), 500, 700, 10);
+    testMultithreaded(Runtime.getRuntime().availableProcessors(), 500, 550, 10);
   }
 
   protected void testMultithreaded(int threads, int maxItems, int iterations, int batchsize) throws Exception {

@@ -19,7 +19,6 @@ package de.ks.flatadocdb.index;
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.ifc.LuceneDocumentExtractor;
 import de.ks.flatadocdb.session.SessionEntry;
-import de.ks.flatadocdb.session.transaction.local.Transactional;
 import de.ks.flatadocdb.util.TimeProfiler;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -28,7 +27,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -77,20 +75,16 @@ public class LuceneIndex implements Index {
 
   @Override
   public void addEntry(SessionEntry sessionEntry) {
-    profiler.get().start();
     try {
       writeEntry(sessionEntry, indexWriter);
       makeDirty();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    profiler.get().stop();
   }
 
   @Override
   public void updateEntry(SessionEntry sessionEntry) {
-    profiler.get().start();
-
     try {
       deleteEntry(sessionEntry, indexWriter);
       writeEntry(sessionEntry, indexWriter);
@@ -98,7 +92,6 @@ public class LuceneIndex implements Index {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    profiler.get().stop();
   }
 
   private void makeDirty() {
@@ -112,14 +105,12 @@ public class LuceneIndex implements Index {
 
   @Override
   public void removeEntry(SessionEntry sessionEntry) {
-    profiler.get().start();
     try {
       deleteEntry(sessionEntry, indexWriter);
       makeDirty();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    profiler.get().stop();
   }
 
   protected void deleteEntry(SessionEntry sessionEntry, IndexWriter writer) throws IOException {
@@ -169,17 +160,14 @@ public class LuceneIndex implements Index {
 
   @Override
   public void prepare() {
-    startTimer();
   }
 
   @Override
   public void commit() {
-    stopTimer();
   }
 
   @Override
   public void rollback() {
-    stopTimer();
   }
 
   @Override
@@ -193,17 +181,4 @@ public class LuceneIndex implements Index {
     }
   }
 
-  private final ThreadLocal<TimeProfiler> profiler = new ThreadLocal<>();
-
-  private void startTimer() {
-    String mdc = MDC.get(Transactional.TRANSACTION_MDC_KEY);
-    profiler.set(new TimeProfiler("Lucene flush" + mdc));
-  }
-
-  private void stopTimer() {
-    TimeProfiler profiler = this.profiler.get();
-    if (profiler != null) {
-      profiler.logDebug(log);
-    }
-  }
 }

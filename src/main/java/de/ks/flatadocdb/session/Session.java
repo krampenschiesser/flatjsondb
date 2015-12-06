@@ -35,12 +35,14 @@ import de.ks.flatadocdb.metamodel.relation.Relation;
 import de.ks.flatadocdb.session.dirtycheck.DirtyChecker;
 import de.ks.flatadocdb.session.transaction.local.TransactionResource;
 import de.ks.flatadocdb.util.TimeProfiler;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.invoke.MethodHandle;
@@ -223,6 +225,17 @@ public class Session implements TransactionResource {
     EntityPersister persister = descriptor.getPersister();
     Object object = persister.load(repository, descriptor, indexElement.getPathInRepository(), relationIds);
     SessionEntry sessionEntry = new SessionEntry(object, indexElement.getId(), descriptor.getVersion(object), indexElement.getNaturalId(), indexElement.getPathInRepository(), descriptor);
+
+    byte[] md5Sum = indexElement.getMd5Sum();
+    sessionEntry.setMd5(md5Sum);
+    if (md5Sum == null) {
+      try (FileInputStream stream = new FileInputStream(indexElement.getPathInRepository().toFile())) {
+        sessionEntry.setMd5(DigestUtils.md5(stream));
+      } catch (IOException e) {
+        log.error("Could not get md5sum from {}", indexElement.getPathInRepository(), e);
+      }
+    }
+
     addToSession(sessionEntry);
 
     for (Map.Entry<Relation, Collection<String>> entry : relationIds.entrySet()) {

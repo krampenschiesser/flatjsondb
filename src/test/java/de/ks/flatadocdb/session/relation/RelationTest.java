@@ -47,7 +47,6 @@ public class RelationTest {
 
   }
 
-
   @Test
   public void testPersistRelation() throws Exception {
     RelationOwner owner = new RelationOwner("owner");
@@ -144,5 +143,28 @@ public class RelationTest {
     session = new Session(metamodel, repository);
     owner = session.findById(RelationOwner.class, owner.getId()).get();
     assertEquals(2, new SessionFriend(session).getEntries().size());
+  }
+
+  @Test
+  public void testDeleteRelation() throws Exception {
+    RelationOwner owner = new RelationOwner("owner");
+    Related related = new Related("related");
+    owner.getRelatedList().add(related);
+
+    Session session = new Session(metamodel, repository);
+    session.persist(owner);
+    session.prepare();
+    session.commit();
+
+    session = new Session(metamodel, repository);
+    session.remove(session.findById(related.getId()).get());
+    session.prepare();
+    session.commit();
+
+    session = new Session(metamodel, repository);
+    owner = (RelationOwner) session.findById(owner.getId()).get();
+    assertTrue(owner.getRelatedList().isEmpty());
+    session.prepare();
+    session.commit();
   }
 }

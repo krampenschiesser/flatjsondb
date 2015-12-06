@@ -79,7 +79,7 @@ public class Transactional {
       log.trace("Successfully committed tx {}", txName);
       return retval;
     } catch (Throwable t) {
-      log.error("Could not commit tx {}", txName, t);
+      log.error("Could not commit tx {}: {}", txName, t, t);
       tx.rollback();
       throw t;
     } finally {

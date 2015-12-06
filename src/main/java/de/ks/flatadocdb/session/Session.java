@@ -297,7 +297,7 @@ public class Session implements TransactionResource {
 
     TimeProfiler profiler = new TimeProfiler("Lucene update").start();
     luceneUpdates.forEach(u -> u.accept(luceneIndex));
-    profiler.stop().logInfo(log);
+    profiler.stop().logDebug(log);
 
     indexes.forEach(Index::commit);
   }

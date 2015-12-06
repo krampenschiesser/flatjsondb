@@ -1,7 +1,8 @@
-# FlatJsonDB
+= FlatJsonDB
 :toc:
+:toclevels: 4
 
-## Main goals
+== Main goals
 
 * Simple straight forward in process database
 * Store json and other text files hierarchical in the file system
@@ -10,9 +11,9 @@
 * In process database
 * Support versioning via GIT(jgit), including support for submodules to get a distributed storage that can be synced
 
-## Quickstart
+== Quickstart
 
-### Create an entity
+=== Create an entity
 
 We create a new entity which has the following properties:
 
@@ -45,7 +46,7 @@ public class ExampleEntity extends NamedEntity {
 }
 ----
 
-### Setup the repository and sessionfactory
+=== Setup the repository and sessionfactory
 [source,java]
 ----
 //open a repository with a java.nio.Path
@@ -64,7 +65,7 @@ factory.close();//if we don't use a try-with-resource block we need to close the
 ----
 
 
-### Persist modify and delete
+=== Persist modify and delete
 [source,java]
 ----
 //persist an entity
@@ -117,7 +118,7 @@ scar@scar:/tmp/myRepoPath/ExampleEntity$ cat Hello_world.json
 }
 ----
 
-### Complete code
+=== Complete code
 [source,java]
 ----
   @Test
@@ -160,13 +161,13 @@ scar@scar:/tmp/myRepoPath/ExampleEntity$ cat Hello_world.json
 ----
 
 
-## Components
+== Components
 
 The flatjsondb consists of one or more repositories. +
 All repository entries are entities which are registered at a global metamodel. +
 Each repository has its own indexes, including the lucene index for searching. +
 
-### Repository
+=== Repository
 
 A repository is generally a folder on your filesystem containing a bunch of json/text or other files which are mapped as entities.
 It might look like the following:
@@ -213,7 +214,7 @@ Or you can manage one main clone on a cloud storage and push to it from differen
 
 Different repositories can be used eg. for private, family or work stuff.
 
-### Entity
+=== Entity
 
 An entity is any java class annotated with *@Entity*.
 
@@ -227,12 +228,12 @@ Those are just suggestions, you can always use the annotations to map your own e
 
 An entity has to
 
-#### Lifecycle callbacks
+==== Lifecycle callbacks
 
-#### Relations
+==== Relations
 
-### Session
+=== Session
 
-### LuceneIndex
+=== LuceneIndex
 
 

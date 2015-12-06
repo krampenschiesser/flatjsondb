@@ -1,16 +1,58 @@
-# FlatAdocDB
+# FlatJsonDB
+:toc:
 
 ## Main goals
 
-* Store asciidoctor and other text/json files hierarchical in the file system
-* Storage has to be *Atomic* and *Isolated*, Consistency and Durability are not the main goals( After close of stream I hope that it is written to the FS, as there are (almost) no relations, consistency is no issue either)
+* Simple straight forward in process database
+* Store json and other text files hierarchical in the file system
+* Integrated apache lucene support
+* Mapping and handling relations between entities, including lazy loading
 * In process database
 * Support versioning via GIT(jgit), including support for submodules to get a distributed storage that can be synced
-* Support searching via apache lucene
-* Provide an easy to use API similar to the JPA EntityManager
 
+## Components
 
-## Implementation details
+The flatjsondb consists of one or more repositories. +
+All repository entries are entities which are registered at a global metamodel. +
+Each repository has its own indexes, including the lucene index for searching. +
 
-include::src/docs/asciidoc/devguide.adoc[]
+### Repository
 
+A repository is generally a folder on your filesystem containing a bunch of json/text or other files which are mapped as entities.
+It might look like the following:
+
+[source,bash]
+-----
+scar@scar:/tmp/tempRepo$ pwd
+/tmp/tempRepo
+
+scar@scar:/tmp/tempRepo$ ls -lA
+total 8
+drwxr-xr-x 2 scar scar 4096 Dec  6 07:58 .lucene
+drwxr-xr-x 2 scar scar 4096 Dec  6 07:58 .index
+drwxr-xr-x 2 scar scar 4096 Dec  6 07:58 .git
+drwxr-xr-x 2 scar scar 4096 Dec  6 07:58 TestEntity
+
+scar@scar:/tmp/tempRepo$ cd TestEntity/
+scar@scar:/tmp/tempRepo/TestEntity$ ls -lA
+total 4
+-rw-r--r-- 1 scar scar 262 Dec  6 07:58 blubber.json
+
+scar@scar:/tmp/tempRepo/TestEntity$ cat blubber.json
+{
+  "de.ks.flatadocdb.metamodel.TestEntity" : {
+    "version" : 1,
+    "id" : "3708a8ca06b62afd2d3d9b1039702b5b61e59e40",
+    "creationTime" : [ 2015, 12, 6, 7, 58, 27, 909000000 ],
+    "updateTime" : null,
+    "name" : "blubber",
+    "attribute" : "Steak"
+  }
+}
+-----
+
+In addition to the entities it contains the index files:
+
+* .git git repository
+* .lucene lucene index files
+* .index faltadocdb index used to prevent file system scanning and parsing at startup.

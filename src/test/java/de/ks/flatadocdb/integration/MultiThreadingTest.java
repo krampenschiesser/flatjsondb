@@ -17,7 +17,6 @@ package de.ks.flatadocdb.integration;
 
 import com.google.common.base.StandardSystemProperty;
 import de.ks.flatadocdb.Repository;
-import de.ks.flatadocdb.exception.AggregateException;
 import de.ks.flatadocdb.exception.StaleObjectStateException;
 import de.ks.flatadocdb.metamodel.TestEntity;
 import de.ks.flatadocdb.session.SessionFactory;
@@ -34,6 +33,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -73,7 +73,7 @@ public class MultiThreadingTest {
 
   @Test
   public void testReducedMultithreading() throws Exception {
-    testMultithreaded(Runtime.getRuntime().availableProcessors(), 1000, 1500, 10);
+    testMultithreaded(Runtime.getRuntime().availableProcessors(), 500, 700, 10);
   }
 
   protected void testMultithreaded(int threads, int maxItems, int iterations, int batchsize) throws Exception {
@@ -120,16 +120,17 @@ public class MultiThreadingTest {
     }
 
     ArrayList<Throwable> exceptions = new ArrayList<>();
-    for (Future<?> future : futures) {
-      try {
-        future.get();
-      } catch (Exception e) {
-        log.error("Got exception from future: ", e);
-        exceptions.add(e);
+
+    while (!futures.isEmpty()) {
+      for (Iterator<Future<?>> iterator = futures.iterator(); iterator.hasNext(); ) {
+        Future<?> next = iterator.next();
+        try {
+          next.get(1, TimeUnit.SECONDS);
+          iterator.remove();
+        } catch (TimeoutException e) {
+          //ok next one
+        }
       }
-    }
-    if (!exceptions.isEmpty()) {
-      throw new AggregateException(exceptions);
     }
   }
 

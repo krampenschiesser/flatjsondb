@@ -241,13 +241,13 @@ The ID of an entity is the SHA1 checksum of the relative path in the repository(
 
 Lifecycle callbacks are support via parameter-less methodds annotated with the following:
 
-* PostLoad
-* PostPersist
-* PostRemove
-* PostUpdate
-* PrePersist
-* PreRemove
-* PreUpdate
+* @PostLoad
+* @PostPersist
+* @PostRemove
+* @PostUpdate
+* @PrePersist
+* @PreRemove
+* @PreUpdate
 
 ==== Relations
 
@@ -256,10 +256,10 @@ These relations are always mapped via 1-n IDs.
 If an entity contains another entity that is not annotated as a relation, this entity will be stored by the persister(like an embeddable).
 The following annotations exist:
 
-* ToMany -> maps a List or a Set of entities
-* ToOne -> maps a single entity
-* Children -> maps a List or a Set of entities
-* Child -> maps a single child entity
+* @ToMany -> maps a List or a Set of entities
+* @ToOne -> maps a single entity
+* @Children -> maps a List or a Set of entities
+* @Child -> maps a single child entity
 
 The child* annotations have a special meaning. They define that those entities are not stored in their usual folder,
 but in a subfolder of their parent's directory.
@@ -269,7 +269,21 @@ However removal of the relation owner will not remove the related entities.
 
 === Session
 
+The session is the main object to manipulate entities.
+It must only be used by a single thread.
+The following methods are important:
 
+* findById -> finds an entity by the sha1 id
+* findByNaturalId -> finds an entity by the natural id, eg. name
+* persist(Object) -> stores an entity, multiple calls for the same entity will result in a NOOP
+* remove(Object) -> deletes an entity
+* lucene(...) -> provides read access to an IndexSearcher of lucene
+
+Updates of entities are done automatically by a dirty check.
+The dirty check implementation is quite simple right now.
+It generates the file contents it would write to the file system and compares the md5 sum with the previous md5 sum.
+
+==== Combine the session with your own transactions
 
 === LuceneIndex
 

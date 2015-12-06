@@ -53,6 +53,7 @@ import java.util.stream.Collectors;
 
 @NotThreadSafe//can only be used as ThreadLocal
 public class Session implements TransactionResource {
+  //FIXME add rollbackonly
   private static final Logger log = LoggerFactory.getLogger(Session.class);
 
   protected final MetaModel metaModel;

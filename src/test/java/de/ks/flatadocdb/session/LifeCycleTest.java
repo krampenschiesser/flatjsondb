@@ -19,7 +19,6 @@ import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.TempRepository;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,13 +37,6 @@ public class LifeCycleTest {
     repository = tempRepository.getRepository();
     metamodel = tempRepository.getMetaModel();
     metamodel.addEntity(TestEntity.class);
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    if (repository != null) {
-      repository.close();
-    }
   }
 
   @Test

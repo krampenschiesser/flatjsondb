@@ -26,7 +26,6 @@ import de.ks.flatadocdb.index.IndexElement;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
 import org.hamcrest.Matchers;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -54,13 +53,6 @@ public class SessionTest {
     metamodel.addEntity(TestEntity.class);
     path = tempRepository.getPath();
     index = repository.getIndex();
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    if (repository != null) {
-      repository.close();
-    }
   }
 
   @Test

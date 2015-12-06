@@ -21,7 +21,6 @@ import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
 import de.ks.flatadocdb.session.SessionFactory;
 import de.ks.flatadocdb.util.DeleteDir;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,11 +43,6 @@ public class BasicIntegrationTest {
 
     repository = new Repository(repoPath, new MetaModel());
     sessionFactory = new SessionFactory(repository, TestEntity.class.getPackage().getName());
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    repository.close();
   }
 
   @Test

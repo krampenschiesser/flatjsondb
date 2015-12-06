@@ -21,7 +21,6 @@ import de.ks.flatadocdb.TempRepository;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
 import de.ks.flatadocdb.session.Session;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -44,13 +43,6 @@ public class RelationCollectionTest {
     repository = tempRepository.getRepository();
     metamodel = tempRepository.getMetaModel();
     metamodel.addEntity(TestEntity.class);
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    if (repository != null) {
-      repository.close();
-    }
   }
 
   @Test

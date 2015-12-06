@@ -22,7 +22,6 @@ import de.ks.flatadocdb.session.Related;
 import de.ks.flatadocdb.session.RelationOwner;
 import de.ks.flatadocdb.session.Session;
 import de.ks.flatadocdb.session.SessionFriend;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -48,12 +47,6 @@ public class RelationTest {
 
   }
 
-  @After
-  public void tearDown() throws Exception {
-    if (repository != null) {
-      repository.close();
-    }
-  }
 
   @Test
   public void testPersistRelation() throws Exception {

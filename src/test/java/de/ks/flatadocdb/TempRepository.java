@@ -36,6 +36,11 @@ public class TempRepository extends ExternalResource {
     repository = new Repository(path, metaModel);
   }
 
+  @Override
+  protected void after() {
+    repository.close();
+  }
+
   public Path getPath() {
     return path;
   }

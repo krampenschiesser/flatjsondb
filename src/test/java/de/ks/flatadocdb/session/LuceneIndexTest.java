@@ -26,7 +26,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -47,13 +46,6 @@ public class LuceneIndexTest {
     repository = tempRepository.getRepository();
     metamodel = tempRepository.getMetaModel();
     metamodel.addEntity(TestEntity.class);
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    if (repository != null) {
-      repository.close();
-    }
   }
 
   @Test

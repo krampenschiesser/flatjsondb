@@ -24,6 +24,7 @@ import de.ks.flatadocdb.session.SessionFactory;
 import de.ks.flatadocdb.util.DeleteDir;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,15 +59,16 @@ public class MultiThreadingTest {
 
   @After
   public void tearDown() throws Exception {
-    repository.close();
+    sessionFactory.close();
   }
 
+  @Ignore
   @Test
   public void testMultiThreading() throws Exception {
     int threads = Runtime.getRuntime().availableProcessors();
 //    int threads = 1;
-    int maxItems = 50000;
-    int iterations = maxItems * 10;
+    int maxItems = 10000;
+    int iterations = maxItems * 3;
     int batchsize = 10;
     ExecutorService service = Executors.newFixedThreadPool(threads);
 

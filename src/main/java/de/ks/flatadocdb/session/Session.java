@@ -35,7 +35,7 @@ import de.ks.flatadocdb.metamodel.relation.Relation;
 import de.ks.flatadocdb.session.dirtycheck.DirtyChecker;
 import de.ks.flatadocdb.session.transaction.local.TransactionResource;
 import de.ks.flatadocdb.util.TimeProfiler;
-import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -294,11 +294,12 @@ public class Session implements TransactionResource {
   @Override
   public void commit() {
     actions.forEach(a -> a.commit(this));
-    luceneIndex.startWrite();
-    TimeProfiler profiler = new TimeProfiler("Lucene commit").start();
+
+    TimeProfiler profiler = new TimeProfiler("Lucene update").start();
     luceneUpdates.forEach(u -> u.accept(luceneIndex));
-    indexes.forEach(Index::commit);
     profiler.stop().logInfo(log);
+
+    indexes.forEach(Index::commit);
   }
 
   @Override
@@ -321,7 +322,8 @@ public class Session implements TransactionResource {
   }
 
   public <E> E lucene(LuceneReadFunction<E> read) {
-    try (DirectoryReader reader = DirectoryReader.open(luceneIndex.getDirectory())) {
+    IndexReader reader = luceneIndex.getIndexReader();
+    try {
       IndexSearcher indexSearcher = new IndexSearcher(reader);
       return read.apply(indexSearcher);
     } catch (IOException e) {

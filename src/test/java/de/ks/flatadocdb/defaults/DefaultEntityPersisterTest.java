@@ -25,7 +25,6 @@ import de.ks.flatadocdb.metamodel.relation.Relation;
 import de.ks.flatadocdb.session.Related;
 import de.ks.flatadocdb.session.RelationOwner;
 import org.hamcrest.Matchers;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -60,14 +59,6 @@ public class DefaultEntityPersisterTest {
     ownerDescriptor = metaModel.getEntityDescriptor(RelationOwner.class);
     relatedDescriptor = metaModel.getEntityDescriptor(Related.class);
   }
-
-  @After
-  public void tearDown() throws Exception {
-    if (repository != null) {
-      repository.close();
-    }
-  }
-
 
   @Test
   public void testStore() throws Exception {

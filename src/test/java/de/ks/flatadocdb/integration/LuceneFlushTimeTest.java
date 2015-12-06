@@ -21,7 +21,6 @@ import de.ks.flatadocdb.TempRepository;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
 import de.ks.flatadocdb.session.Session;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,17 +39,10 @@ public class LuceneFlushTimeTest {
     metamodel.addEntity(TestEntity.class);
   }
 
-  @After
-  public void tearDown() throws Exception {
-    if (repository != null) {
-      repository.close();
-    }
-  }
-
   @Test
   public void testBigSession() throws Exception {
     Session session = new Session(metamodel, repository);
-    for (int i = 0; i < 10000; i++) {
+    for (int i = 0; i < 5000; i++) {
       TestEntity testEntity = new TestEntity("Schnitzel" + i);
       session.persist(testEntity);
     }

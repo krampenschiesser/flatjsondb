@@ -226,13 +226,50 @@ public class TestEntity extends NamedEntity {
 As you can see we already provide some base classes (NamedEntity and BaseEntity) you can extend from.
 Those are just suggestions, you can always use the annotations to map your own entities.
 
-An entity has to
+An entity has to fulfill the following requirements:
+
+* Annotated witht *@Entity*
+* 1 Verision field *@Version long version;*
+* 1 Id field *@Id String version;*
+* For jackson it needs to have a default constructor
+
+==== Entity ID
+
+The ID of an entity is the SHA1 checksum of the relative path in the repository(which is unique).
 
 ==== Lifecycle callbacks
 
+Lifecycle callbacks are support via parameter-less methodds annotated with the following:
+
+* PostLoad
+* PostPersist
+* PostRemove
+* PostUpdate
+* PrePersist
+* PreRemove
+* PreUpdate
+
 ==== Relations
 
+An entity can contain relations to other entities.
+These relations are always mapped via 1-n IDs.
+If an entity contains another entity that is not annotated as a relation, this entity will be stored by the persister(like an embeddable).
+The following annotations exist:
+
+* ToMany -> maps a List or a Set of entities
+* ToOne -> maps a single entity
+* Children -> maps a List or a Set of entities
+* Child -> maps a single child entity
+
+The child* annotations have a special meaning. They define that those entities are not stored in their usual folder,
+but in a subfolder of their parent's directory.
+
+Related entities are always persisted with their parent.
+However removal of the relation owner will not remove the related entities.
+
 === Session
+
+
 
 === LuceneIndex
 

@@ -105,8 +105,8 @@ public class Session implements TransactionResource {
 
     String id = idGenerator.getSha1Hash(repository.getPath(), complete);
 
-    Optional<?> found = findById(id);
-    if (found.isPresent()) {
+    Object found = findById(id);
+    if (found != null) {
       log.warn("Trying to persist entity {} [{}] twice", entity, complete);
       return;
     }
@@ -175,7 +175,7 @@ public class Session implements TransactionResource {
   }
 
   @SuppressWarnings("unchecked")
-  public <E> Optional<E> findByNaturalId(Class<E> clazz, Serializable naturalId) {
+  public <E> E findByNaturalId(Class<E> clazz, Serializable naturalId) {
     Objects.requireNonNull(clazz);
     Objects.requireNonNull(naturalId);
 
@@ -183,35 +183,35 @@ public class Session implements TransactionResource {
     if (sessionEntry == null) {
       IndexElement indexElement = globalIndex.getByNaturalId(naturalId);
       if (indexElement == null) {
-        return Optional.empty();
+        return null;
       } else {
-        return Optional.ofNullable((E) load(indexElement));
+        return (E) load(indexElement);
       }
 
     } else {
-      return Optional.of((E) sessionEntry.object);
+      return (E) sessionEntry.object;
     }
   }
 
   @SuppressWarnings("unchecked")
-  public <E> Optional<E> findById(Class<E> clazz, String id) {
-    return (Optional<E>) findById(id);
+  public <E> E findById(Class<E> clazz, String id) {
+    return (E) findById(id);
   }
 
   @SuppressWarnings("unchecked")
-  public <E> Optional<E> findById(String id) {
+  public <E> E findById(String id) {
     Objects.requireNonNull(id);
 
     SessionEntry sessionEntry = entriesById.get(id);
     if (sessionEntry == null) {
       IndexElement indexElement = globalIndex.getById(id);
       if (indexElement == null) {
-        return Optional.empty();
+        return null;
       } else {
-        return Optional.ofNullable((E) load(indexElement));
+        return (E) load(indexElement);
       }
     } else {
-      return Optional.of((E) sessionEntry.object);
+      return (E) sessionEntry.object;
     }
   }
 
@@ -231,7 +231,7 @@ public class Session implements TransactionResource {
       if (relation.isLazy()) {
         relation.setupLazy(object, ids, this);
       } else {
-        List<Object> relatedEntities = ids.stream().sequential().map(this::findById).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+        List<Object> relatedEntities = ids.stream().sequential().map(this::findById).filter(o -> o != null).collect(Collectors.toList());
         relation.setRelatedEntities(object, relatedEntities);
       }
     }

@@ -10,6 +10,54 @@
 * In process database
 * Support versioning via GIT(jgit), including support for submodules to get a distributed storage that can be synced
 
+## Quickstart
+
+### Create an entity
+
+We create a new entity which has the following properties:
+
+* a name as natural id
+* a string attribute
+* simple auditing times like *creationTime* and *updateTime*
+
+[source,java]
+----
+@Entity
+public class MyEntity extends NamedEntity {
+  String attribute;
+
+  protected MyEntity() {//json needs a default constructor
+    super(null);
+  }
+
+  public MyEntity(String name) {
+    super(name);
+  }
+
+  public String getAttribute() {
+    return attribute;
+  }
+
+  public MyEntity setAttribute(String attribute) {
+    this.attribute = attribute;
+    return this;
+  }
+}
+----
+
+### Setup the repostiry and metamodel
+[source,java]
+----
+
+----
+
+
+### Persist modify and delete
+[source,java]
+----
+
+----
+
 ## Components
 
 The flatjsondb consists of one or more repositories. +
@@ -56,3 +104,33 @@ In addition to the entities it contains the index files:
 * .git git repository
 * .lucene lucene index files
 * .index faltadocdb index used to prevent file system scanning and parsing at startup.
+
+As a repository is manged by git you can use it in a distributed way: +
+For example you can have a clone on your local computer and a seperate one on a notebook and sync both via wlan.+
+Or you can manage one main clone on a cloud storage and push to it from different machines. +
+
+Different repositories can be used eg. for private, family or work stuff.
+
+### Entity
+
+An entity is any java class annotated with *@Entity*.
+
+[source,java]
+@Entity
+public class TestEntity extends NamedEntity {
+...
+
+As you can see we already provide some base classes (NamedEntity and BaseEntity) you can extend from.
+Those are just suggestions, you can always use the annotations to map your own entities.
+
+An entity has to
+
+#### Lifecycle callbacks
+
+#### Relations
+
+### Session
+
+### LuceneIndex
+
+

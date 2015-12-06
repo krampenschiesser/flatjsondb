@@ -43,17 +43,30 @@ public class SessionFactory implements AutoCloseable {
     this(Collections.singleton(repository), Collections.singleton(entityPackage));
   }
 
+  public SessionFactory(Repository repository, Class<?>... entityClasses) {
+    this(Collections.singleton(repository), entityClasses);
+  }
+
+  public SessionFactory(Collection<Repository> repositories, Class<?>... entityClasses) {
+    checkAtLeastOne(repositories);
+
+    repositories.forEach(this::addRepository);
+    for (Class<?> entityClass : entityClasses) {
+      metaModel.addEntity(entityClass);
+    }
+  }
+
   public SessionFactory(Collection<Repository> repositories, Collection<String> packages) {
-    checkSize(repositories, 1);
-    checkSize(packages, 1);
+    checkAtLeastOne(repositories);
+    checkAtLeastOne(packages);
 
     repositories.forEach(this::addRepository);
     metaModel.scanClassPath(packages);
   }
 
-  private void checkSize(Collection<?> collection, int expectedSize) {
-    if (collection.size() != expectedSize) {
-      throw new IllegalArgumentException("Expected a collection with " + expectedSize + " elements, but got " + collection.size());
+  private void checkAtLeastOne(Collection<?> collection) {
+    if (collection.size() < 1) {
+      throw new IllegalArgumentException("Expected a collection with at least one element, but got 0");
     }
   }
 
@@ -61,7 +74,7 @@ public class SessionFactory implements AutoCloseable {
     Objects.requireNonNull(repository, "Repository is required");
     log.info("Added repository {}", repository.getPath());
     repositoryByName.put(repository.getName(), repository);
-    repository.initialize();
+    repository.initialize(metaModel, executorService);
   }
 
   public Repository getRepository(String name) {

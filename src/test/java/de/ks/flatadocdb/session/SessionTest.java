@@ -32,7 +32,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Optional;
 
 import static org.junit.Assert.*;
 
@@ -83,17 +82,17 @@ public class SessionTest {
     session1.persist(testEntity);
     assertNotNull(testEntity.getId());
 
-    Optional<TestEntity> result = session1.findByNaturalId(TestEntity.class, "Schnitzel");
-    assertTrue(result.isPresent());
+    TestEntity result = session1.findByNaturalId(TestEntity.class, "Schnitzel");
+    assertNotNull(result);
 
     result = session2.findByNaturalId(TestEntity.class, "Schnitzel");
-    assertFalse(result.isPresent());
+    assertNull(result);
 
     session1.prepare();
     session1.commit();
 
     result = session2.findByNaturalId(TestEntity.class, "Schnitzel");
-    assertTrue(result.isPresent());
+    assertNotNull(result);
   }
 
   @Test
@@ -171,8 +170,8 @@ public class SessionTest {
     session1 = new Session(metamodel, repository);
     Session session2 = new Session(metamodel, repository);
 
-    TestEntity first = session1.findById(TestEntity.class, testEntity.getId()).get();
-    TestEntity second = session2.findById(TestEntity.class, testEntity.getId()).get();
+    TestEntity first = session1.findById(TestEntity.class, testEntity.getId());
+    TestEntity second = session2.findById(TestEntity.class, testEntity.getId());
 
     second.setAttribute("bla");
     session2.prepare();
@@ -198,7 +197,7 @@ public class SessionTest {
 
     for (int i = 0; i < 5; i++) {
       session = new Session(metamodel, repository);
-      testEntity = session.findByNaturalId(TestEntity.class, "Schnitzel").get();
+      testEntity = session.findByNaturalId(TestEntity.class, "Schnitzel");
       testEntity.setAttribute("att" + i);
       session.prepare();
       session.commit();
@@ -215,8 +214,8 @@ public class SessionTest {
     session.commit();
 
     session = new Session(metamodel, repository);
-    testEntity = session.findByNaturalId(TestEntity.class, "Schnitzel").get();
-    TestEntity testEntity2 = session.findByNaturalId(TestEntity.class, "Schnitzel").get();
+    testEntity = session.findByNaturalId(TestEntity.class, "Schnitzel");
+    TestEntity testEntity2 = session.findByNaturalId(TestEntity.class, "Schnitzel");
     assertSame(testEntity, testEntity2);
   }
 
@@ -235,7 +234,7 @@ public class SessionTest {
     assertTrue(pathInRepository.toFile().exists());
 
     session = new Session(metamodel, repository);
-    testEntity = session.findById(TestEntity.class, testEntity.getId()).get();
+    testEntity = session.findById(TestEntity.class, testEntity.getId());
     session.remove(testEntity);
     session.prepare();
     session.commit();

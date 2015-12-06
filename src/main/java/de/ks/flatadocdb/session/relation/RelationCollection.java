@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -49,10 +48,10 @@ public class RelationCollection<E, DelegateType extends Collection<E>, IdCollect
       log.debug("Loading {} elements of lazy collection", ids.size());
 
       for (String id : ids) {
-        Optional<Object> found = session.findById(id);
-        if (found.isPresent()) {
+        Object found = session.findById(id);
+        if (found != null) {
           @SuppressWarnings("unchecked")
-          E e = (E) found.get();
+          E e = (E) found;
           delegate.add(e);
           log.trace("Found related {} for id {}", e, id);
         }

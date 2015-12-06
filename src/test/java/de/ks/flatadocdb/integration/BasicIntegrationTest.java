@@ -17,10 +17,10 @@ package de.ks.flatadocdb.integration;
 
 import com.google.common.base.StandardSystemProperty;
 import de.ks.flatadocdb.Repository;
-import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
 import de.ks.flatadocdb.session.SessionFactory;
 import de.ks.flatadocdb.util.DeleteDir;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -41,8 +41,13 @@ public class BasicIntegrationTest {
     new DeleteDir(repoPath).delete();
     Files.createDirectories(repoPath);
 
-    repository = new Repository(repoPath, new MetaModel());
+    repository = new Repository(repoPath);
     sessionFactory = new SessionFactory(repository, TestEntity.class.getPackage().getName());
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    sessionFactory.close();
   }
 
   @Test
@@ -52,7 +57,7 @@ public class BasicIntegrationTest {
       session.persist(entity);
     });
 
-    TestEntity entity = sessionFactory.transactedSessionRead(repository, session -> session.findByNaturalId(TestEntity.class, "blubber").get());
+    TestEntity entity = sessionFactory.transactedSessionRead(repository, session -> session.findByNaturalId(TestEntity.class, "blubber"));
     assertEquals("blubber", entity.getName());
     assertEquals("Steak", entity.getAttribute());
   }

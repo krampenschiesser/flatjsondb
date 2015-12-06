@@ -18,7 +18,6 @@ package de.ks.flatadocdb.integration;
 import com.google.common.base.StandardSystemProperty;
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.exception.StaleObjectStateException;
-import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
 import de.ks.flatadocdb.session.SessionFactory;
 import de.ks.flatadocdb.util.DeleteDir;
@@ -53,7 +52,7 @@ public class MultiThreadingTest {
     new DeleteDir(repoPath).delete();
     Files.createDirectories(repoPath);
 
-    repository = new Repository(repoPath, new MetaModel());
+    repository = new Repository(repoPath);
     sessionFactory = new SessionFactory(repository, TestEntity.class.getPackage().getName());
   }
 
@@ -99,7 +98,7 @@ public class MultiThreadingTest {
                   workQueue.add(ids.get(k));
                   String id = workQueue.poll();
                   if (id != null) {
-                    TestEntity testEntity = session.findById(TestEntity.class, id).get();
+                    TestEntity testEntity = session.findById(TestEntity.class, id);
                     testEntity.setAttribute(testEntity.getName() + suffix);
                   }
                 }

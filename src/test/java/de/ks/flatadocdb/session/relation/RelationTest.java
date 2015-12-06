@@ -117,7 +117,7 @@ public class RelationTest {
     session.commit();
 
     session = new Session(metamodel, repository);
-    owner = session.findById(RelationOwner.class, owner.getId()).get();
+    owner = session.findById(RelationOwner.class, owner.getId());
     assertEquals(1, new SessionFriend(session).getEntries().size());
 
     assertEquals(2, owner.getRelatedList().size());
@@ -141,7 +141,7 @@ public class RelationTest {
     session.commit();
 
     session = new Session(metamodel, repository);
-    owner = session.findById(RelationOwner.class, owner.getId()).get();
+    owner = session.findById(RelationOwner.class, owner.getId());
     assertEquals(2, new SessionFriend(session).getEntries().size());
   }
 
@@ -157,12 +157,12 @@ public class RelationTest {
     session.commit();
 
     session = new Session(metamodel, repository);
-    session.remove(session.findById(related.getId()).get());
+    session.remove(session.findById(related.getId()));
     session.prepare();
     session.commit();
 
     session = new Session(metamodel, repository);
-    owner = (RelationOwner) session.findById(owner.getId()).get();
+    owner = (RelationOwner) session.findById(owner.getId());
     assertTrue(owner.getRelatedList().isEmpty());
     session.prepare();
     session.commit();

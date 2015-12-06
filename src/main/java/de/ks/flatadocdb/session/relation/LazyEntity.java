@@ -79,7 +79,7 @@ public class LazyEntity implements MethodHandler {
   public Object invoke(Object self, Method thisMethod, Method proceed, Object[] args) throws Throwable {
     if (!loaded.get()) {
       session.checkCorrectThread();
-      Object found = session.findById(id).orElse(null);
+      Object found = session.findById(id);
       if (found == null) {
         log.warn("For {} loaded lazy entity {} but found none", ownerField, id);
       } else {

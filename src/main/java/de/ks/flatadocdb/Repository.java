@@ -33,23 +33,18 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-public class Repository implements AutoCloseable {
+public class Repository {
   public static final String LUCENE_DIR = ".lucene";
   private static final Logger log = LoggerFactory.getLogger(Repository.class);
 
   protected final Path path;
   protected final String name;
-  protected final Directory luceneDirectory;
-  protected final GlobalIndex index;
-  protected final LuceneIndex luceneIndex;
+  protected volatile Directory luceneDirectory;
+  protected volatile GlobalIndex index;
+  protected volatile LuceneIndex luceneIndex;
 
-  public Repository(Path path, MetaModel metaModel) {
-    this(path, metaModel, Executors.newSingleThreadExecutor());
-  }
-
-  public Repository(Path path, MetaModel metaModel, ExecutorService executorService) {
+  public Repository(Path path) {
     this.path = path;
     this.name = path.getName(path.getNameCount() - 1).toString();
     if (!path.toFile().exists()) {
@@ -59,21 +54,6 @@ public class Repository implements AutoCloseable {
         throw new RuntimeException(e);
       }
     }
-    Path subPath = path.resolve(LUCENE_DIR);
-    if (!Files.exists(subPath)) {
-      try {
-        Files.createDirectories(subPath);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    try {
-      luceneDirectory = FSDirectory.open(subPath);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    index = new GlobalIndex(this, metaModel, executorService);
-    luceneIndex = new LuceneIndex(this);
   }
 
   public Path getPath() {
@@ -111,7 +91,6 @@ public class Repository implements AutoCloseable {
     return luceneIndex;
   }
 
-  @Override
   public void close() {
     try {
       luceneDirectory.close();
@@ -122,7 +101,22 @@ public class Repository implements AutoCloseable {
     index.close();
   }
 
-  public void initialize() {
-
+  public Repository initialize(MetaModel metaModel, ExecutorService executorService) {
+    Path subPath = path.resolve(LUCENE_DIR);
+    if (!Files.exists(subPath)) {
+      try {
+        Files.createDirectories(subPath);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    try {
+      luceneDirectory = FSDirectory.open(subPath);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    index = new GlobalIndex(this, metaModel, executorService);
+    luceneIndex = new LuceneIndex(this);
+    return this;
   }
 }

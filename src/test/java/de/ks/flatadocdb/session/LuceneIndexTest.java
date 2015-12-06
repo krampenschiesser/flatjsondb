@@ -78,7 +78,7 @@ public class LuceneIndexTest {
 
 
     session = new Session(metamodel, repository);
-    TestEntity read = session.findById(TestEntity.class, testEntity.getId()).get();
+    TestEntity read = session.findById(TestEntity.class, testEntity.getId());
     read.setAttribute("Zaeh");
     session.prepare();
     session.commit();
@@ -104,7 +104,7 @@ public class LuceneIndexTest {
 
 
     session = new Session(metamodel, repository);
-    TestEntity read = session.findById(TestEntity.class, testEntity.getId()).get();
+    TestEntity read = session.findById(TestEntity.class, testEntity.getId());
     session.remove(read);
     session.prepare();
     session.commit();

@@ -16,12 +16,14 @@
 package de.ks.flatadocdb;
 
 import com.google.common.base.StandardSystemProperty;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.util.DeleteDir;
 import org.junit.rules.ExternalResource;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.Executors;
 
 public class TempRepository extends ExternalResource {
   private Path path;
@@ -33,7 +35,8 @@ public class TempRepository extends ExternalResource {
     path = Paths.get(StandardSystemProperty.JAVA_IO_TMPDIR.value(), "testRepository");
     new DeleteDir(path).delete();
     metaModel = new MetaModel();
-    repository = new Repository(path, metaModel);
+    repository = new Repository(path);
+    repository.initialize(metaModel, Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).build()));
   }
 
   @Override

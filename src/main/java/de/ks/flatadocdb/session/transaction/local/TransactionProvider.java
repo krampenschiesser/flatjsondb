@@ -37,7 +37,6 @@ public class TransactionProvider {
 
   public void removeTransaction(String txName) {
     BaseTransaction tx = transactions.get().stream().filter(t -> t.getName().equals(txName)).findFirst().get();
-    tx.getResources().forEach(TransactionResource::close);
     transactions.get().remove(tx);
   }
 

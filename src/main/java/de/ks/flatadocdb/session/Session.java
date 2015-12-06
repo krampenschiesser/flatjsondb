@@ -323,11 +323,6 @@ public class Session implements TransactionResource {
     indexes.forEach(Index::rollback);
   }
 
-  @Override
-  public void close() {
-    //
-  }
-
   public void checkCorrectThread() {
     Thread currentThread = Thread.currentThread();
     if (!currentThread.equals(this.thread)) {

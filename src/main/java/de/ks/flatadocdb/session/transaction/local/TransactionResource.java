@@ -23,6 +23,4 @@ public interface TransactionResource {
   void commit();
 
   void rollback();
-
-  void close();
 }

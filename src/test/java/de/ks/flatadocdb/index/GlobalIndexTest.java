@@ -25,7 +25,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.nio.file.Path;
 import java.util.Collection;
+import java.util.concurrent.Executors;
 
 import static org.junit.Assert.assertEquals;
 
@@ -36,11 +38,13 @@ public class GlobalIndexTest {
   private Repository repository;
   private MetaModel metaModel;
   private GlobalIndex index;
+  private Path path;
 
   @Before
   public void setUp() throws Exception {
     repository = tempRepository.getRepository();
     metaModel = tempRepository.getMetaModel();
+    path = tempRepository.getPath();
     metaModel.addEntity(TestEntity.class);
     for (int i = 0; i < COUNT; i++) {
       TestEntity entity = new TestEntity("test" + (i + 1));
@@ -58,5 +62,25 @@ public class GlobalIndexTest {
 
     Collection<IndexElement> elements = index.getAllOf(TestEntity.class);
     assertEquals(COUNT, elements.size());
+  }
+
+  @Test
+  public void testPersistLoadIndex() throws Exception {
+    index.recreate();
+    index.flush();
+
+    repository.close();
+    repository = new Repository(path);
+    try {
+      repository.initialize(metaModel, Executors.newSingleThreadExecutor());
+      index = repository.getIndex();
+      index.load();
+
+      Collection<IndexElement> elements = index.getAllOf(TestEntity.class);
+      assertEquals(COUNT, elements.size());
+    } finally {
+      repository.close();
+    }
+
   }
 }

@@ -16,6 +16,10 @@
 
 package de.ks.flatadocdb.index;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.defaults.DefaultIdGenerator;
@@ -51,6 +55,8 @@ import java.util.stream.Collectors;
  * * last modified(for rebuild checking)
  */
 public class GlobalIndex implements Index {
+  public static final String INDEX_FOLDER = ".index";
+  public static final String INDEX_FILE = "index.json";
   private static final Logger log = LoggerFactory.getLogger(GlobalIndex.class);
 
   protected final Map<Serializable, IndexElement> naturalIdToElement = new ConcurrentHashMap<>();
@@ -159,7 +165,7 @@ public class GlobalIndex implements Index {
 
   @Override
   public void prepare() {
-    
+
   }
 
   @Override
@@ -231,5 +237,54 @@ public class GlobalIndex implements Index {
   @Override
   public void close() {
 
+  }
+
+  public void flush() {
+    Path folder = repository.getPath().resolve(INDEX_FOLDER);
+    if (!Files.exists(folder)) {
+      try {
+        Files.createDirectories(folder);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    final ObjectMapper mapper = getMapper();
+    ArrayList<IndexElement> elements = new ArrayList<>(idToElement.values());
+    try {
+      mapper.writeValue(repository.getPath().resolve(INDEX_FOLDER).resolve(INDEX_FILE).toFile(), elements);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public void load() {
+    final ObjectMapper mapper = getMapper();
+
+    Path filePath = repository.getPath().resolve(INDEX_FOLDER).resolve(INDEX_FILE);
+    if (Files.exists(filePath)) {
+      try {
+        @SuppressWarnings("unchecked")
+        ArrayList<IndexElement> values = mapper.readValue(filePath.toFile(), ArrayList.class);
+        for (IndexElement element : values) {
+          element.setRepository(repository);
+          String id = element.getId();
+          Serializable naturalId = element.getNaturalId();
+          idToElement.put(id, element);
+          naturalIdToElement.put(naturalId, element);
+        }
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
+  protected ObjectMapper getMapper() {
+    final ObjectMapper mapper = new ObjectMapper();
+    mapper.findAndRegisterModules();
+    mapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
+    mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+    mapper.enableDefaultTyping();
+    mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.WRAPPER_OBJECT);
+    return mapper;
   }
 }

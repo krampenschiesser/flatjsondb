@@ -33,6 +33,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Repository {
   public static final String LUCENE_DIR = ".lucene";
@@ -43,6 +44,7 @@ public class Repository {
   protected volatile Directory luceneDirectory;
   protected volatile GlobalIndex index;
   protected volatile LuceneIndex luceneIndex;
+  protected final AtomicBoolean closed = new AtomicBoolean();
 
   public Repository(Path path) {
     this.path = path;
@@ -91,17 +93,21 @@ public class Repository {
     return luceneIndex;
   }
 
-  public void close() {
-    try {
-      luceneDirectory.close();
-    } catch (IOException e) {
-      log.error("Could not close lucene index {}", luceneDirectory, e);
+  public synchronized void close() {
+    if (!closed.get()) {
+      try {
+        luceneDirectory.close();
+      } catch (IOException e) {
+        log.error("Could not close lucene index {}", luceneDirectory, e);
+      }
+      luceneIndex.close();
+      index.close();
+      closed.set(true);
     }
-    luceneIndex.close();
-    index.close();
   }
 
-  public Repository initialize(MetaModel metaModel, ExecutorService executorService) {
+  public synchronized Repository initialize(MetaModel metaModel, ExecutorService executorService) {
+    checkClosed();
     Path subPath = path.resolve(LUCENE_DIR);
     if (!Files.exists(subPath)) {
       try {
@@ -116,7 +122,14 @@ public class Repository {
       throw new RuntimeException(e);
     }
     index = new GlobalIndex(this, metaModel, executorService);
+    index.load();
     luceneIndex = new LuceneIndex(this);
     return this;
+  }
+
+  private void checkClosed() {
+    if (closed.get()) {
+      throw new IllegalStateException("Repository " + path + " already closed");
+    }
   }
 }

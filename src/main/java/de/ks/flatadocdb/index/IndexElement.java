@@ -16,19 +16,28 @@
 
 package de.ks.flatadocdb.index;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.ks.flatadocdb.Repository;
 
 import java.io.Serializable;
 import java.nio.file.Path;
 
 public class IndexElement {
-  private final Repository repository;
+  @JsonIgnore
+  private Repository repository;
   private final Path pathInRepository;
   private final String id;
   private final Serializable naturalId;
   private final Class<?> entityClass;
   private byte[] md5Sum;
   private long lastModified;
+
+  protected IndexElement() {
+    id = null;
+    naturalId = null;
+    entityClass = null;
+    pathInRepository = null;
+  }
 
   public IndexElement(Repository repository, Path pathInRepository, String id, Serializable naturalId, Class<?> entityClass) {
     this.repository = repository;
@@ -78,6 +87,10 @@ public class IndexElement {
   public IndexElement setLastModified(long time) {
     this.lastModified = time;
     return this;
+  }
+
+  protected void setRepository(Repository repository) {
+    this.repository = repository;
   }
 
   @Override

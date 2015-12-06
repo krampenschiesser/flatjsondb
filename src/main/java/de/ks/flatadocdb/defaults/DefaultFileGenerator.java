@@ -50,7 +50,7 @@ public class DefaultFileGenerator implements FileGenerator {
 
   @Override
   public String getFlushFileName(Repository repository, EntityDescriptor descriptor, Object object) {
-    return "." + getFileName(repository, descriptor, object) + "." + ".flush";
+    return "." + getFileName(repository, descriptor, object) + ".flush";
   }
 
   protected String parseHashCode(Object object) {

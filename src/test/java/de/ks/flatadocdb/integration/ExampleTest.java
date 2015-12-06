@@ -38,24 +38,39 @@ public class ExampleTest {
 
   @Test
   public void testExample() throws Exception {
+    //open a repository with a java.nio.Path
     Repository repository = new Repository(myRepoPath);
+
+    //open a new session factory
+    //the factory needs at least one repository and a package to scan or 1-n entity classes
+    //a factory needs to be closed again to release resources(mainly lucene index)
     try (SessionFactory factory = new SessionFactory(repository, ExampleEntity.class)) {
       factory.transactedSession(session -> {
         ExampleEntity entity = new ExampleEntity("Hello world!");
         assert entity.getId() == null;
         session.persist(entity);
-        assert entity.getId() != null;
+        assert entity.getId() != null;//the unique id is written into the entity with the persist call
       });
 
+      //modify entity
       factory.transactedSession(session -> {
         ExampleEntity entity = session.findByNaturalId(ExampleEntity.class, "Hello world!");
         entity.setAttribute("Coffee");
+
+        ExampleEntity entity2 = session.findByNaturalId(ExampleEntity.class, "Hello world!");
+        assert entity == entity2;//same instance always returned
       });
 
+      //read entity
       ExampleEntity entity = factory.transactedSessionRead(session -> session.findByNaturalId(ExampleEntity.class, "Hello world!"));
-      assert "Coffee".equals(entity.getAttribute());
+      assert "Coffee".equals(entity.getAttribute());//entity is now detached but can still be used.
 
+      //delete enity again
+      factory.transactedSession(session -> {
+        ExampleEntity reloaded = session.findByNaturalId(ExampleEntity.class, "Hello world!");
+        session.remove(reloaded);
+      });
     }
-//    factory.close();
+//    factory.close(); if we don't use a try-with-resource block we need to close the factory manually
   }
 }

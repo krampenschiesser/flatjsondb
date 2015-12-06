@@ -37,6 +37,9 @@ public class EntityUpdate extends SessionAction {
     long version = entityDescriptor.getVersion(entity);
     entityDescriptor.writeVersion(entity, version + 1);
     sessionEntry.version++;
+
+    executeLifecycleAction(LifeCycle.PRE_UPDATE);
+
     EntityPersister persister = entityDescriptor.getPersister();
     byte[] fileContents = persister.createFileContents(repository, entityDescriptor, entity);
 
@@ -45,7 +48,6 @@ public class EntityUpdate extends SessionAction {
     byte[] md5 = DigestUtils.md5(fileContents);
     sessionEntry.setMd5(md5);
 
-    executeLifecycleAction(LifeCycle.PRE_UPDATE);
 
     checkAppendToComplete(sessionEntry.getCompletePath());//better to use Filelock if possible
   }

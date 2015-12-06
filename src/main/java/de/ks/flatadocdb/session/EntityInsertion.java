@@ -34,6 +34,9 @@ public class EntityInsertion extends SessionAction {
     checkVersionIncrement(sessionEntry.getCompletePath(), sessionEntry.getVersion());
     checkNoFlushFileExists(getFlushPath());
 
+    executeLifecycleAction(LifeCycle.PRE_PERSIST);
+    executeLifecycleAction(LifeCycle.PRE_UPDATE);
+
     EntityPersister persister = sessionEntry.getEntityDescriptor().getPersister();
     byte[] fileContents = persister.createFileContents(repository, sessionEntry.getEntityDescriptor(), sessionEntry.getObject());
 
@@ -42,8 +45,6 @@ public class EntityInsertion extends SessionAction {
     byte[] md5 = DigestUtils.md5(fileContents);
     sessionEntry.setMd5(md5);
 
-    executeLifecycleAction(LifeCycle.PRE_PERSIST);
-    executeLifecycleAction(LifeCycle.PRE_UPDATE);
 
     checkAppendToComplete(sessionEntry.getCompletePath());//better to use Filelock if possible
   }

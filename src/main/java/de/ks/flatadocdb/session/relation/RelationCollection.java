@@ -58,7 +58,7 @@ public class RelationCollection<E, DelegateType extends Collection<E>, IdCollect
         }
       }
       if (ids.size() != delegate.size()) {
-        log.warn("Got different collection size after loading. Expected {} elements but found {}", ids.size(), delegate.size(), new Exception());
+        log.warn("Got different collection size after loading. Expected {} elements but found {}", ids.size(), delegate.size());
       }
       loaded.set(true);
     }

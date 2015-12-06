@@ -267,6 +267,14 @@ but in a subfolder of their parent's directory.
 Related entities are always persisted with their parent.
 However removal of the relation owner will not remove the related entities.
 
+==== Customize Entity loading and saving
+
+The @Entity annotation contains some field defining the behaviour on how and where the entity is loaded/saved;
+
+* FolderGenerator -> Generates the target folder to store the entity in
+* FileGenerator -> Generates the file name for the entity
+* EntityPersister -> used to load/save an entity. Custom implementations can be used for eg. asciidoctor, xml whatever.
+
 === Session
 
 The session is the main object to manipulate entities.
@@ -285,6 +293,20 @@ It generates the file contents it would write to the file system and compares th
 
 ==== Combine the session with your own transactions
 
+The session provides the usual methods you need to include it in your own transaction environment:
+
+* prepare
+* commit
+* rollback
+
+However due to the mass of file operations the commit phase can break down and destroy you 2 phase commit.
+
 === LuceneIndex
 
+Lucene is included to provide search access for all entities.
+Sadly lucene is not that fast when I commit the current state.
+Therefore the LuceneIndex is  not transaction safe.
+I try to ensure that it is only updated after a successful commit, but this is can still go wrong.
 
+By default all Enum, String or primitive fields and collections/arrays thereof are indexed.
+You can generate your own list of indexable fields by using an own imlementation of *LuceneDocumentExtractor* (See @Entity).

@@ -95,6 +95,28 @@ factory.transactedSession(session -> {
 });
 ----
 
+The contents look like this:
+[source,shell]
+----
+scar@scar:~$ cd /tmp/myRepoPath/
+scar@scar:/tmp/myRepoPath$ ls
+ExampleEntity
+scar@scar:/tmp/myRepoPath$ cd ExampleEntity/
+scar@scar:/tmp/myRepoPath/ExampleEntity$ ls
+Hello_world.json
+scar@scar:/tmp/myRepoPath/ExampleEntity$ cat Hello_world.json
+{
+  "de.ks.flatadocdb.integration.ExampleEntity" : {
+    "version" : 1,
+    "id" : "720ce395f0a0a151f198877bd9122257db55cdbe",
+    "creationTime" : [ 2015, 12, 6, 9, 28, 59, 50000000 ],
+    "updateTime" : [ 2015, 12, 6, 9, 29, 9, 858000000 ],
+    "name" : "Hello world!",
+    "attribute" : "Coffee"
+  }
+}
+----
+
 ### Complete code
 [source,java]
 ----

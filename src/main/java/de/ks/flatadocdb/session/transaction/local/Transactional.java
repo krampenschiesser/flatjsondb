@@ -72,14 +72,17 @@ public class Transactional {
   public static <T> T withNewTransaction(String txName, Supplier<T> supplier) {
     SimpleTransaction tx = provider.beginTransaction(txName);
     MDC.put(TRANSACTION_MDC_KEY, txName.substring(3));
+    String phase = "execute";
     try {
       T retval = supplier.get();
+      phase = "prepare";
       tx.prepare();
+      phase = "commit";
       tx.commit();
       log.trace("Successfully committed tx {}", txName);
       return retval;
     } catch (Throwable t) {
-      log.error("Could not commit tx {}: {}", txName, t, t);
+      log.error("Exception during phase '{}' {}: {}", phase, txName, t, t);
       tx.rollback();
       throw t;
     } finally {

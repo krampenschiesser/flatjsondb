@@ -163,20 +163,6 @@ public class GlobalIndex implements Index {
     }
   }
 
-  @Override
-  public void prepare() {
-
-  }
-
-  @Override
-  public void commit() {
-
-  }
-
-  @Override
-  public void rollback() {
-
-  }
 
   private long getLastModified(Path path) {
     try {

@@ -159,18 +159,6 @@ public class LuceneIndex implements Index {
   }
 
   @Override
-  public void prepare() {
-  }
-
-  @Override
-  public void commit() {
-  }
-
-  @Override
-  public void rollback() {
-  }
-
-  @Override
   public void close() {
     try {
       indexWriter.close();

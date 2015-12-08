@@ -30,12 +30,6 @@ public interface Index {
 
   void recreate();
 
-  void prepare();
-
-  void commit();
-
-  void rollback();
-
   void close();
 
 }

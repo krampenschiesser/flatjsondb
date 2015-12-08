@@ -312,14 +312,6 @@ public class Session implements TransactionResource {
         throw e;
       }
     }
-    for (Index index : indexes) {
-      try {
-        index.prepare();
-      } catch (RuntimeException e) {
-        rollbackonly = true;
-        throw e;
-      }
-    }
   }
 
   @Override
@@ -346,7 +338,6 @@ public class Session implements TransactionResource {
     if (isRollbackonly()) {
       return;
     }
-    indexes.forEach(Index::commit);
   }
 
   @Override
@@ -354,7 +345,6 @@ public class Session implements TransactionResource {
     actions.forEach(a -> a.rollback(this));
     actions.clear();
     luceneUpdates.clear();
-    indexes.forEach(Index::rollback);
   }
 
   public void checkCorrectThread() {

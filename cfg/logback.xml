@@ -44,4 +44,5 @@
         <appender-ref ref="FILE"/>
     </root>
     <logger name="de.ks" level="info"/>
+    <!--<logger name="de.ks.flatadocdb.session" level="debug"/>-->
 </configuration>

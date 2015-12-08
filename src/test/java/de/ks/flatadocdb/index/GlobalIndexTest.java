@@ -21,6 +21,7 @@ import de.ks.flatadocdb.TempRepository;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
 import de.ks.flatadocdb.session.Session;
+import org.apache.lucene.index.IndexReader;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -39,6 +40,7 @@ public class GlobalIndexTest {
   private MetaModel metaModel;
   private GlobalIndex index;
   private Path path;
+  private LuceneIndex luceneIndex;
 
   @Before
   public void setUp() throws Exception {
@@ -54,6 +56,8 @@ public class GlobalIndexTest {
       session.commit();
     }
     index = repository.getIndex();
+    luceneIndex = repository.getLuceneIndex();
+    luceneIndex.clear();
   }
 
   @Test
@@ -62,6 +66,17 @@ public class GlobalIndexTest {
 
     Collection<IndexElement> elements = index.getAllOf(TestEntity.class);
     assertEquals(COUNT, elements.size());
+  }
+
+  @Test
+  public void testRecreateLuceneIndex() throws Exception {
+    IndexReader indexReader = luceneIndex.getIndexReader();
+    assertEquals(0, indexReader.maxDoc());
+
+    luceneIndex.recreate();
+
+    indexReader = luceneIndex.getIndexReader();
+    assertEquals(COUNT, indexReader.maxDoc());
   }
 
   @Test

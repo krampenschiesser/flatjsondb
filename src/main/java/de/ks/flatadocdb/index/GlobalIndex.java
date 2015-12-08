@@ -23,7 +23,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.defaults.DefaultIdGenerator;
-import de.ks.flatadocdb.ifc.EntityPersister;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.session.SessionEntry;
@@ -54,7 +53,7 @@ import java.util.stream.Collectors;
  * * md5sum (for rebuild checking)
  * * last modified(for rebuild checking)
  */
-public class GlobalIndex implements Index {
+public class GlobalIndex extends Index {
   public static final String INDEX_FOLDER = ".index";
   public static final String INDEX_FILE = "index.json";
   private static final Logger log = LoggerFactory.getLogger(GlobalIndex.class);
@@ -62,18 +61,13 @@ public class GlobalIndex implements Index {
   protected final Map<Serializable, IndexElement> naturalIdToElement = new ConcurrentHashMap<>();
   protected final Map<String, IndexElement> idToElement = new ConcurrentHashMap<>();
 
-  protected final Repository repository;
-  protected final MetaModel metaModel;
-  protected final ExecutorService executorService;
 
   public GlobalIndex(Repository repository, MetaModel metaModel) {
     this(repository, metaModel, Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).build()));
   }
 
   public GlobalIndex(Repository repository, MetaModel metaModel, ExecutorService executorService) {
-    this.repository = repository;
-    this.metaModel = metaModel;
-    this.executorService = executorService;
+    super(repository, metaModel, executorService);
   }
 
   @Override
@@ -163,8 +157,7 @@ public class GlobalIndex implements Index {
     }
   }
 
-
-  private long getLastModified(Path path) {
+  protected long getLastModified(Path path) {
     try {
       return Files.getLastModifiedTime(path).toMillis();
     } catch (IOException e) {
@@ -173,7 +166,7 @@ public class GlobalIndex implements Index {
     }
   }
 
-  private byte[] readMd5(Path path) {
+  protected byte[] readMd5(Path path) {
     byte[] md5 = new byte[0];
     try (FileInputStream stream = new FileInputStream(path.toFile())) {
       try (BufferedInputStream buffered = new BufferedInputStream(stream)) {
@@ -184,40 +177,6 @@ public class GlobalIndex implements Index {
       log.error("Could not get md5 of {}", path, e);
     }
     return md5;
-  }
-
-  private Map<EntityDescriptor, Set<Path>> mapToEntityDescriptors(Set<Path> allFiles) {
-    Map<EntityDescriptor, Set<Path>> discovered = new ConcurrentHashMap<>();
-    List<EntityDescriptor> entities = metaModel.getEntities();
-    entities.forEach(e -> discovered.put(e, new HashSet<>()));
-
-    Map<Path, Future<?>> futures = new LinkedHashMap<>();
-    for (Path file : allFiles) {
-      futures.put(file, parseSingleFile(discovered, entities, file));
-    }
-
-    futures.forEach((p, f) -> {
-      try {
-        f.get();
-      } catch (Exception e) {
-        log.error("Could not  determine responsible entity descriptor for {}", p, e);
-      }
-    });
-    return discovered;
-  }
-
-  private Future<?> parseSingleFile(Map<EntityDescriptor, Set<Path>> discovered, List<EntityDescriptor> entities, Path file) {
-    return executorService.submit(() -> {
-      for (EntityDescriptor entityDescriptor : entities) {
-        EntityPersister persister = entityDescriptor.getPersister();
-        if (persister.canParse(file, entityDescriptor)) {
-          discovered.get(entityDescriptor).add(file);
-          log.debug("Found file {} which can be parsed as {}", file, entityDescriptor.getEntityClass().getSimpleName());
-          return;
-        }
-      }
-      log.debug("Could not find any entity descriptor for {}", file);
-    });
   }
 
   @Override

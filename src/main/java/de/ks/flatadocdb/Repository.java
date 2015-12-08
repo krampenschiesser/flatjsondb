@@ -123,7 +123,7 @@ public class Repository {
     }
     index = new GlobalIndex(this, metaModel, executorService);
     index.load();
-    luceneIndex = new LuceneIndex(this);
+    luceneIndex = new LuceneIndex(this, metaModel, executorService);
     return this;
   }
 

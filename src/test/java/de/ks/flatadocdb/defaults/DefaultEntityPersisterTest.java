@@ -16,6 +16,7 @@
 
 package de.ks.flatadocdb.defaults;
 
+import com.google.common.base.StandardSystemProperty;
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.TempRepository;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
@@ -109,8 +110,8 @@ public class DefaultEntityPersisterTest {
     log.info(json);
     assertThat(json, Matchers.not(Matchers.containsString(Related.class.getName())));
     assertThat(json, Matchers.containsString("\"child\" : \"childId\""));
-    assertThat(json, Matchers.containsString("\"relatedList\" : {\n" + "      \"java.util.ArrayList\" : [ \"relatedId\", \"relatedId\" ]"));
-    assertThat(json, Matchers.containsString("\"relatedSet\" : {\n" + "      \"java.util.HashSet\" : [ \"relatedId\" ]"));
+    assertThat(json, Matchers.containsString("\"relatedList\" : {" + StandardSystemProperty.LINE_SEPARATOR.value() + "      \"java.util.ArrayList\" : [ \"relatedId\", \"relatedId\" ]"));
+    assertThat(json, Matchers.containsString("\"relatedSet\" : {" + StandardSystemProperty.LINE_SEPARATOR.value() + "      \"java.util.HashSet\" : [ \"relatedId\" ]"));
   }
 
   @Test

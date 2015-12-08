@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package de.ks.flatadocdb.session;
 
 import com.google.common.base.StandardSystemProperty;
@@ -22,6 +23,7 @@ import de.ks.flatadocdb.exception.AggregateException;
 import de.ks.flatadocdb.exception.StaleObjectFileException;
 import de.ks.flatadocdb.exception.StaleObjectStateException;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
+import de.ks.flatadocdb.util.WindowsSafeFileAccess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +36,7 @@ import java.util.*;
  * Base class for events that happen in a session.
  */
 public abstract class SessionAction {
+
   private static final Logger log = LoggerFactory.getLogger(SessionAction.class);
 
   protected final Repository repository;
@@ -118,12 +121,10 @@ public abstract class SessionAction {
   }
 
   protected void moveFlushFile(Path flushPath) {
-    try {
+    WindowsSafeFileAccess.exec(() -> {
       Files.move(flushPath, sessionEntry.getCompletePath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
       log.debug("Moved flush {} file to real file for {}", flushPath.getFileName(), sessionEntry);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    });
   }
 
   protected void writeFlushFile(byte[] fileContents) {

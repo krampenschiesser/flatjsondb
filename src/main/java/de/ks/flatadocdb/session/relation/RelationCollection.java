@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package de.ks.flatadocdb.session.relation;
 
 import de.ks.flatadocdb.session.Session;

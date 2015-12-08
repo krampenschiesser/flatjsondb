@@ -237,6 +237,7 @@ public class Session implements TransactionResource {
       }
     }
 
+    log.trace("Loaded {}", object);
     addToSession(sessionEntry);
 
     for (Map.Entry<Relation, Collection<String>> entry : relationIds.entrySet()) {

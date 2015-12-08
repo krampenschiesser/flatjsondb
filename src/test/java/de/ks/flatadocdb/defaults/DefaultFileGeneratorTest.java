@@ -45,9 +45,10 @@ public class DefaultFileGeneratorTest {
   @Test
   public void testNaturalId() throws Exception {
     DefaultFileGenerator generator = new DefaultFileGenerator();
-    String s = generator.parseNaturalId("#: öäana89?!!``  l");
+
+    String s = generator.parseNaturalId("#: \u00F6\u00E4ana89?!!``  l");
     assertNotNull(s);
-    assertEquals("_öäana89__l", s);
+    assertEquals("_\u00F6\u00E4ana89__l", s);
   }
 
 }

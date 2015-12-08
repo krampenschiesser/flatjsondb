@@ -63,7 +63,6 @@ public class MultiThreadingTest {
   @Test
   public void testMassiveMultiThreading() throws Exception {
     int threads = Runtime.getRuntime().availableProcessors();
-//    int threads = 1;
     int maxItems = 10000;
     int iterations = maxItems * 3;
     int batchsize = 10;
@@ -112,7 +111,7 @@ public class MultiThreadingTest {
               }
             });
           } catch (StaleObjectStateException e) {
-            log.info("Got statel object state exception", e);
+            log.info("Got stale object state exception", e);
             //ok
           }
         }

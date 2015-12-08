@@ -19,6 +19,7 @@ task wrapper(type: Wrapper) {
 }
 
 apply plugin: "java"
+apply plugin: "maven-publish"
 
 group = "de.ks"
 version = "$version"
@@ -27,6 +28,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven {
         url = "http://repository.jboss.org/nexus/content/groups/public"
@@ -134,4 +136,12 @@ asciidoctor {
                     idseparator         : '-'
             ]
     ]
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
 }

@@ -72,7 +72,9 @@ public abstract class SessionAction {
   protected void addFileDeleteRollback(Path path) {
     rollbacks.add(() -> {
       try {
-        Files.delete(path);
+        if (Files.exists(path)) {
+          Files.delete(path);
+        }
         log.debug("Deleting {} because of rollback for {}", path, sessionEntry);
       } catch (IOException e) {
         throw new RuntimeException(e);

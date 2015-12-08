@@ -53,7 +53,6 @@ import java.util.stream.Collectors;
 
 @NotThreadSafe//can only be used as ThreadLocal
 public class Session implements TransactionResource {
-  //FIXME add rollbackonly
   private static final Logger log = LoggerFactory.getLogger(Session.class);
 
   protected final MetaModel metaModel;
@@ -71,6 +70,8 @@ public class Session implements TransactionResource {
   protected final DirtyChecker dirtyChecker;
   protected final Thread thread;
   protected final List<Index> indexes;
+
+  protected boolean rollbackonly = false;
 
   public Session(MetaModel metaModel, Repository repository) {
     this.metaModel = metaModel;
@@ -302,24 +303,56 @@ public class Session implements TransactionResource {
   public void prepare() {
     Collection<SessionEntry> dirty = dirtyChecker.findDirty(this.entriesById.values());
     dirty.stream().map(e -> new EntityUpdate(repository, e)).forEach(actions::add);
-    actions.forEach(a -> a.prepare(this));
-    indexes.forEach(Index::prepare);
+
+    for (SessionAction action : actions) {
+      try {
+        action.prepare(this);
+      } catch (RuntimeException e) {
+        rollbackonly = true;
+        throw e;
+      }
+    }
+    for (Index index : indexes) {
+      try {
+        index.prepare();
+      } catch (RuntimeException e) {
+        rollbackonly = true;
+        throw e;
+      }
+    }
   }
 
   @Override
   public void commit() {
-    actions.forEach(a -> a.commit(this));
+    if (isRollbackonly()) {
+      return;
+    }
+    for (SessionAction action : actions) {
+      try {
+        action.commit(this);
+      } catch (RuntimeException e) {
+        rollbackonly = true;
+        throw e;
+      }
+    }
 
+    if (isRollbackonly()) {
+      return;
+    }
     TimeProfiler profiler = new TimeProfiler("Lucene update").start();
     luceneUpdates.forEach(u -> u.accept(luceneIndex));
     profiler.stop().logDebug(log);
 
+    if (isRollbackonly()) {
+      return;
+    }
     indexes.forEach(Index::commit);
   }
 
   @Override
   public void rollback() {
     actions.forEach(a -> a.rollback(this));
+    actions.clear();
     luceneUpdates.clear();
     indexes.forEach(Index::rollback);
   }
@@ -344,5 +377,15 @@ public class Session implements TransactionResource {
   @FunctionalInterface
   public interface LuceneReadFunction<R> {
     R apply(IndexSearcher searcher) throws IOException;
+  }
+
+  private void checkRollbackOnly() {
+    if (rollbackonly) {
+      throw new IllegalStateException("Session marked as rollback only");
+    }
+  }
+
+  public boolean isRollbackonly() {
+    return rollbackonly;
   }
 }

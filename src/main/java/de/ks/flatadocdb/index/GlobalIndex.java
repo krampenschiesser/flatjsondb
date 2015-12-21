@@ -25,6 +25,7 @@ import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.defaults.DefaultIdGenerator;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
+import de.ks.flatadocdb.query.Query;
 import de.ks.flatadocdb.session.SessionEntry;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
@@ -60,7 +61,7 @@ public class GlobalIndex extends Index {
 
   protected final Map<Serializable, IndexElement> naturalIdToElement = new ConcurrentHashMap<>();
   protected final Map<String, IndexElement> idToElement = new ConcurrentHashMap<>();
-
+  protected final ConcurrentHashMap<Query, ConcurrentHashMap<IndexElement, Object>> queryElements = new ConcurrentHashMap<>();
 
   public GlobalIndex(Repository repository, MetaModel metaModel) {
     this(repository, metaModel, Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).build()));
@@ -77,6 +78,13 @@ public class GlobalIndex extends Index {
     if (element.hasNaturalId()) {
       naturalIdToElement.put(element.getNaturalId(), element);
     }
+    @SuppressWarnings("unchecked")
+    Set<Query<Object, Object>> queries = (Set) sessionEntry.getEntityDescriptor().getQueries();
+    for (Query<Object, Object> query : queries) {
+      Object value = query.getValue(sessionEntry.getObject());
+      ConcurrentHashMap<IndexElement, Object> map = queryElements.computeIfAbsent(query, q -> new ConcurrentHashMap<>());
+      map.put(element, value);
+    }
   }
 
   @Override
@@ -91,6 +99,14 @@ public class GlobalIndex extends Index {
     idToElement.remove(element.getId());
     if (element.hasNaturalId()) {
       naturalIdToElement.remove(element.getNaturalId());
+    }
+    @SuppressWarnings("unchecked")
+    Set<Query<Object, Object>> queries = (Set) sessionEntry.getEntityDescriptor().getQueries();
+    for (Query<Object, Object> query : queries) {
+      ConcurrentHashMap<IndexElement, Object> map = queryElements.get(query);
+      if (map != null) {
+        map.remove(element);
+      }
     }
   }
 
@@ -231,5 +247,11 @@ public class GlobalIndex extends Index {
     mapper.enableDefaultTyping();
     mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.WRAPPER_OBJECT);
     return mapper;
+  }
+
+  public <E, V> Map<IndexElement, V> getQueryElements(Query<E, V> query) {
+    @SuppressWarnings("unchecked")
+    ConcurrentHashMap<IndexElement, V> retval = (ConcurrentHashMap<IndexElement, V>) queryElements.get(query);
+    return retval;
   }
 }

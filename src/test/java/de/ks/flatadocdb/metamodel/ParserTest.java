@@ -101,6 +101,7 @@ public class ParserTest {
     assertNotNull(result.persister);
     assertNotNull(result.fileGenerator);
     assertNotNull(result.folderGenerator);
+    assertEquals(1, result.getQueries().size());
 
     CorrectEntity entity = new CorrectEntity("test").setId("abc123").setVersion(3);
 

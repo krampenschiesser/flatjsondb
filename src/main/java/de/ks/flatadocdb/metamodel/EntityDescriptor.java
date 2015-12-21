@@ -25,6 +25,7 @@ import de.ks.flatadocdb.annotation.ToOne;
 import de.ks.flatadocdb.annotation.lifecycle.LifeCycle;
 import de.ks.flatadocdb.ifc.*;
 import de.ks.flatadocdb.metamodel.relation.*;
+import de.ks.flatadocdb.query.Query;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
@@ -61,6 +62,7 @@ public class EntityDescriptor {
     private final Set<ToManyRelation> toManyRelations = new HashSet<>();
     private final Set<ToOneChildRelation> toOneChildRelations = new HashSet<>();
     private final Set<ToManyChildRelation> toManyChildRelations = new HashSet<>();
+    private final Set<Query<?, ?>> queries = new HashSet<>();
 
     private Builder() {
       //
@@ -143,6 +145,11 @@ public class EntityDescriptor {
       return this;
     }
 
+    public Builder queries(Set<Query<?, ?>> relations) {
+      this.queries.addAll(relations);
+      return this;
+    }
+
     public EntityDescriptor build() {
       return new EntityDescriptor(this);
     }
@@ -168,6 +175,7 @@ public class EntityDescriptor {
   protected final Set<Relation> allRelations;
   protected final Set<Relation> childRelations;
   protected final Set<Relation> normalRelations;
+  protected final Set<Query<?, ?>> queries;
 
   public EntityDescriptor(Builder b) {
     this.entityClass = b.entityClass;
@@ -186,6 +194,7 @@ public class EntityDescriptor {
     this.folderGenerator = b.folderGenerator;
     this.fileGenerator = b.fileGenerator;
     this.luceneExtractor = b.extractor;
+    this.queries = Collections.unmodifiableSet(b.queries);
 
     HashSet<Relation> allRels = new HashSet<>();
     allRels.addAll(toManyChildRelations);
@@ -364,6 +373,10 @@ public class EntityDescriptor {
 
   public LuceneDocumentExtractor getLuceneExtractor() {
     return luceneExtractor;
+  }
+
+  public Set<Query<?, ?>> getQueries() {
+    return queries;
   }
 
   @Override

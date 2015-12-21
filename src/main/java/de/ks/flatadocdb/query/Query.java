@@ -33,6 +33,10 @@ public class Query<E, V> {
     this.propertyPath = propertyPath;
   }
 
+  public Class<E> getOwnerClass() {
+    return clazz;
+  }
+
   public V getValue(E instance) {
     return propertyPath.getValue(instance);
   }

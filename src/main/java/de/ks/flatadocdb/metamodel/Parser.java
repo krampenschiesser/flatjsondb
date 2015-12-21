@@ -59,6 +59,8 @@ public class Parser extends BaseParser {
 
     RelationParser relationParser = new RelationParser();
 
+    QueryParser queryParser = new QueryParser();
+
     EntityDescriptor.Builder builder = EntityDescriptor.Builder.create();
     builder.entity(clazz);
     builder.id(idGetterHandle, idSetterHandle);
@@ -74,6 +76,7 @@ public class Parser extends BaseParser {
     builder.toMany(relationParser.parseToManyRelations(clazz));
     builder.toOneChild(relationParser.parseToOneChildRelations(clazz));
     builder.toManyChild(relationParser.parseToManyChildRelations(clazz));
+    builder.queries(queryParser.getQueries(clazz));
     return builder.build();
   }
 

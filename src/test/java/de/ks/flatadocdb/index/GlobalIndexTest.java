@@ -66,6 +66,7 @@ public class GlobalIndexTest {
 
     Collection<IndexElement> elements = index.getAllOf(TestEntity.class);
     assertEquals(COUNT, elements.size());
+    assertEquals(COUNT, index.getQueryElements(TestEntity.attributeQuery()).size());
   }
 
   @Test

@@ -32,6 +32,7 @@ import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.relation.ChildRelation;
 import de.ks.flatadocdb.metamodel.relation.Relation;
+import de.ks.flatadocdb.query.Query;
 import de.ks.flatadocdb.session.dirtycheck.DirtyChecker;
 import de.ks.flatadocdb.session.transaction.local.TransactionResource;
 import de.ks.flatadocdb.util.TimeProfiler;
@@ -49,6 +50,7 @@ import java.lang.invoke.MethodHandle;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @NotThreadSafe//can only be used as ThreadLocal
@@ -361,6 +363,33 @@ public class Session implements TransactionResource {
       return read.apply(indexSearcher);
     } catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  public <E, V> Collection<E> query(Query<E, V> query, Predicate<V> filter) {
+    Set<SessionEntry> filteredFromSession = this.entriesById.values().stream()//
+      .filter(entry -> query.getOwnerClass().isAssignableFrom(entry.getObject().getClass()))//
+      .filter(entry -> filter.test(query.getValue((E) entry.getObject())))//
+      .collect(Collectors.toSet());
+
+    Set<E> fromIndex = queryFromIndex(query, filter, entriesById.keySet());
+
+    HashSet<E> retval = new HashSet<>(fromIndex);
+    filteredFromSession.forEach(e -> retval.add((E) e.getObject()));
+    return retval;
+  }
+
+  private <E, V> Set<E> queryFromIndex(Query<E, V> query, Predicate<V> filter, Set<String> idsToIgnore) {
+    Map<IndexElement, V> elements = globalIndex.getQueryElements(query);
+    if (elements == null) {
+      return Collections.emptySet();
+    } else {
+      return elements.entrySet().stream()//
+        .filter(entry -> !idsToIgnore.contains(entry.getKey().getId()))//
+        .filter(entry -> filter.test(entry.getValue()))//
+        .map(entry -> loadSessionEntry(entry.getKey()).getObject())//
+        .map(o -> (E) o)//
+        .collect(Collectors.toSet());
     }
   }
 

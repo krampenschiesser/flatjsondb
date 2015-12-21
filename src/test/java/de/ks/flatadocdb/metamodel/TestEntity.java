@@ -16,10 +16,17 @@
 package de.ks.flatadocdb.metamodel;
 
 import de.ks.flatadocdb.annotation.Entity;
+import de.ks.flatadocdb.annotation.QueryProvider;
 import de.ks.flatadocdb.entity.NamedEntity;
+import de.ks.flatadocdb.query.Query;
 
 @Entity
 public class TestEntity extends NamedEntity {
+  @QueryProvider
+  public static Query<TestEntity, String> attributeQuery() {
+    return Query.of(TestEntity.class, TestEntity::getAttribute);
+  }
+
   String attribute;
 
   protected TestEntity() {

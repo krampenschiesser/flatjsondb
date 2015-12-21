@@ -23,16 +23,14 @@ import de.ks.flatadocdb.annotation.lifecycle.PreUpdate;
 import de.ks.flatadocdb.query.Query;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Base class you can use. If you have your own domain model you can just add the corresponding fields and annotations.
  */
 public class BaseEntity {
   @QueryProvider
-  public static Collection<Query> getQuerys() {
-    return Collections.singletonList(Query.of(BaseEntity.class, BaseEntity::getCreationTime));
+  public static Query<? extends BaseEntity, LocalDateTime> getCreationTimeQuery() {
+    return Query.of(BaseEntity.class, BaseEntity::getCreationTime);
   }
 
   @Version

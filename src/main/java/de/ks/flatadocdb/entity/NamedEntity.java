@@ -23,7 +23,7 @@ import de.ks.flatadocdb.annotation.NaturalId;
  */
 public class NamedEntity extends BaseEntity {
   @NaturalId
-  protected final String name;
+  protected String name;//not final, under some circumstances you might want to set the name later
 
   public NamedEntity(String name) {
     this.name = name;
@@ -31,6 +31,10 @@ public class NamedEntity extends BaseEntity {
 
   public String getName() {
     return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
   }
 
   @Override

@@ -17,15 +17,24 @@
 package de.ks.flatadocdb.entity;
 
 import de.ks.flatadocdb.annotation.Id;
+import de.ks.flatadocdb.annotation.QueryProvider;
 import de.ks.flatadocdb.annotation.Version;
 import de.ks.flatadocdb.annotation.lifecycle.PreUpdate;
+import de.ks.flatadocdb.query.Query;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Base class you can use. If you have your own domain model you can just add the corresponding fields and annotations.
  */
 public class BaseEntity {
+  @QueryProvider
+  public static Collection<Query> getQuerys() {
+    return Collections.singletonList(Query.of(BaseEntity.class, BaseEntity::getCreationTime));
+  }
+
   @Version
   protected long version;
   @Id

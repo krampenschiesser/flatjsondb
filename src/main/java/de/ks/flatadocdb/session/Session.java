@@ -380,13 +380,13 @@ public class Session implements TransactionResource {
   }
 
   private <E, V> Set<E> queryFromIndex(Query<E, V> query, Predicate<V> filter, Set<String> idsToIgnore) {
-    Map<IndexElement, V> elements = globalIndex.getQueryElements(query);
+    Map<IndexElement, Optional<V>> elements = globalIndex.getQueryElements(query);
     if (elements == null) {
       return Collections.emptySet();
     } else {
       return elements.entrySet().stream()//
         .filter(entry -> !idsToIgnore.contains(entry.getKey().getId()))//
-        .filter(entry -> filter.test(entry.getValue()))//
+        .filter(entry -> filter.test(entry.getValue().orElse(null)))//
         .map(entry -> loadSessionEntry(entry.getKey()).getObject())//
         .map(o -> (E) o)//
         .collect(Collectors.toSet());

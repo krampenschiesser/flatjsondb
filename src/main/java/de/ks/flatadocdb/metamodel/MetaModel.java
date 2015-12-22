@@ -18,6 +18,7 @@ package de.ks.flatadocdb.metamodel;
 
 import de.ks.flatadocdb.annotation.Entity;
 import de.ks.flatadocdb.exception.EntityNotRegisteredException;
+import de.ks.flatadocdb.query.Query;
 import org.reflections.Reflections;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
@@ -117,6 +118,17 @@ public class MetaModel {
         }
       }
       return false;
+    }
+  }
+
+  public Query<?, ?> getQuery(Class<?> owner, String name) {
+    Set<Query<?, ?>> queries = this.getEntities().stream().flatMap(e -> e.getQueries().stream()).filter(q -> q.getOwnerClass().equals(owner)).filter(q -> q.getName().equals(name)).collect(Collectors.toSet());
+    if (queries.size() > 1) {
+      throw new IllegalStateException("Found multiple queries for owner " + owner + " and name '" + name + "'" + queries);
+    } else if (queries.size() == 1) {
+      return queries.iterator().next();
+    } else {
+      return null;
     }
   }
 }

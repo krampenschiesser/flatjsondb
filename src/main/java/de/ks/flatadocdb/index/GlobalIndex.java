@@ -57,11 +57,12 @@ import java.util.stream.Collectors;
 public class GlobalIndex extends Index {
   public static final String INDEX_FOLDER = ".index";
   public static final String INDEX_FILE = "index.json";
+  public static final String QUERY_FILE = "query.json";
   private static final Logger log = LoggerFactory.getLogger(GlobalIndex.class);
 
   protected final Map<Serializable, IndexElement> naturalIdToElement = new ConcurrentHashMap<>();
   protected final Map<String, IndexElement> idToElement = new ConcurrentHashMap<>();
-  protected final ConcurrentHashMap<Query, ConcurrentHashMap<IndexElement, Object>> queryElements = new ConcurrentHashMap<>();
+  protected final ConcurrentHashMap<Query, ConcurrentHashMap<IndexElement, Optional<Object>>> queryElements = new ConcurrentHashMap<>();
 
   public GlobalIndex(Repository repository, MetaModel metaModel) {
     this(repository, metaModel, Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).build()));
@@ -69,6 +70,7 @@ public class GlobalIndex extends Index {
 
   public GlobalIndex(Repository repository, MetaModel metaModel, ExecutorService executorService) {
     super(repository, metaModel, executorService);
+
   }
 
   @Override
@@ -82,8 +84,8 @@ public class GlobalIndex extends Index {
     Set<Query<Object, Object>> queries = (Set) sessionEntry.getEntityDescriptor().getQueries();
     for (Query<Object, Object> query : queries) {
       Object value = query.getValue(sessionEntry.getObject());
-      ConcurrentHashMap<IndexElement, Object> map = queryElements.computeIfAbsent(query, q -> new ConcurrentHashMap<>());
-      map.put(element, value);
+      ConcurrentHashMap<IndexElement, Optional<Object>> map = queryElements.computeIfAbsent(query, q -> new ConcurrentHashMap<>());
+      map.put(element, Optional.ofNullable(value));
     }
   }
 
@@ -103,7 +105,7 @@ public class GlobalIndex extends Index {
     @SuppressWarnings("unchecked")
     Set<Query<Object, Object>> queries = (Set) sessionEntry.getEntityDescriptor().getQueries();
     for (Query<Object, Object> query : queries) {
-      ConcurrentHashMap<IndexElement, Object> map = queryElements.get(query);
+      ConcurrentHashMap<IndexElement, Optional<Object>> map = queryElements.get(query);
       if (map != null) {
         map.remove(element);
       }
@@ -213,6 +215,9 @@ public class GlobalIndex extends Index {
     ArrayList<IndexElement> elements = new ArrayList<>(idToElement.values());
     try {
       mapper.writeValue(repository.getPath().resolve(INDEX_FOLDER).resolve(INDEX_FILE).toFile(), elements);
+
+      List<QueryWrapper> wrappers = queryElements.entrySet().stream().map(entry -> new QueryWrapper(entry.getKey().getOwnerClass(), entry.getKey().getName(), entry.getValue())).collect(Collectors.toList());
+      mapper.writeValue(repository.getPath().resolve(INDEX_FOLDER).resolve(QUERY_FILE).toFile(), wrappers);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -237,6 +242,24 @@ public class GlobalIndex extends Index {
         throw new RuntimeException(e);
       }
     }
+
+    filePath = repository.getPath().resolve(INDEX_FOLDER).resolve(QUERY_FILE);
+    if (Files.exists(filePath)) {
+      try {
+        @SuppressWarnings("unchecked")
+        List<QueryWrapper> wrappers = mapper.readValue(filePath.toFile(), List.class);
+        for (QueryWrapper wrapper : wrappers) {
+          Query<?, ?> query = metaModel.getQuery(wrapper.owner, wrapper.queryName);
+          ConcurrentHashMap<IndexElement, Optional<Object>> value = new ConcurrentHashMap<>();
+          queryElements.put(query, value);
+          for (Map.Entry<String, Optional<Object>> entry : wrapper.elements.entrySet()) {
+            value.put(idToElement.get(entry.getKey()), entry.getValue());
+          }
+        }
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   protected ObjectMapper getMapper() {
@@ -249,9 +272,27 @@ public class GlobalIndex extends Index {
     return mapper;
   }
 
-  public <E, V> Map<IndexElement, V> getQueryElements(Query<E, V> query) {
+  public <E, V> Map<IndexElement, Optional<V>> getQueryElements(Query<E, V> query) {
     @SuppressWarnings("unchecked")
-    ConcurrentHashMap<IndexElement, V> retval = (ConcurrentHashMap<IndexElement, V>) queryElements.get(query);
+    ConcurrentHashMap<IndexElement, Optional<V>> retval = (ConcurrentHashMap) queryElements.get(query);
     return retval;
+  }
+
+  static class QueryWrapper {
+    Class<?> owner;
+    String queryName;
+    HashMap<String, Optional<Object>> elements = new HashMap<>();
+
+    protected QueryWrapper() {
+      //json
+    }
+
+    public QueryWrapper(Class<?> owner, String queryName, ConcurrentHashMap<IndexElement, Optional<Object>> originalElements) {
+      this.owner = owner;
+      this.queryName = queryName;
+      for (Map.Entry<IndexElement, Optional<Object>> entry : originalElements.entrySet()) {
+        elements.put(entry.getKey().getId(), entry.getValue());
+      }
+    }
   }
 }

@@ -95,13 +95,19 @@ public class Repository {
 
   public synchronized void close() {
     if (!closed.get()) {
-      try {
-        luceneDirectory.close();
-      } catch (IOException e) {
-        log.error("Could not close lucene index {}", luceneDirectory, e);
+      if (luceneDirectory != null) {
+        try {
+          luceneDirectory.close();
+        } catch (IOException e) {
+          log.error("Could not close lucene index {}", luceneDirectory, e);
+        }
       }
-      luceneIndex.close();
-      index.close();
+      if (luceneIndex != null) {
+        luceneIndex.close();
+      }
+      if (index != null) {
+        index.close();
+      }
       closed.set(true);
     }
   }

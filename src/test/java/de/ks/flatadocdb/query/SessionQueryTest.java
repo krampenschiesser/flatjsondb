@@ -29,6 +29,7 @@ import org.junit.Test;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -61,7 +62,7 @@ public class SessionQueryTest {
 
   @Test
   public void testIndexFilled() throws Exception {
-    Map<IndexElement, String> elements = index.getQueryElements(TestEntity.attributeQuery());
+    Map<IndexElement, Optional<String>> elements = index.getQueryElements(TestEntity.attributeQuery());
     assertNotNull(elements);
     assertEquals(AMOUNT, elements.size());
   }

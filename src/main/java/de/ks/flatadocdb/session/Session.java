@@ -367,6 +367,7 @@ public class Session implements TransactionResource {
     }
   }
 
+  @SuppressWarnings("unchecked")
   public <E, V> Collection<E> query(Query<E, V> query, Predicate<V> filter) {
     Set<SessionEntry> filteredFromSession = this.entriesById.values().stream()//
       .filter(entry -> query.getOwnerClass().isAssignableFrom(entry.getObject().getClass()))//
@@ -380,6 +381,7 @@ public class Session implements TransactionResource {
     return retval;
   }
 
+  @SuppressWarnings("unchecked")
   private <E, V> Set<E> queryFromIndex(Query<E, V> query, Predicate<V> filter, Set<String> idsToIgnore) {
     Map<IndexElement, Optional<V>> elements = globalIndex.getQueryElements(query);
     if (elements == null) {

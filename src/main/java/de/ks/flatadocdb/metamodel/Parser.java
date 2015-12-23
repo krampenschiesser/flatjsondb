@@ -20,6 +20,7 @@ import de.ks.flatadocdb.annotation.*;
 import de.ks.flatadocdb.annotation.lifecycle.LifeCycle;
 import de.ks.flatadocdb.ifc.*;
 import de.ks.flatadocdb.metamodel.relation.RelationParser;
+import org.apache.commons.lang3.tuple.Pair;
 import org.reflections.ReflectionUtils;
 
 import java.io.Serializable;
@@ -28,6 +29,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -53,6 +55,8 @@ public class Parser extends BaseParser {
     MethodHandle versionGetterHandle = resolveVersionFieldGetter(clazz, allFields);
     MethodHandle versionSetterHandle = resolveVersionFieldSetter(clazz, allFields);
     MethodHandle naturalIdHandle = resolveNaturalIdField(clazz, allFields);
+    Pair<MethodHandle, MethodHandle> pathInRepo = resolvePathInRepoField(clazz, allFields);
+
 
     Map<Field, PropertyPersister> propertyPersisters = resolvePropertyPersisters(allFields);
     Map<LifeCycle, Set<MethodHandle>> lifecycleMethods = new LifeCycleParser().parseMethods(clazz);
@@ -77,6 +81,9 @@ public class Parser extends BaseParser {
     builder.toOneChild(relationParser.parseToOneChildRelations(clazz));
     builder.toManyChild(relationParser.parseToManyChildRelations(clazz));
     builder.queries(queryParser.getQueries(clazz));
+    if (pathInRepo != null) {
+      builder.pathInRepo(pathInRepo.getKey(), pathInRepo.getValue());
+    }
     return builder.build();
   }
 
@@ -127,6 +134,18 @@ public class Parser extends BaseParser {
     check(idField, f -> f.getType() != long.class, f -> "Type of Version field is no 'long' on " + clazz.getName());
     MethodHandle versionHandle = getSetter(idField);
     return versionHandle;
+  }
+
+  private Pair<MethodHandle, MethodHandle> resolvePathInRepoField(Class<?> clazz, Set<Field> allFields) {
+    Field idField = resolveExactlyOneField(clazz, allFields, PathInRepo.class, "PathInRepo", false);
+    if (idField == null) {
+      return null;
+    } else {
+      check(idField, f -> f.getType() != Path.class, f -> "Type of PathInRepo field is no 'java.nio.file.Path' on " + clazz.getName());
+      MethodHandle getter = getGetter(idField);
+      MethodHandle setter = getGetter(idField);
+      return Pair.of(getter, setter);
+    }
   }
 
   private MethodHandle resolveNaturalIdField(Class<?> clazz, Set<Field> allFields) {

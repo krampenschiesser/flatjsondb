@@ -17,11 +17,13 @@
 package de.ks.flatadocdb.entity;
 
 import de.ks.flatadocdb.annotation.Id;
+import de.ks.flatadocdb.annotation.PathInRepo;
 import de.ks.flatadocdb.annotation.QueryProvider;
 import de.ks.flatadocdb.annotation.Version;
 import de.ks.flatadocdb.annotation.lifecycle.PreUpdate;
 import de.ks.flatadocdb.query.Query;
 
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 
 /**
@@ -37,6 +39,8 @@ public class BaseEntity {
   protected long version;
   @Id
   protected String id;
+  @PathInRepo
+  protected Path pathInRepository;
 
   protected LocalDateTime creationTime;
   protected LocalDateTime updateTime;
@@ -64,5 +68,9 @@ public class BaseEntity {
 
   public LocalDateTime getUpdateTime() {
     return updateTime;
+  }
+
+  public Path getPathInRepository() {
+    return pathInRepository;
   }
 }

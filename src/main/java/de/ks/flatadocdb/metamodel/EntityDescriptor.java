@@ -51,6 +51,8 @@ public class EntityDescriptor {
     private MethodHandle naturalIdFieldAccess;
     private MethodHandle idGetterAccess;
     private MethodHandle idSetterAccess;
+    private MethodHandle pathInRepoGetterAccess;
+    private MethodHandle pathInRepoSetterAccess;
     private EntityPersister persister;
     private FolderGenerator folderGenerator;
     private FileGenerator fileGenerator;
@@ -82,6 +84,12 @@ public class EntityDescriptor {
     public Builder id(MethodHandle getter, MethodHandle setter) {
       idGetterAccess = getter;
       idSetterAccess = setter;
+      return this;
+    }
+
+    public Builder pathInRepo(MethodHandle getter, MethodHandle setter) {
+      pathInRepoGetterAccess = getter;
+      pathInRepoSetterAccess = setter;
       return this;
     }
 
@@ -162,6 +170,8 @@ public class EntityDescriptor {
   protected final MethodHandle versionSetterAccess;
   protected final MethodHandle idGetterAccess;
   protected final MethodHandle idSetterAccess;
+  protected final MethodHandle pathInRepoGetterAccess;
+  protected final MethodHandle pathInRepoSetterAccess;
   protected final EntityPersister persister;
   protected final FolderGenerator folderGenerator;
   protected final FileGenerator fileGenerator;
@@ -182,6 +192,8 @@ public class EntityDescriptor {
     this.persister = b.persister;
     this.idGetterAccess = b.idGetterAccess;
     this.idSetterAccess = b.idSetterAccess;
+    this.pathInRepoGetterAccess = b.pathInRepoGetterAccess;
+    this.pathInRepoSetterAccess = b.pathInRepoSetterAccess;
     this.naturalIdFieldAccess = b.naturalIdFieldAccess;
     this.versionGetterAccess = b.versionGetterAccess;
     this.versionSetterAccess = b.versionSetterAccess;

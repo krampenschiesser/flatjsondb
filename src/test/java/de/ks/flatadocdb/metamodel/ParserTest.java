@@ -18,10 +18,7 @@ package de.ks.flatadocdb.metamodel;
 
 import com.google.common.base.StandardSystemProperty;
 import de.ks.flatadocdb.Repository;
-import de.ks.flatadocdb.annotation.Entity;
-import de.ks.flatadocdb.annotation.Id;
-import de.ks.flatadocdb.annotation.Property;
-import de.ks.flatadocdb.annotation.Version;
+import de.ks.flatadocdb.annotation.*;
 import de.ks.flatadocdb.entity.BaseEntity;
 import de.ks.flatadocdb.entity.NamedEntity;
 import de.ks.flatadocdb.ifc.EntityPersister;
@@ -101,6 +98,8 @@ public class ParserTest {
     assertNotNull(result.persister);
     assertNotNull(result.fileGenerator);
     assertNotNull(result.folderGenerator);
+    assertNotNull(result.pathInRepoGetterAccess);
+    assertNotNull(result.pathInRepoSetterAccess);
     assertEquals(1, result.getQueries().size());
 
     CorrectEntity entity = new CorrectEntity("test").setId("abc123").setVersion(3);
@@ -133,6 +132,11 @@ public class ParserTest {
 
     assertTrue(result.getPropertyPersister("bla").isPresent());
     assertTrue(result.getPropertyPersister("other").isPresent());
+  }
+
+  @Test(expected = ParseException.class)
+  public void testBadPathInRepo() throws Exception {
+    parser.parse(BadPathEntity.class);
   }
 
   @Entity
@@ -228,6 +232,17 @@ public class ParserTest {
 
   static class NoEntity {
     protected String name;
+  }
+
+  @Entity
+  static class BadPathEntity {
+    @Version
+    protected long version;
+    @Id
+    protected String id;
+
+    @PathInRepo
+    String wrongPathType;
   }
 
   @Entity

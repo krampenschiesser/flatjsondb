@@ -32,6 +32,7 @@ import javax.annotation.concurrent.Immutable;
 import java.io.Serializable;
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -286,7 +287,6 @@ public class EntityDescriptor {
     return childRelations;
   }
 
-  @Nullable
   public String getId(Object entity) {
     return invokeGetter(idGetterAccess, entity);
   }
@@ -295,12 +295,20 @@ public class EntityDescriptor {
     return invokeGetter(versionGetterAccess, entity);
   }
 
+  public Path getPathInRepo(Object entity) {
+    return invokeGetter(pathInRepoGetterAccess, entity);
+  }
+
   public void writetId(Object entity, String id) {
     invokeSetter(idSetterAccess, entity, id);
   }
 
   public void writeVersion(Object entity, long version) {
     invokeSetter(versionSetterAccess, entity, version);
+  }
+
+  public void writePathInRepo(Object entity, Path path) {
+    invokeSetter(pathInRepoSetterAccess, entity, (Path) path);
   }
 
   @Nullable

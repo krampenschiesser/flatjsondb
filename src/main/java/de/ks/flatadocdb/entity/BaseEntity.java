@@ -17,7 +17,7 @@
 package de.ks.flatadocdb.entity;
 
 import de.ks.flatadocdb.annotation.Id;
-import de.ks.flatadocdb.annotation.PathInRepo;
+import de.ks.flatadocdb.annotation.PathInRepository;
 import de.ks.flatadocdb.annotation.QueryProvider;
 import de.ks.flatadocdb.annotation.Version;
 import de.ks.flatadocdb.annotation.lifecycle.PreUpdate;
@@ -39,7 +39,7 @@ public class BaseEntity {
   protected long version;
   @Id
   protected String id;
-  @PathInRepo
+  @PathInRepository
   protected Path pathInRepository;
 
   protected LocalDateTime creationTime;

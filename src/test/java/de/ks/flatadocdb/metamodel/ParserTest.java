@@ -115,6 +115,11 @@ public class ParserTest {
     EntityDescriptor desc = Mockito.mock(EntityDescriptor.class);
     Mockito.when(desc.getNaturalId(entity)).thenReturn("test");
     assertEquals("test.json", result.fileGenerator.getFileName(repo, desc, entity));
+
+
+    result.pathInRepoSetterAccess.invoke(entity, Paths.get(StandardSystemProperty.JAVA_IO_TMPDIR.value()));
+    Object path = result.pathInRepoGetterAccess.invoke(entity);
+    assertEquals(Paths.get(StandardSystemProperty.JAVA_IO_TMPDIR.value()), path);
   }
 
   @Test
@@ -241,7 +246,7 @@ public class ParserTest {
     @Id
     protected String id;
 
-    @PathInRepo
+    @PathInRepository
     String wrongPathType;
   }
 

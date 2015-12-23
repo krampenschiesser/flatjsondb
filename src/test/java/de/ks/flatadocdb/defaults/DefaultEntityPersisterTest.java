@@ -19,6 +19,7 @@ package de.ks.flatadocdb.defaults;
 import com.google.common.base.StandardSystemProperty;
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.TempRepository;
+import de.ks.flatadocdb.entity.BaseEntityFriend;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.metamodel.TestEntity;
@@ -36,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -64,7 +66,9 @@ public class DefaultEntityPersisterTest {
   @Test
   public void testStore() throws Exception {
     DefaultEntityPersister persister = new DefaultEntityPersister();
+    persister.initialize(metaModel);
     TestEntity testEntity = new TestEntity("Hallo welt");
+    new BaseEntityFriend(testEntity).setPathInRepo(repository.getPath());
 
     String fileName = testEntityDescriptor.getFileGenerator().getFileName(tempRepository.getRepository(), testEntityDescriptor, testEntity);
     Path folder = testEntityDescriptor.getFolderGenerator().getFolder(tempRepository.getRepository(), null, testEntity);
@@ -75,7 +79,10 @@ public class DefaultEntityPersisterTest {
 
     assertTrue(target.toFile().exists());
 
-    assertTrue(Files.readAllLines(target).stream().filter(line -> line.contains("Hallo welt")).findFirst().isPresent());
+    List<String> lines = Files.readAllLines(target);
+    assertTrue(lines.stream().filter(line -> line.contains("Hallo welt")).findFirst().isPresent());
+    assertFalse(lines.stream().filter(line -> line.contains("pathInRepository")).findFirst().isPresent());
+    log.info(new String(contents));
 
     Object load = persister.load(tempRepository.getRepository(), testEntityDescriptor, target, new HashMap<>());
     assertEquals(testEntity, load);

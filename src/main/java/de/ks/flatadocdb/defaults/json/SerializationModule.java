@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
+import de.ks.flatadocdb.annotation.PathInRepository;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import org.slf4j.Logger;
@@ -63,9 +64,13 @@ public class SerializationModule extends Module {
         List<BeanPropertyWriter> relationProperties = beanProperties.stream()//
           .filter(p -> entityDescriptor.isRelation(p.getMember())).collect(Collectors.toList());
 
+        List<BeanPropertyWriter> repoPathProperty = beanProperties.stream()//
+          .filter(p -> p.getAnnotation(PathInRepository.class) != null).collect(Collectors.toList());
+
         ArrayList<BeanPropertyWriter> all = new ArrayList<>(beanProperties);
         log.trace("Removing {} relation properties fron {}: {}", relationProperties.size(), beanDesc.getBeanClass(), relationProperties);
         all.removeAll(relationProperties);
+        all.removeAll(repoPathProperty);
         relationProperties.stream().map(old -> new RelationCollectionPropertyWriter(old, metaModel)).forEach(all::add);
         return all;
       }
@@ -75,7 +80,10 @@ public class SerializationModule extends Module {
       @Override
       public List<BeanPropertyDefinition> updateProperties(DeserializationConfig config, BeanDescription beanDesc, List<BeanPropertyDefinition> propDefs) {
         EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(beanDesc.getBeanClass());
-        return propDefs.stream().filter(p -> !entityDescriptor.isRelation(p.getPrimaryMember())).collect(Collectors.toList());
+        return propDefs.stream()//
+          .filter(p -> !entityDescriptor.isRelation(p.getPrimaryMember()))//
+          .filter(p -> p.getPrimaryMember().getAnnotation(PathInRepository.class) == null)//
+          .collect(Collectors.toList());
       }
     });
   }

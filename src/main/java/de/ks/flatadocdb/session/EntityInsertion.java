@@ -22,6 +22,8 @@ import de.ks.flatadocdb.exception.StaleObjectFileException;
 import de.ks.flatadocdb.ifc.EntityPersister;
 import org.apache.commons.codec.digest.DigestUtils;
 
+import java.nio.file.Path;
+
 public class EntityInsertion extends SessionAction {
   public EntityInsertion(Repository repository, SessionEntry sessionEntry) {
     super(repository, sessionEntry);
@@ -46,6 +48,8 @@ public class EntityInsertion extends SessionAction {
     byte[] md5 = DigestUtils.md5(fileContents);
     sessionEntry.setMd5(md5);
 
+    Path completePath = sessionEntry.getCompletePath();
+    sessionEntry.getEntityDescriptor().writePathInRepo(sessionEntry.getObject(), completePath);
 
     checkAppendToComplete(sessionEntry.getCompletePath());//better to use Filelock if possible
   }

@@ -137,13 +137,13 @@ public class Parser extends BaseParser {
   }
 
   private Pair<MethodHandle, MethodHandle> resolvePathInRepoField(Class<?> clazz, Set<Field> allFields) {
-    Field idField = resolveExactlyOneField(clazz, allFields, PathInRepo.class, "PathInRepo", false);
+    Field idField = resolveExactlyOneField(clazz, allFields, PathInRepository.class, "PathInRepo", false);
     if (idField == null) {
       return null;
     } else {
       check(idField, f -> f.getType() != Path.class, f -> "Type of PathInRepo field is no 'java.nio.file.Path' on " + clazz.getName());
       MethodHandle getter = getGetter(idField);
-      MethodHandle setter = getGetter(idField);
+      MethodHandle setter = getSetter(idField);
       return Pair.of(getter, setter);
     }
   }

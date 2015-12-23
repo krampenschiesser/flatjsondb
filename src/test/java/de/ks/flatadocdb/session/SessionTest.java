@@ -55,6 +55,21 @@ public class SessionTest {
   }
 
   @Test
+  public void testPathInRepo() throws Exception {
+    Session session1 = new Session(metamodel, repository);
+    TestEntity testEntity = new TestEntity("Schnitzel");
+    session1.persist(testEntity);
+    assertNull(testEntity.getPathInRepository());
+    session1.prepare();
+    session1.commit();
+    assertNotNull(testEntity.getPathInRepository());
+
+    session1 = new Session(metamodel, repository);
+    testEntity = session1.findByNaturalId(TestEntity.class, "Schnitzel");
+    assertNotNull(testEntity.getPathInRepository());
+  }
+
+  @Test
   public void testFileWriting() throws Exception {
     Session session1 = new Session(metamodel, repository);
     TestEntity testEntity = new TestEntity("Schnitzel");

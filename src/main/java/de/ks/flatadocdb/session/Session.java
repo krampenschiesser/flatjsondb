@@ -229,6 +229,7 @@ public class Session implements TransactionResource {
     EntityPersister persister = descriptor.getPersister();
     Object object = persister.load(repository, descriptor, indexElement.getPathInRepository(), relationIds);
     SessionEntry sessionEntry = new SessionEntry(object, indexElement.getId(), descriptor.getVersion(object), indexElement.getNaturalId(), indexElement.getPathInRepository(), descriptor);
+    descriptor.writePathInRepo(object, indexElement.getPathInRepository());
 
     byte[] md5Sum = indexElement.getMd5Sum();
     sessionEntry.setMd5(md5Sum);

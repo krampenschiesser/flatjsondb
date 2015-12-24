@@ -103,4 +103,15 @@ public class SessionQueryTest {
       assertNotEquals("Schnitzel10", testEntity.getName());
     }
   }
+
+  @Test
+  public void testQueryValues() throws Exception {
+    Session session = new Session(metamodel, repository);
+
+    TestEntity entity = session.findByNaturalId(TestEntity.class, "Schnitzel10");
+    entity.setAttribute("blubb");
+
+    Set<String> values = session.queryValues(TestEntity.attributeQuery(), s -> true);
+    assertEquals(AMOUNT, values.size());
+  }
 }

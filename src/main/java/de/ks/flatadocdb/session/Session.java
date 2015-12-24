@@ -368,6 +368,36 @@ public class Session implements TransactionResource {
   }
 
   @SuppressWarnings("unchecked")
+  public <E, V> Set<V> queryValues(Query<E, V> query, Predicate<V> filter) {
+    Set<V> filteredFromSession = this.entriesById.values().stream()//
+      .filter(entry -> query.getOwnerClass().isAssignableFrom(entry.getObject().getClass()))//
+      .map(entry -> query.getValue((E) entry.getObject()))//
+      .filter(Objects::nonNull)//
+      .filter(filter::test)//
+      .collect(Collectors.toSet());
+
+    Set<V> fromIndex = queryValuesFromIndex(query, filter, entriesById.keySet());
+
+    HashSet<V> retval = new HashSet<>(fromIndex);
+    retval.addAll(filteredFromSession);
+    return retval;
+  }
+
+  private <E, V> Set<V> queryValuesFromIndex(Query<E, V> query, Predicate<V> filter, Set<String> idsToIgnore) {
+    Map<IndexElement, Optional<V>> elements = globalIndex.getQueryElements(query);
+    if (elements == null) {
+      return Collections.emptySet();
+    } else {
+      return elements.entrySet().stream()//
+        .filter(entry -> !idsToIgnore.contains(entry.getKey().getId()))//
+        .filter(entry -> entry.getValue().isPresent())//
+        .filter(entry -> filter.test(entry.getValue().get()))//
+        .map(entry -> entry.getValue().get())//
+        .collect(Collectors.toSet());
+    }
+  }
+
+  @SuppressWarnings("unchecked")
   public <E, V> Collection<E> query(Query<E, V> query, Predicate<V> filter) {
     Set<SessionEntry> filteredFromSession = this.entriesById.values().stream()//
       .filter(entry -> query.getOwnerClass().isAssignableFrom(entry.getObject().getClass()))//

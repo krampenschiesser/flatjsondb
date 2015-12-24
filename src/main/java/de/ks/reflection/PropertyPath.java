@@ -153,13 +153,13 @@ public class PropertyPath {
         } else if (int.class.equals(Primitives.unwrap(returnType))) {
           return 42;
         } else if (long.class.equals(Primitives.unwrap(returnType))) {
-          return 42;
+          return 42L;
         } else if (short.class.equals(Primitives.unwrap(returnType))) {
-          return 42;
+          return (short) 42;
         } else if (char.class.equals(Primitives.unwrap(returnType))) {
-          return 42;
+          return (char) 42;
         } else if (byte.class.equals(Primitives.unwrap(returnType))) {
-          return 4;
+          return (byte) 4;
         } else if (float.class.equals(Primitives.unwrap(returnType))) {
           return 42F;
         } else if (double.class.equals(Primitives.unwrap(returnType))) {

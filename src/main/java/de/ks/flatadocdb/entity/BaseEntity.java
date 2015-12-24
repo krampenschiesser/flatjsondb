@@ -73,4 +73,12 @@ public class BaseEntity {
   public Path getPathInRepository() {
     return pathInRepository;
   }
+
+  public void setCreationTime(LocalDateTime creationTime) {
+    this.creationTime = creationTime;
+  }
+
+  public void setUpdateTime(LocalDateTime updateTime) {
+    this.updateTime = updateTime;
+  }
 }

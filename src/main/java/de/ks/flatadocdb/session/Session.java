@@ -39,6 +39,7 @@ import de.ks.flatadocdb.util.TimeProfiler;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
+import org.reflections.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -368,9 +369,9 @@ public class Session implements TransactionResource {
   }
 
   @SuppressWarnings("unchecked")
-  public <E, V> Set<V> queryValues(Query<E, V> query, Predicate<V> filter) {
+  public <R, E, V> Set<V> queryValues(Class<R> resultClass, Query<E, V> query, Predicate<V> filter) {
     Set<V> filteredFromSession = this.entriesById.values().stream()//
-      .filter(entry -> query.getOwnerClass().isAssignableFrom(entry.getObject().getClass()))//
+      .filter(entry -> resultClass.isAssignableFrom(entry.getObject().getClass()))//
       .map(entry -> query.getValue((E) entry.getObject()))//
       .filter(Objects::nonNull)//
       .filter(filter::test)//
@@ -398,13 +399,13 @@ public class Session implements TransactionResource {
   }
 
   @SuppressWarnings("unchecked")
-  public <E, V> Collection<E> query(Query<E, V> query, Predicate<V> filter) {
-    MultiQueyBuilder<E> builder = multiQuery();
+  public <R, E, V> Collection<R> query(Class<R> resultClass, Query<E, V> query, Predicate<V> filter) {
+    MultiQueyBuilder<R> builder = multiQuery(resultClass);
     return builder.query(query, filter).find();
   }
 
-  public <E> MultiQueyBuilder<E> multiQuery() {
-    return new MultiQueyBuilder<>(this);
+  public <E> MultiQueyBuilder<E> multiQuery(Class<E> resultClass) {
+    return new MultiQueyBuilder<>(this, resultClass);
   }
 
   @FunctionalInterface
@@ -424,17 +425,26 @@ public class Session implements TransactionResource {
 
   public static class MultiQueyBuilder<E> {
     private final Session session;
+    private final Class<E> resultClass;
     protected LinkedHashMap<Query<E, Object>, Predicate<Object>> queries = new LinkedHashMap<>();
 
-    public MultiQueyBuilder(Session session) {
+    public MultiQueyBuilder(Session session, Class<E> resultClass) {
       this.session = session;
+      this.resultClass = resultClass;
     }
 
     @SuppressWarnings("unchecked")
-    public <V> MultiQueyBuilder<E> query(Query<? extends E, V> query, Predicate<V> filter) {
-      Query<E, Object> cast = (Query<E, Object>) query;
-      queries.put(cast, (Predicate<Object>) filter);
-      return this;
+    public <V> MultiQueyBuilder<E> query(Query<?, V> query, Predicate<V> filter) {
+      boolean isSubtype = resultClass.isAssignableFrom(query.getOwnerClass());
+      boolean isSuperType = ReflectionUtils.getAllSuperTypes(resultClass).contains(query.getOwnerClass());
+
+      if (isSubtype || isSuperType) {
+        Query<E, Object> cast = (Query<E, Object>) query;
+        queries.put(cast, (Predicate<Object>) filter);
+        return this;
+      } else {
+        throw new IllegalArgumentException("Given query class " + query.getOwnerClass() + " and expected result class " + resultClass + " are totally unrelated.");
+      }
     }
 
     public Set<E> find() {
@@ -442,13 +452,16 @@ public class Session implements TransactionResource {
       queries.keySet().forEach(query -> {
         Map<IndexElement, ? extends Optional<?>> queryElements = session.globalIndex.getQueryElements(query);
 
-        queryElements.entrySet().stream().filter(e -> !session.entriesById.keySet().contains(e.getKey().getId())).forEach(entry -> {
-          Map<Query<E, Object>, Object> map = indexElementMapHashMap.compute(entry.getKey().getId(), (indexElement, queryObjectMap) -> queryObjectMap == null ? new HashMap<Query<E, Object>, Object>() : queryObjectMap);
-          map.put(query, entry.getValue().orElse(null));
-        });
+        queryElements.entrySet().stream()//
+          .filter(e -> !session.entriesById.keySet().contains(e.getKey().getId()))//
+          .filter(e -> resultClass.isAssignableFrom(e.getKey().getEntityClass()))//
+          .forEach(entry -> {
+            Map<Query<E, Object>, Object> map = indexElementMapHashMap.compute(entry.getKey().getId(), (indexElement, queryObjectMap) -> queryObjectMap == null ? new HashMap<Query<E, Object>, Object>() : queryObjectMap);
+            map.put(query, entry.getValue().orElse(null));
+          });
 
         session.entriesById.values().stream()//
-          .filter(v -> query.getOwnerClass().isAssignableFrom(v.getEntityDescriptor().getEntityClass()))//
+          .filter(v -> resultClass.isAssignableFrom(v.getEntityDescriptor().getEntityClass()))//
           .forEach(v -> {
             String id = v.getId();
             Map<Query<E, Object>, Object> map = indexElementMapHashMap.compute(id, (indexElement, queryObjectMap) -> queryObjectMap == null ? new HashMap<Query<E, Object>, Object>() : queryObjectMap);

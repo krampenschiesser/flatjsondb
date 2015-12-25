@@ -72,7 +72,7 @@ public class SessionQueryTest {
   @Test
   public void testFindFromIndex() throws Exception {
     Session session = new Session(metamodel, repository);
-    Collection<TestEntity> entities = session.query(TestEntity.attributeQuery(), (String str) -> str.contains("1"));
+    Collection<TestEntity> entities = session.query(TestEntity.class, TestEntity.attributeQuery(), (String str) -> str.contains("1"));
     assertEquals(3, entities.size());
 
     for (TestEntity entity : entities) {
@@ -86,9 +86,9 @@ public class SessionQueryTest {
     Set<TestEntity> all = index.getAllOf(TestEntity.class).stream().map(IndexElement::getId).map(id -> session.findById(TestEntity.class, id)).collect(Collectors.toSet());
     all.forEach(e -> e.setAttribute("bla"));
 
-    Collection<TestEntity> entities = session.query(TestEntity.attributeQuery(), (String str) -> str.contains("1"));
+    Collection<TestEntity> entities = session.query(TestEntity.class, TestEntity.attributeQuery(), (String str) -> str.contains("1"));
     assertEquals(0, entities.size());
-    entities = session.query(TestEntity.attributeQuery(), (String str) -> str.contains("bla"));
+    entities = session.query(TestEntity.class, TestEntity.attributeQuery(), (String str) -> str.contains("bla"));
     assertEquals(AMOUNT, entities.size());
   }
 
@@ -99,7 +99,7 @@ public class SessionQueryTest {
     TestEntity entity = session.findByNaturalId(TestEntity.class, "Schnitzel10");
     entity.setAttribute("blubb");
 
-    Collection<TestEntity> entities = session.query(TestEntity.attributeQuery(), (String str) -> str.contains("1"));
+    Collection<TestEntity> entities = session.query(TestEntity.class, TestEntity.attributeQuery(), (String str) -> str.contains("1"));
     assertEquals(2, entities.size());
     for (TestEntity testEntity : entities) {
       assertNotEquals("Schnitzel10", testEntity.getName());
@@ -113,7 +113,7 @@ public class SessionQueryTest {
     TestEntity entity = session.findByNaturalId(TestEntity.class, "Schnitzel10");
     entity.setAttribute("blubb");
 
-    Set<String> values = session.queryValues(TestEntity.attributeQuery(), s -> true);
+    Set<String> values = session.queryValues(TestEntity.class, TestEntity.attributeQuery(), s -> true);
     assertEquals(AMOUNT, values.size());
   }
 
@@ -121,9 +121,9 @@ public class SessionQueryTest {
   public void testMultiQuery() throws Exception {
     Session session = new Session(metamodel, repository);
 
-    Session.MultiQueyBuilder<TestEntity> query = session.<TestEntity>multiQuery();
+    Session.MultiQueyBuilder<TestEntity> query = session.multiQuery(TestEntity.class);
     query.query(TestEntity.attributeQuery(), (String str) -> str.contains("1"));
-    query.query((Query<? extends TestEntity, LocalDateTime>) BaseEntity.getCreationTimeQuery(), (LocalDateTime time) -> time.isAfter(LocalDateTime.now().minusYears(1)));
+    query.query(BaseEntity.getCreationTimeQuery(), (LocalDateTime time) -> time.isAfter(LocalDateTime.now().minusYears(1)));
 
     Set<TestEntity> entities = query.find();
     assertEquals(3, entities.size());

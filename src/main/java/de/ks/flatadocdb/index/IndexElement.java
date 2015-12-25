@@ -105,7 +105,6 @@ public class IndexElement {
     IndexElement that = (IndexElement) o;
 
     return id.equals(that.id);
-
   }
 
   @Override

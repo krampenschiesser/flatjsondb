@@ -399,31 +399,12 @@ public class Session implements TransactionResource {
 
   @SuppressWarnings("unchecked")
   public <E, V> Collection<E> query(Query<E, V> query, Predicate<V> filter) {
-    Set<SessionEntry> filteredFromSession = this.entriesById.values().stream()//
-      .filter(entry -> query.getOwnerClass().isAssignableFrom(entry.getObject().getClass()))//
-      .filter(entry -> filter.test(query.getValue((E) entry.getObject())))//
-      .collect(Collectors.toSet());
-
-    Set<E> fromIndex = queryFromIndex(query, filter, entriesById.keySet());
-
-    HashSet<E> retval = new HashSet<>(fromIndex);
-    filteredFromSession.forEach(e -> retval.add((E) e.getObject()));
-    return retval;
+    MultiQueyBuilder<E> builder = multiQuery();
+    return builder.query(query, filter).find();
   }
 
-  @SuppressWarnings("unchecked")
-  private <E, V> Set<E> queryFromIndex(Query<E, V> query, Predicate<V> filter, Set<String> idsToIgnore) {
-    Map<IndexElement, Optional<V>> elements = globalIndex.getQueryElements(query);
-    if (elements == null) {
-      return Collections.emptySet();
-    } else {
-      return elements.entrySet().stream()//
-        .filter(entry -> !idsToIgnore.contains(entry.getKey().getId()))//
-        .filter(entry -> filter.test(entry.getValue().orElse(null)))//
-        .map(entry -> loadSessionEntry(entry.getKey()).getObject())//
-        .map(o -> (E) o)//
-        .collect(Collectors.toSet());
-    }
+  public <E> MultiQueyBuilder<E> multiQuery() {
+    return new MultiQueyBuilder<>(this);
   }
 
   @FunctionalInterface
@@ -439,5 +420,63 @@ public class Session implements TransactionResource {
 
   public boolean isRollbackonly() {
     return rollbackonly;
+  }
+
+  public static class MultiQueyBuilder<E> {
+    private final Session session;
+    protected LinkedHashMap<Query<E, Object>, Predicate<Object>> queries = new LinkedHashMap<>();
+
+    public MultiQueyBuilder(Session session) {
+      this.session = session;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <V> MultiQueyBuilder<E> query(Query<? extends E, V> query, Predicate<V> filter) {
+      Query<E, Object> cast = (Query<E, Object>) query;
+      queries.put(cast, (Predicate<Object>) filter);
+      return this;
+    }
+
+    public Set<E> find() {
+      HashMap<String, Map<Query<E, Object>, Object>> indexElementMapHashMap = new HashMap<>();
+      queries.keySet().forEach(query -> {
+        Map<IndexElement, ? extends Optional<?>> queryElements = session.globalIndex.getQueryElements(query);
+
+        queryElements.entrySet().stream().filter(e -> !session.entriesById.keySet().contains(e.getKey().getId())).forEach(entry -> {
+          Map<Query<E, Object>, Object> map = indexElementMapHashMap.compute(entry.getKey().getId(), (indexElement, queryObjectMap) -> queryObjectMap == null ? new HashMap<Query<E, Object>, Object>() : queryObjectMap);
+          map.put(query, entry.getValue().orElse(null));
+        });
+
+        session.entriesById.values().stream()//
+          .filter(v -> query.getOwnerClass().isAssignableFrom(v.getEntityDescriptor().getEntityClass()))//
+          .forEach(v -> {
+            String id = v.getId();
+            Map<Query<E, Object>, Object> map = indexElementMapHashMap.compute(id, (indexElement, queryObjectMap) -> queryObjectMap == null ? new HashMap<Query<E, Object>, Object>() : queryObjectMap);
+
+            @SuppressWarnings("unchecked")
+            Object value = query.getValue((E) v.getObject());
+            map.put(query, value);
+          });
+      });
+
+      HashSet<String> results = new HashSet<>();
+      for (Map.Entry<String, Map<Query<E, Object>, Object>> entry : indexElementMapHashMap.entrySet()) {
+        boolean include = true;
+        Map<Query<E, Object>, Object> value = entry.getValue();
+        for (Map.Entry<Query<E, Object>, Object> queryObjectEntry : value.entrySet()) {
+          Predicate<Object> predicate = queries.get(queryObjectEntry.getKey());
+          include = predicate.test(queryObjectEntry.getValue());
+          if (!include) {
+            break;
+          }
+        }
+        if (include) {
+          results.add(entry.getKey());
+        }
+      }
+      return results.stream().map(session::findById)//
+        .map(o -> (E) o)//
+        .collect(Collectors.toSet());
+    }
   }
 }

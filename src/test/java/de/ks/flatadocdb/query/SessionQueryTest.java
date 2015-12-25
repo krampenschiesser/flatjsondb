@@ -17,6 +17,7 @@ package de.ks.flatadocdb.query;
 
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.TempRepository;
+import de.ks.flatadocdb.entity.BaseEntity;
 import de.ks.flatadocdb.index.GlobalIndex;
 import de.ks.flatadocdb.index.IndexElement;
 import de.ks.flatadocdb.metamodel.MetaModel;
@@ -27,6 +28,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -113,5 +115,21 @@ public class SessionQueryTest {
 
     Set<String> values = session.queryValues(TestEntity.attributeQuery(), s -> true);
     assertEquals(AMOUNT, values.size());
+  }
+
+  @Test
+  public void testMultiQuery() throws Exception {
+    Session session = new Session(metamodel, repository);
+
+    Session.MultiQueyBuilder<TestEntity> query = session.<TestEntity>multiQuery();
+    query.query(TestEntity.attributeQuery(), (String str) -> str.contains("1"));
+    query.query((Query<? extends TestEntity, LocalDateTime>) BaseEntity.getCreationTimeQuery(), (LocalDateTime time) -> time.isAfter(LocalDateTime.now().minusYears(1)));
+
+    Set<TestEntity> entities = query.find();
+    assertEquals(3, entities.size());
+
+    for (TestEntity entity : entities) {
+      assertThat(entity.getAttribute(), Matchers.containsString("1"));
+    }
   }
 }

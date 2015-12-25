@@ -17,11 +17,18 @@
 package de.ks.flatadocdb.entity;
 
 import de.ks.flatadocdb.annotation.NaturalId;
+import de.ks.flatadocdb.annotation.QueryProvider;
+import de.ks.flatadocdb.query.Query;
 
 /**
  * Class supporting a natural id that is the name.
  */
 public class NamedEntity extends BaseEntity {
+  @QueryProvider
+  public static Query<NamedEntity, String> nameQuery() {
+    return Query.of(NamedEntity.class, NamedEntity::getName);
+  }
+
   @NaturalId
   protected String name;//not final, under some circumstances you might want to set the name later
 

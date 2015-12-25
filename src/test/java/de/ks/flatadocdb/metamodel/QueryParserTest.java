@@ -27,7 +27,7 @@ public class QueryParserTest {
   @Test
   public void testParseQueries() throws Exception {
     Set<Query<?, ?>> queries = new QueryParser().getQueries(TestEntity.class);
-    assertEquals(2, queries.size());
+    assertEquals(3, queries.size());
   }
 
   @Test(expected = ParseException.class)

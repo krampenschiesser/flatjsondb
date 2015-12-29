@@ -59,31 +59,39 @@ public class SerializationModule extends Module {
     context.addBeanSerializerModifier(new BeanSerializerModifier() {
       @Override
       public List<BeanPropertyWriter> changeProperties(SerializationConfig config, BeanDescription beanDesc, List<BeanPropertyWriter> beanProperties) {
-        EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(beanDesc.getBeanClass());
+        if (metaModel.isRegistered(beanDesc.getBeanClass())) {
+          EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(beanDesc.getBeanClass());
 
-        List<BeanPropertyWriter> relationProperties = beanProperties.stream()//
-          .filter(p -> entityDescriptor.isRelation(p.getMember())).collect(Collectors.toList());
+          List<BeanPropertyWriter> relationProperties = beanProperties.stream()//
+            .filter(p -> entityDescriptor.isRelation(p.getMember())).collect(Collectors.toList());
 
-        List<BeanPropertyWriter> repoPathProperty = beanProperties.stream()//
-          .filter(p -> p.getAnnotation(PathInRepository.class) != null).collect(Collectors.toList());
+          List<BeanPropertyWriter> repoPathProperty = beanProperties.stream()//
+            .filter(p -> p.getAnnotation(PathInRepository.class) != null).collect(Collectors.toList());
 
-        ArrayList<BeanPropertyWriter> all = new ArrayList<>(beanProperties);
-        log.trace("Removing {} relation properties fron {}: {}", relationProperties.size(), beanDesc.getBeanClass(), relationProperties);
-        all.removeAll(relationProperties);
-        all.removeAll(repoPathProperty);
-        relationProperties.stream().map(old -> new RelationCollectionPropertyWriter(old, metaModel)).forEach(all::add);
-        return all;
+          ArrayList<BeanPropertyWriter> all = new ArrayList<>(beanProperties);
+          log.trace("Removing {} relation properties fron {}: {}", relationProperties.size(), beanDesc.getBeanClass(), relationProperties);
+          all.removeAll(relationProperties);
+          all.removeAll(repoPathProperty);
+          relationProperties.stream().map(old -> new RelationCollectionPropertyWriter(old, metaModel)).forEach(all::add);
+          return all;
+        } else {
+          return beanProperties;
+        }
       }
     });
 
     context.addBeanDeserializerModifier(new BeanDeserializerModifier() {
       @Override
       public List<BeanPropertyDefinition> updateProperties(DeserializationConfig config, BeanDescription beanDesc, List<BeanPropertyDefinition> propDefs) {
-        EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(beanDesc.getBeanClass());
-        return propDefs.stream()//
-          .filter(p -> !entityDescriptor.isRelation(p.getPrimaryMember()))//
-          .filter(p -> p.getPrimaryMember().getAnnotation(PathInRepository.class) == null)//
-          .collect(Collectors.toList());
+        if (metaModel.isRegistered(beanDesc.getBeanClass())) {
+          EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(beanDesc.getBeanClass());
+          return propDefs.stream()//
+            .filter(p -> !entityDescriptor.isRelation(p.getPrimaryMember()))//
+            .filter(p -> p.getPrimaryMember().getAnnotation(PathInRepository.class) == null)//
+            .collect(Collectors.toList());
+        } else {
+          return propDefs;
+        }
       }
     });
   }

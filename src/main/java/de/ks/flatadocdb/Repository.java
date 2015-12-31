@@ -45,6 +45,7 @@ public class Repository {
   protected volatile GlobalIndex index;
   protected volatile LuceneIndex luceneIndex;
   protected final AtomicBoolean closed = new AtomicBoolean();
+  private MetaModel metaModel;
 
   public Repository(Path path) {
     this.path = path;
@@ -113,6 +114,7 @@ public class Repository {
   }
 
   public synchronized Repository initialize(MetaModel metaModel, ExecutorService executorService) {
+    this.metaModel = metaModel;
     checkClosed();
     Path subPath = path.resolve(LUCENE_DIR);
     if (!Files.exists(subPath)) {
@@ -131,6 +133,10 @@ public class Repository {
     index.load();
     luceneIndex = new LuceneIndex(this, metaModel, executorService);
     return this;
+  }
+
+  public MetaModel getMetaModel() {
+    return metaModel;
   }
 
   private void checkClosed() {

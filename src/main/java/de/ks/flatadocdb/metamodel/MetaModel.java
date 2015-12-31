@@ -19,6 +19,7 @@ package de.ks.flatadocdb.metamodel;
 import de.ks.flatadocdb.annotation.Entity;
 import de.ks.flatadocdb.exception.EntityNotRegisteredException;
 import de.ks.flatadocdb.query.Query;
+import javassist.util.proxy.ProxyFactory;
 import org.reflections.Reflections;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
@@ -64,6 +65,9 @@ public class MetaModel {
   public EntityDescriptor getEntityDescriptor(Class<?> clazz) throws EntityNotRegisteredException {
     lock.readLock().lock();
     try {
+      if (ProxyFactory.isProxyClass(clazz)) {
+        clazz = clazz.getSuperclass();
+      }
       EntityDescriptor retval = clazz2EntityDescriptor.get(clazz);
       if (retval == null) {
         throw new EntityNotRegisteredException(clazz, new HashSet<>(clazz2EntityDescriptor.keySet()));

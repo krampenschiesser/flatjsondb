@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class DefaultFileGenerator implements FileGenerator {
   private static final Logger log = LoggerFactory.getLogger(DefaultFileGenerator.class);
@@ -36,7 +35,7 @@ public class DefaultFileGenerator implements FileGenerator {
   public String getFileName(Repository repository, EntityDescriptor descriptor, Object object) {
     Object naturalId = descriptor.getNaturalId(object);
     if (naturalId != null) {
-      String naturalIdString = parseNaturalId(String.valueOf(naturalId));
+      String naturalIdString = NameStripper.stripName(String.valueOf(naturalId));
       String retval = naturalIdString + "." + EXTENSION;
       log.trace("Generated file name \"{}\" via natural id for {}", retval, object);
       return retval;
@@ -57,13 +56,5 @@ public class DefaultFileGenerator implements FileGenerator {
     int hashCode = Objects.hashCode(object);
     byte[] array = new byte[]{(byte) (hashCode >>> 24), (byte) (hashCode >>> 16), (byte) (hashCode >>> 8), (byte) hashCode};
     return Hex.encodeHexString(array);
-  }
-
-  protected String parseNaturalId(String naturalIdString) {
-    String parsed = naturalIdString.chars()//
-      .map(c -> Character.isWhitespace((char) c) ? '_' : c)//
-      .filter(c -> Character.isLetterOrDigit((char) c) || c == '_')//
-      .mapToObj(c -> String.valueOf((char) c)).collect(Collectors.joining());
-    return parsed;
   }
 }

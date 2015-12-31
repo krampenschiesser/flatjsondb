@@ -22,8 +22,7 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class DefaultFileGeneratorTest {
   private static final Logger log = LoggerFactory.getLogger(DefaultFileGeneratorTest.class);
@@ -46,7 +45,7 @@ public class DefaultFileGeneratorTest {
   public void testNaturalId() throws Exception {
     DefaultFileGenerator generator = new DefaultFileGenerator();
 
-    String s = generator.parseNaturalId("#: \u00F6\u00E4ana89?!!``  l");
+    String s = NameStripper.stripName("#: \u00F6\u00E4ana89?!!``  l");
     assertNotNull(s);
     assertEquals("_\u00F6\u00E4ana89__l", s);
   }

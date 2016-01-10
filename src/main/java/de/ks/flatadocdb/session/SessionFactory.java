@@ -49,11 +49,11 @@ public class SessionFactory implements AutoCloseable {
 
   public SessionFactory(Collection<Repository> repositories, Class<?>... entityClasses) {
     checkAtLeastOne(repositories);
-
-    repositories.forEach(this::addRepository);
     for (Class<?> entityClass : entityClasses) {
       metaModel.addEntity(entityClass);
     }
+
+    repositories.forEach(this::addRepository);
   }
 
   public SessionFactory(Collection<Repository> repositories, Collection<String> packages) {

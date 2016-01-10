@@ -130,7 +130,9 @@ public class Repository {
       throw new RuntimeException(e);
     }
     index = new GlobalIndex(this, metaModel, executorService);
-    index.load();
+    if (!index.load()) {
+      index.recreate();
+    }
     luceneIndex = new LuceneIndex(this, metaModel, executorService);
     return this;
   }

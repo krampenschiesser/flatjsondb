@@ -167,7 +167,9 @@ public class GlobalIndex extends Index {
       try {
         IndexElement indexElement = future.get();
         this.idToElement.put(indexElement.getId(), indexElement);
-        this.naturalIdToElement.put(indexElement.getNaturalId(), indexElement);
+        if (indexElement.getNaturalId() != null) {
+          this.naturalIdToElement.put(indexElement.getNaturalId(), indexElement);
+        }
       } catch (Exception e) {
         log.error("Could not retrieve index element", e);
       }
@@ -223,8 +225,9 @@ public class GlobalIndex extends Index {
     }
   }
 
-  public void load() {
+  public boolean load() {
     final ObjectMapper mapper = getMapper();
+    int loaded = 0;
 
     Path filePath = repository.getPath().resolve(INDEX_FOLDER).resolve(INDEX_FILE);
     if (Files.exists(filePath)) {
@@ -238,6 +241,7 @@ public class GlobalIndex extends Index {
           idToElement.put(id, element);
           naturalIdToElement.put(naturalId, element);
         }
+        loaded++;
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -256,10 +260,12 @@ public class GlobalIndex extends Index {
             value.put(idToElement.get(entry.getKey()), entry.getValue());
           }
         }
+        loaded++;
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
     }
+    return loaded == 2;
   }
 
   protected ObjectMapper getMapper() {

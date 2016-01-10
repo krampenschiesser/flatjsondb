@@ -167,8 +167,8 @@ public class Session implements TransactionResource {
   public void remove(Object entity) {
     Objects.requireNonNull(entity);
     SessionEntry sessionEntry = entity2Entry.get(entity);
+    EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(entity.getClass());
     if (sessionEntry == null) {
-      EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(entity.getClass());
       String id = entityDescriptor.getId(entity);
       if (id != null) {
         IndexElement indexElement = globalIndex.getById(id);
@@ -178,6 +178,12 @@ public class Session implements TransactionResource {
     if (sessionEntry != null) {
       dirtyChecker.trackDelete(sessionEntry);
       actions.add(new EntityDelete(repository, sessionEntry));
+    }
+    for (Relation relation : entityDescriptor.getChildRelations()) {
+      Collection<Object> relatedEntities = relation.getRelatedEntities(entity);
+      for (Object relatedEntity : relatedEntities) {
+        remove(relatedEntity);
+      }
     }
   }
 

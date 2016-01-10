@@ -17,16 +17,19 @@ package de.ks.flatadocdb.session.relation;
 
 import de.ks.flatadocdb.Repository;
 import de.ks.flatadocdb.TempRepository;
+import de.ks.flatadocdb.index.IndexElement;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.session.Related;
 import de.ks.flatadocdb.session.RelationOwner;
 import de.ks.flatadocdb.session.Session;
 import de.ks.flatadocdb.session.SessionFriend;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.nio.file.Path;
+import java.util.Collection;
 
 import static org.junit.Assert.*;
 
@@ -166,5 +169,51 @@ public class RelationTest {
     assertTrue(owner.getRelatedList().isEmpty());
     session.prepare();
     session.commit();
+  }
+
+  @Test
+  public void testDeleteChildWithParent() throws Exception {
+    RelationOwner owner = new RelationOwner("owner");
+    Related related = new Related("child");
+    owner.setChild(related);
+
+    Session session = new Session(metamodel, repository);
+    session.persist(owner);
+    session.prepare();
+    session.commit();
+
+
+    session = new Session(metamodel, repository);
+    session.remove(session.findById(owner.getId()));
+    session.prepare();
+    session.commit();
+
+    Collection<IndexElement> owners = repository.getIndex().getAllOf(RelationOwner.class);
+    Collection<IndexElement> children = repository.getIndex().getAllOf(Related.class);
+    assertThat(owners, Matchers.empty());
+    assertThat(children, Matchers.empty());
+  }
+
+  @Test
+  public void testDeleteChildrenWithParent() throws Exception {
+    RelationOwner owner = new RelationOwner("owner");
+    Related related = new Related("child");
+    owner.getRelatedChildren().add(related);
+
+    Session session = new Session(metamodel, repository);
+    session.persist(owner);
+    session.prepare();
+    session.commit();
+
+
+    session = new Session(metamodel, repository);
+    session.remove(session.findById(owner.getId()));
+    session.prepare();
+    session.commit();
+
+    Collection<IndexElement> owners = repository.getIndex().getAllOf(RelationOwner.class);
+    Collection<IndexElement> children = repository.getIndex().getAllOf(Related.class);
+    assertThat(owners, Matchers.empty());
+    assertThat(children, Matchers.empty());
   }
 }

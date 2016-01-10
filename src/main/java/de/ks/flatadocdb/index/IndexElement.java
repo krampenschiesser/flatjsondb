@@ -112,4 +112,13 @@ public class IndexElement {
     return id.hashCode();
   }
 
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("IndexElement{");
+    sb.append("entityClass=").append(entityClass);
+    sb.append(", naturalId=").append(naturalId);
+    sb.append(", id='").append(id).append('\'');
+    sb.append('}');
+    return sb.toString();
+  }
 }

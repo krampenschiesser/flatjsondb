@@ -36,13 +36,4 @@ public interface FolderGenerator {
    */
   Path getFolder(Repository repository, @Nullable Path ownerPath, Object object);
 
-  /**
-   * Implementations can define if the whole folder shalle be deleted with its entity.
-   * This might be useful to cleanup related resources that are not known to the program.
-   *
-   * @return default false
-   */
-  default boolean isRemoveFolderOnDelete() {
-    return false;
-  }
 }

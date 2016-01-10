@@ -17,7 +17,7 @@
 package de.ks.flatadocdb.session;
 
 import de.ks.flatadocdb.Repository;
-import de.ks.flatadocdb.metamodel.EntityDescriptor;
+import de.ks.flatadocdb.annotation.lifecycle.LifeCycle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,9 +25,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.stream.Stream;
 
 public class EntityDelete extends SessionAction {
   private static final Logger log = LoggerFactory.getLogger(EntityDelete.class);
+  public static final String DELETION_SUFFIX = "_del";
 
   public EntityDelete(Repository repository, SessionEntry sessionEntry) {
     super(repository, sessionEntry);
@@ -35,26 +37,13 @@ public class EntityDelete extends SessionAction {
 
   @Override
   public void prepare(Session session) {
-    EntityDescriptor entityDescriptor = sessionEntry.getEntityDescriptor();
-
-    boolean removeFolderOnDelete = entityDescriptor.getFolderGenerator().isRemoveFolderOnDelete();
-    if (removeFolderOnDelete) {
-      Path folder = sessionEntry.getFolder();
-      try {
-        String deletionTarget = folder.toFile().getName() + "_del";
-        Files.move(folder, folder.getParent().resolve(deletionTarget), StandardCopyOption.ATOMIC_MOVE);
-        log.debug("Moved folder scheduled for deletion from {} to {} for {}", sessionEntry.getFileName(), deletionTarget, sessionEntry.getObject());
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    } else {
-      Path completePath = sessionEntry.getCompletePath();
-      try {
-        Files.move(completePath, completePath.getParent().resolve(completePath.toFile().getName() + "_del"), StandardCopyOption.ATOMIC_MOVE);
-        log.debug("Moved file scheduled for deletion from {} to {} for {}", sessionEntry.getFileName(), completePath, sessionEntry.getObject());
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+    executeLifecycleAction(LifeCycle.POST_REMOVE);
+    Path completePath = sessionEntry.getCompletePath();
+    try {
+      Files.move(completePath, completePath.getParent().resolve(completePath.toFile().getName() + DELETION_SUFFIX), StandardCopyOption.ATOMIC_MOVE);
+      log.debug("Moved file scheduled for deletion from {} to {} for {}", sessionEntry.getFileName(), completePath, sessionEntry.getObject());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -62,57 +51,48 @@ public class EntityDelete extends SessionAction {
   public void commit(Session session) {
     session.removeFromSession(sessionEntry);
 
-    EntityDescriptor entityDescriptor = sessionEntry.getEntityDescriptor();
-    boolean removeFolderOnDelete = entityDescriptor.getFolderGenerator().isRemoveFolderOnDelete();
-    if (removeFolderOnDelete) {
-      Path folder = sessionEntry.getFolder();
-      try {
-        Path deletionTarget = folder.getParent().resolve(folder.toFile().getName() + "_del");
-        Files.delete(deletionTarget);
-        log.debug("Deleted folder {}(originally {}) for {}", deletionTarget, sessionEntry.getFileName(), sessionEntry.getObject());
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    } else {
-      Path completePath = sessionEntry.getCompletePath();
-      try {
-        Files.delete(completePath.getParent().resolve(completePath.toFile().getName() + "_del"));
-        log.debug("Deleted folder {}(originally {}) for {}", completePath, sessionEntry.getFileName(), sessionEntry.getObject());
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+    Path completePath = sessionEntry.getCompletePath();
+    try {
+      Files.delete(completePath.getParent().resolve(completePath.toFile().getName() + DELETION_SUFFIX));
+      log.debug("Deleted folder {}(originally {}) for {}", completePath, sessionEntry.getFileName(), sessionEntry.getObject());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
     session.globalIndex.removeEntry(sessionEntry);
     session.luceneUpdates.add(index -> index.removeEntry(sessionEntry));
+    executeLifecycleAction(LifeCycle.POST_REMOVE);
+    removeEmptyFolders(completePath);
+  }
+
+  private void removeEmptyFolders(Path completePath) {
+    for (Path parent = completePath.getParent(); !repository.getPath().equals(parent); parent = parent.getParent()) {
+      try {
+        if (Files.exists(parent)) {
+          Stream<Path> list = Files.list(parent);
+          long count = list.count();
+          if (count == 0) {
+            Files.deleteIfExists(parent);
+          } else {
+            break;
+          }
+        }
+      } catch (IOException e) {
+        log.error("Could not remove empty dir {}", completePath.getParent(), e);
+      }
+    }
   }
 
   @Override
   public void rollback(Session session) {
-    EntityDescriptor entityDescriptor = sessionEntry.getEntityDescriptor();
-
-    boolean removeFolderOnDelete = entityDescriptor.getFolderGenerator().isRemoveFolderOnDelete();
-    if (removeFolderOnDelete) {
-      Path folder = sessionEntry.getFolder();
-      try {
-        Path moveFolder = folder.getParent().resolve(folder.toFile().getName() + "_del");
-        if (moveFolder.toFile().exists()) {
-          Files.move(moveFolder, folder, StandardCopyOption.ATOMIC_MOVE);
-          log.debug("Rolled back folder scheduled for deletion from {} to {} for {}", moveFolder, sessionEntry.getFileName(), sessionEntry.getObject());
-        }
-      } catch (IOException e) {
-        throw new RuntimeException(e);
+    Path completePath = sessionEntry.getCompletePath();
+    try {
+      Path moveFile = completePath.getParent().resolve(completePath.toFile().getName() + DELETION_SUFFIX);
+      if (moveFile.toFile().exists()) {
+        Files.move(moveFile, completePath, StandardCopyOption.ATOMIC_MOVE);
+        log.debug("Rolled back file scheduled for deletion from {} to {} for {}", moveFile, sessionEntry.getFileName(), sessionEntry.getObject());
       }
-    } else {
-      Path completePath = sessionEntry.getCompletePath();
-      try {
-        Path moveFile = completePath.getParent().resolve(completePath.toFile().getName() + "_del");
-        if (moveFile.toFile().exists()) {
-          Files.move(moveFile, completePath, StandardCopyOption.ATOMIC_MOVE);
-          log.debug("Rolled back file scheduled for deletion from {} to {} for {}", moveFile, sessionEntry.getFileName(), sessionEntry.getObject());
-        }
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 }

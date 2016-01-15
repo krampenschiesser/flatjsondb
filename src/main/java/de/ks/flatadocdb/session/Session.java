@@ -34,6 +34,7 @@ import de.ks.flatadocdb.metamodel.relation.ChildRelation;
 import de.ks.flatadocdb.metamodel.relation.Relation;
 import de.ks.flatadocdb.query.Query;
 import de.ks.flatadocdb.session.dirtycheck.DirtyChecker;
+import de.ks.flatadocdb.session.relation.LazyEntity;
 import de.ks.flatadocdb.session.transaction.local.TransactionResource;
 import de.ks.flatadocdb.util.TimeProfiler;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -113,7 +114,7 @@ public class Session implements TransactionResource {
     String id = idGenerator.getSha1Hash(repository.getPath(), complete);
 
     Object found = findById(id);
-    if (found != null) {
+    if (found != null && !dirtyChecker.getDeletions().contains(entity)) {
       log.warn("Trying to persist entity {} [{}] twice", entity, complete);
       return;
     }
@@ -144,7 +145,7 @@ public class Session implements TransactionResource {
     for (Object related : relatedEntities) {
       EntityDescriptor descriptor = metaModel.getEntityDescriptor(related.getClass());
       String relationId = descriptor.getId(related);
-      if (relationId == null) {
+      if (relationId == null || dirtyChecker.getDeletions().contains(related)) {
         if (relation instanceof ChildRelation) {
           ChildRelation childRelation = (ChildRelation) relation;
 
@@ -167,12 +168,19 @@ public class Session implements TransactionResource {
   public void remove(Object entity) {
     Objects.requireNonNull(entity);
     SessionEntry sessionEntry = entity2Entry.get(entity);
+    removeSessionEntry(sessionEntry, entity);
+  }
+
+  protected void removeSessionEntry(SessionEntry sessionEntry, Object entity) {
     EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(entity.getClass());
 
     for (Relation relation : entityDescriptor.getChildRelations()) {
       Collection<Object> relatedEntities = relation.getRelatedEntities(entity);
       for (Object relatedEntity : relatedEntities) {
+
+        EntityDescriptor relatedDescriptor = metaModel.getEntityDescriptor(relatedEntity.getClass());
         remove(relatedEntity);
+        relatedDescriptor.writetId(LazyEntity.getRealObject(relatedEntity), null);
       }
     }
     if (sessionEntry == null) {
@@ -312,8 +320,20 @@ public class Session implements TransactionResource {
 
   @Override
   public void prepare() {
+    Set<SessionEntry> renamed = entriesById.values().stream().filter(e -> {
+      EntityDescriptor entityDescriptor = e.getEntityDescriptor();
+      String newFileName = entityDescriptor.getFileGenerator().getFileName(repository, entityDescriptor, e.object);
+      return !newFileName.equals(e.getFileName());
+    }).collect(Collectors.toSet());
+
+    for (SessionEntry sessionEntry : renamed) {
+      removeSessionEntry(sessionEntry, sessionEntry.getObject());
+      persist(sessionEntry.getObject());
+    }
     Collection<SessionEntry> dirty = dirtyChecker.findDirty(this.entriesById.values());
+    dirty.removeAll(renamed);
     dirty.stream().map(e -> new EntityUpdate(repository, e)).forEach(actions::add);
+
 
     for (SessionAction action : actions) {
       try {

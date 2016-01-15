@@ -77,4 +77,8 @@ public class DirtyChecker {
         return dirty;
       }).collect(Collectors.toSet());
   }
+
+  public Set<Object> getDeletions() {
+    return deletions;
+  }
 }

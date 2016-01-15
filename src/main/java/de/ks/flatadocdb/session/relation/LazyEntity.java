@@ -56,6 +56,23 @@ public class LazyEntity implements MethodHandler {
     return instance;
   }
 
+  @SuppressWarnings("unchecked")
+  public static <E> E getRealObject(E possibleProxy) {
+    if (possibleProxy != null) {
+      if (possibleProxy instanceof ProxyObject) {
+        MethodHandler handler = ((ProxyObject) possibleProxy).getHandler();
+        if (handler instanceof LazyEntity) {
+          LazyEntity lazyEntity = (LazyEntity) handler;
+          if (!lazyEntity.loaded.get()) {
+            lazyEntity.load();
+          }
+          return (E) lazyEntity.delegate.get();
+        }
+      }
+    }
+    return possibleProxy;
+  }
+
   protected final AtomicBoolean loaded = new AtomicBoolean(false);
   protected final String id;
   protected final Session session;
@@ -79,18 +96,22 @@ public class LazyEntity implements MethodHandler {
   @Override
   public Object invoke(Object self, Method thisMethod, Method proceed, Object[] args) throws Throwable {
     if (!loaded.get()) {
-      session.checkCorrectThread();
-      Object found = session.findById(id);
-      if (found == null) {
-        log.warn("For {} loaded lazy entity {} but found none", ownerField, id);
-      } else {
-        log.debug("For {} loaded lazy entity {}({})", ownerField, found, id);
-      }
-      delegate.set(found);
-      applyToOwnerField();
-      loaded.set(true);
+      load();
     }
     return thisMethod.invoke(delegate.get(), args);
+  }
+
+  private void load() {
+    session.checkCorrectThread();
+    Object found = session.findById(id);
+    if (found == null) {
+      log.warn("For {} loaded lazy entity {} but found none", ownerField, id);
+    } else {
+      log.debug("For {} loaded lazy entity {}({})", ownerField, found, id);
+    }
+    delegate.set(found);
+    applyToOwnerField();
+    loaded.set(true);
   }
 
   private void applyToOwnerField() {

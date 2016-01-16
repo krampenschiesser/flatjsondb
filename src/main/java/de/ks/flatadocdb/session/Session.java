@@ -121,7 +121,7 @@ public class Session implements TransactionResource {
 
     entityDescriptor.writetId(entity, id);
 
-    SessionEntry sessionEntry = new SessionEntry(entity, id, 0, new NaturalId(entityDescriptor.getEntityClass(), naturalId), complete, entityDescriptor);
+    SessionEntry sessionEntry = new SessionEntry(entity, id, 0, naturalId == null ? null : new NaturalId(entityDescriptor.getEntityClass(), naturalId), complete, entityDescriptor);
     addToSession(sessionEntry);
 
     dirtyChecker.trackPersist(sessionEntry);

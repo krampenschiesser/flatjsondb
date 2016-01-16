@@ -16,11 +16,13 @@
 package de.ks.flatadocdb.session;
 
 import java.io.Serializable;
+import java.util.Locale;
 
 public class NaturalId implements Serializable {
   private static final long serialVersionUID = 1L;
 
   private Serializable key;
+  private Serializable real;
   private Class<?> clazz;
 
   protected NaturalId() {
@@ -28,6 +30,11 @@ public class NaturalId implements Serializable {
 
   public NaturalId(Class<?> clazz, Serializable key) {
     this.key = key;
+    if (key instanceof String) {
+      real = ((String) key).toLowerCase(Locale.ROOT);
+    } else {
+      real = key;
+    }
     this.clazz = clazz;
   }
 
@@ -50,7 +57,7 @@ public class NaturalId implements Serializable {
 
     NaturalId naturalId1 = (NaturalId) o;
 
-    if (!key.equals(naturalId1.key)) {
+    if (!real.equals(naturalId1.real)) {
       return false;
     }
     return clazz.equals(naturalId1.clazz);
@@ -59,7 +66,7 @@ public class NaturalId implements Serializable {
 
   @Override
   public int hashCode() {
-    int result = key.hashCode();
+    int result = real.hashCode();
     result = 31 * result + clazz.hashCode();
     return result;
   }

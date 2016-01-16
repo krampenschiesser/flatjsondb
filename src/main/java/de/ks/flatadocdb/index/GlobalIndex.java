@@ -151,7 +151,7 @@ public class GlobalIndex extends Index {
           long lastModified = getLastModified(path);
           Object loaded = descriptor.getPersister().load(repository, descriptor, path, new HashMap<>());
           Serializable naturalId = descriptor.getNaturalId(loaded);
-          IndexElement indexElement = new IndexElement(repository, path, id, new NaturalId(loaded.getClass(), naturalId), descriptor.getEntityClass());
+          IndexElement indexElement = new IndexElement(repository, path, id, naturalId == null ? null : new NaturalId(loaded.getClass(), naturalId), descriptor.getEntityClass());
           indexElement.setMd5Sum(md5).setLastModified(lastModified);
           log.trace("Created index element {}", indexElement);
           return indexElement;
@@ -240,7 +240,9 @@ public class GlobalIndex extends Index {
           String id = element.getId();
           Serializable naturalId = element.getNaturalId();
           idToElement.put(id, element);
-          naturalIdToElement.put(new NaturalId(element.getEntityClass(), naturalId), element);
+          if (naturalId != null) {
+            naturalIdToElement.put(new NaturalId(element.getEntityClass(), naturalId), element);
+          }
         }
         loaded++;
       } catch (IOException e) {

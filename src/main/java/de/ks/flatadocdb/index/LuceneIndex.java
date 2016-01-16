@@ -133,7 +133,7 @@ public class LuceneIndex extends Index {
           @SuppressWarnings("unchecked")
           Document document = luceneExtractor.createDocument(loaded);
 
-          appendStandardFields(document, id, path.getFileName().toString(), new NaturalId(loaded.getClass(), naturalId));
+          appendStandardFields(document, id, path.getFileName().toString(), naturalId == null ? null : new NaturalId(loaded.getClass(), naturalId));
           log.trace("Created lucene document {}", document);
           return document;
         });

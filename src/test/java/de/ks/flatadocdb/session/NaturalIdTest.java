@@ -63,4 +63,21 @@ public class NaturalIdTest {
     assertEquals(owner, ownerReloaded);
     assertNotEquals(ownerReloaded.getClass(), testReloaded.getClass());
   }
+
+  @Test
+  public void testNaturalIdIgnoreCase() throws Exception {
+    TestEntity test = new TestEntity("Test");
+
+    Session session = new Session(metamodel, repository);
+    session.persist(test);
+    session.prepare();
+    session.commit();
+
+    session = new Session(metamodel, repository);
+    TestEntity testReloaded = session.findByNaturalId(TestEntity.class, "test");
+    session.prepare();
+    session.commit();
+
+    assertNotNull(testReloaded);
+  }
 }

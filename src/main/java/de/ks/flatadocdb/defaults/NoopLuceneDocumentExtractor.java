@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-package de.ks.flatadocdb.ifc;
+package de.ks.flatadocdb.defaults;
 
+import de.ks.flatadocdb.ifc.LuceneDocumentExtractor;
 import org.apache.lucene.document.Document;
 
-@FunctionalInterface
-/**
- * Used to extract a document containing the indexable fields for lucene.
- */
-public interface LuceneDocumentExtractor<E> {
+public class NoopLuceneDocumentExtractor implements LuceneDocumentExtractor {
+  @Override
+  public Document createDocument(Object instance) {
+    return null;
+  }
 
-  Document createDocument(E instance);
-
-  /**
-   * @return true if id, path and naturalid should be added although the document might be empty
-   */
-  default boolean isCreateDefaults() {
-    return true;
+  @Override
+  public boolean isCreateDefaults() {
+    return false;
   }
 }

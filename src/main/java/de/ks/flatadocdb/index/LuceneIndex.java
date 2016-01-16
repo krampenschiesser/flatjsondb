@@ -132,9 +132,13 @@ public class LuceneIndex extends Index {
           Serializable naturalId = descriptor.getNaturalId(loaded);
           @SuppressWarnings("unchecked")
           Document document = luceneExtractor.createDocument(loaded);
-
-          appendStandardFields(document, id, path.getFileName().toString(), naturalId == null ? null : new NaturalId(loaded.getClass(), naturalId));
-          log.trace("Created lucene document {}", document);
+          if (document == null && luceneExtractor.isCreateDefaults()) {
+            document = new Document();
+          }
+          if (document != null) {
+            appendStandardFields(document, id, path.getFileName().toString(), naturalId == null ? null : new NaturalId(loaded.getClass(), naturalId));
+            log.trace("Created lucene document {}", document);
+          }
           return document;
         });
         retval.add(future);
@@ -148,7 +152,9 @@ public class LuceneIndex extends Index {
     for (Future<Document> future : futures) {
       try {
         Document document = future.get();
-        indexWriter.addDocument(document);
+        if (document != null) {
+          indexWriter.addDocument(document);
+        }
       } catch (Exception e) {
         log.error("Could not retrieve index element", e);
       }

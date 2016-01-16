@@ -216,4 +216,27 @@ public class RelationTest {
     assertThat(owners, Matchers.empty());
     assertThat(children, Matchers.empty());
   }
+
+  @Test
+  public void testPersistChildLater() throws Exception {
+    RelationOwner owner = new RelationOwner("owner");
+
+    Session session = new Session(metamodel, repository);
+    session.persist(owner);
+    session.prepare();
+    session.commit();
+
+    session = new Session(metamodel, repository);
+    owner = session.findById(owner.getId());
+    Related related = new Related("childRelated");
+    owner.getRelatedChildren().add(related);
+    Related child = new Related("child");
+    owner.setChild(child);
+    session.prepare();
+    session.commit();
+
+    assertNotNull(owner.getId());
+    assertNotNull(related.getId());
+    assertNotNull(child.getId());
+  }
 }

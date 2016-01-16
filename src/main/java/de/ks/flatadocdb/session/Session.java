@@ -327,6 +327,30 @@ public class Session implements TransactionResource {
 
   @Override
   public void prepare() {
+    Set<SessionEntry> renamed = handleRenames();
+
+    Collection<SessionEntry> dirty = dirtyChecker.findDirty(this.entriesById.values());
+    dirty.removeAll(renamed);
+    dirty.forEach(e -> {
+      e.getEntityDescriptor().getChildRelations().stream()//
+        .flatMap(r -> r.getRelatedEntities(e.getObject()).stream())//
+        .filter(o -> metaModel.getEntityDescriptor(o.getClass()).getId(o) == null)//
+        .filter(o -> !entity2Entry.containsKey(o))//
+        .forEach(this::persist);
+    });
+    dirty.stream().map(e -> new EntityUpdate(repository, e)).forEach(actions::add);
+
+    for (SessionAction action : this.actions) {
+      try {
+        action.prepare(this);
+      } catch (RuntimeException e) {
+        rollbackonly = true;
+        throw e;
+      }
+    }
+  }
+
+  private Set<SessionEntry> handleRenames() {
     Set<SessionEntry> renamed = entriesById.values().stream()//
       .filter(e -> !e.isChild())//
       .filter(e -> {
@@ -350,19 +374,7 @@ public class Session implements TransactionResource {
         processed.add(sessionEntry.getObject());
       }
     }
-    Collection<SessionEntry> dirty = dirtyChecker.findDirty(this.entriesById.values());
-    dirty.removeAll(renamed);
-    dirty.stream().map(e -> new EntityUpdate(repository, e)).forEach(actions::add);
-
-
-    for (SessionAction action : this.actions) {
-      try {
-        action.prepare(this);
-      } catch (RuntimeException e) {
-        rollbackonly = true;
-        throw e;
-      }
-    }
+    return renamed;
   }
 
   @Override

@@ -67,7 +67,7 @@ public class Session implements TransactionResource {
 
   protected final Map<String, SessionEntry> entriesById = new HashMap<>();
   protected final Map<Object, SessionEntry> entriesByNaturalId = new HashMap<>();
-  protected final Map<Object, SessionEntry> entity2Entry = new HashMap<>();
+  protected final Map<Object, SessionEntry> entity2Entry = new IdentityHashMap<>();
 
   protected final List<SessionAction> actions = new LinkedList<>();
   protected final List<Consumer<LuceneIndex>> luceneUpdates = new LinkedList<>();
@@ -114,7 +114,7 @@ public class Session implements TransactionResource {
     String id = idGenerator.getSha1Hash(repository.getPath(), complete);
 
     Object found = findById(id);
-    if (found != null && !dirtyChecker.getDeletions().contains(entity)) {
+    if ((found != null || entity2Entry.containsKey(entity)) && !dirtyChecker.getDeletions().contains(entity)) {
       log.warn("Trying to persist entity {} [{}] twice", entity, complete);
       return;
     }
@@ -168,19 +168,21 @@ public class Session implements TransactionResource {
   public void remove(Object entity) {
     Objects.requireNonNull(entity);
     SessionEntry sessionEntry = entity2Entry.get(entity);
-    removeSessionEntry(sessionEntry, entity);
+    removeSessionEntry(sessionEntry, entity, Collections.emptySet());
   }
 
-  protected void removeSessionEntry(SessionEntry sessionEntry, Object entity) {
+  protected void removeSessionEntry(SessionEntry sessionEntry, Object entity, Set<Object> ignoredRelations) {
     EntityDescriptor entityDescriptor = metaModel.getEntityDescriptor(entity.getClass());
 
     for (Relation relation : entityDescriptor.getChildRelations()) {
       Collection<Object> relatedEntities = relation.getRelatedEntities(entity);
       for (Object relatedEntity : relatedEntities) {
-
-        EntityDescriptor relatedDescriptor = metaModel.getEntityDescriptor(relatedEntity.getClass());
-        remove(relatedEntity);
-        relatedDescriptor.writetId(LazyEntity.getRealObject(relatedEntity), null);
+        relatedEntity = LazyEntity.getRealObject(relatedEntity);
+        if (!ignoredRelations.contains(relatedEntity)) {
+          EntityDescriptor relatedDescriptor = metaModel.getEntityDescriptor(relatedEntity.getClass());
+          remove(relatedEntity);
+          relatedDescriptor.writetId(relatedEntity, null);
+        }
       }
     }
     if (sessionEntry == null) {
@@ -257,6 +259,10 @@ public class Session implements TransactionResource {
       }
     }
 
+    Path rootFolder = descriptor.getFolderGenerator().getFolder(repository, repository.getPath(), object);
+    boolean isChild = !rootFolder.equals(sessionEntry.getCompletePath().getParent());
+    sessionEntry.setChild(isChild);
+
     log.trace("Loaded {}", object);
     addToSession(sessionEntry);
 
@@ -320,22 +326,35 @@ public class Session implements TransactionResource {
 
   @Override
   public void prepare() {
-    Set<SessionEntry> renamed = entriesById.values().stream().filter(e -> {
-      EntityDescriptor entityDescriptor = e.getEntityDescriptor();
-      String newFileName = entityDescriptor.getFileGenerator().getFileName(repository, entityDescriptor, e.object);
-      return !newFileName.equals(e.getFileName());
-    }).collect(Collectors.toSet());
+    Set<SessionEntry> renamed = entriesById.values().stream()//
+      .filter(e -> !e.isChild())//
+      .filter(e -> {
+        EntityDescriptor entityDescriptor = e.getEntityDescriptor();
+        String newFileName = entityDescriptor.getFileGenerator().getFileName(repository, entityDescriptor, e.object);
+        return !newFileName.equals(e.getFileName());
+      }).collect(Collectors.toSet());
 
+    HashSet<Object> processed = new HashSet<>();
     for (SessionEntry sessionEntry : renamed) {
-      removeSessionEntry(sessionEntry, sessionEntry.getObject());
-      persist(sessionEntry.getObject());
+      boolean alreadyProcessed = processed.contains(sessionEntry.getObject());
+      if (!alreadyProcessed) {
+        removeSessionEntry(sessionEntry, sessionEntry.getObject(), processed);
+        persist(sessionEntry.getObject());
+
+        Set<Relation> allRelations = sessionEntry.getEntityDescriptor().getChildRelations();
+        for (Relation child : allRelations) {
+          Collection<Object> related = child.getRelatedEntities(sessionEntry.getObject());
+          processed.addAll(related);
+        }
+        processed.add(sessionEntry.getObject());
+      }
     }
     Collection<SessionEntry> dirty = dirtyChecker.findDirty(this.entriesById.values());
     dirty.removeAll(renamed);
     dirty.stream().map(e -> new EntityUpdate(repository, e)).forEach(actions::add);
 
 
-    for (SessionAction action : actions) {
+    for (SessionAction action : this.actions) {
       try {
         action.prepare(this);
       } catch (RuntimeException e) {

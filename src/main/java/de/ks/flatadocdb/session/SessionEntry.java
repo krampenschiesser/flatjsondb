@@ -29,6 +29,7 @@ public class SessionEntry {
   protected final Path completePath;
   private final EntityDescriptor entityDescriptor;
   protected byte[] md5;
+  protected boolean child;
 
   public SessionEntry(Object object, String id, long version, Serializable naturalId, Path completePath, EntityDescriptor entityDescriptor) {
     this.object = object;
@@ -77,6 +78,14 @@ public class SessionEntry {
 
   public EntityDescriptor getEntityDescriptor() {
     return entityDescriptor;
+  }
+
+  public boolean isChild() {
+    return child;
+  }
+
+  public void setChild(boolean child) {
+    this.child = child;
   }
 
   @Override

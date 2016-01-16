@@ -110,4 +110,40 @@ public class RenamingTest {
     assertEquals(2, folders.size());
     assertEquals("huhu.json", folders.get(1).getFileName().toString());
   }
+
+  @Test
+  public void testRenameEntityAndChild() throws Exception {
+    RelationOwner owner = new RelationOwner("owner");
+    Related child = new Related("child");
+    owner.setChild(child);
+
+    Session session = new Session(metamodel, repository);
+    session.persist(owner);
+    session.prepare();
+    session.commit();
+
+    session = new Session(metamodel, repository);
+    RelationOwner reloaded = session.findById(owner.getId());
+    reloaded.setName("huhu");
+    reloaded.getChild().setName("haha");
+    session.prepare();
+    session.commit();
+
+    Collection<IndexElement> indexElements = repository.getIndex().getAllOf(RelationOwner.class);
+    assertEquals(1, indexElements.size());
+    IndexElement element = indexElements.iterator().next();
+    assertEquals("huhu", element.getNaturalId());
+
+    indexElements = repository.getIndex().getAllOf(Related.class);
+    assertEquals(1, indexElements.size());
+    element = indexElements.iterator().next();
+    assertEquals("haha", element.getNaturalId());
+
+    Path repoPath = tempRepository.getPath();
+
+    List<Path> folders = Files.list(repoPath.resolve(RelationOwner.class.getSimpleName())).collect(Collectors.toList());
+    folders.sort(Comparator.comparing(p -> p.getFileName().toString()));
+    assertEquals(2, folders.size());
+    assertEquals("huhu.json", folders.get(1).getFileName().toString());
+  }
 }

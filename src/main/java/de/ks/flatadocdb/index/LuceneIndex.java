@@ -21,6 +21,7 @@ import de.ks.flatadocdb.defaults.DefaultIdGenerator;
 import de.ks.flatadocdb.ifc.LuceneDocumentExtractor;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
+import de.ks.flatadocdb.session.NaturalId;
 import de.ks.flatadocdb.session.SessionEntry;
 import de.ks.flatadocdb.util.TimeProfiler;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -132,7 +133,7 @@ public class LuceneIndex extends Index {
           @SuppressWarnings("unchecked")
           Document document = luceneExtractor.createDocument(loaded);
 
-          appendStandardFields(document, id, path.getFileName().toString(), naturalId);
+          appendStandardFields(document, id, path.getFileName().toString(), new NaturalId(loaded.getClass(), naturalId));
           log.trace("Created lucene document {}", document);
           return document;
         });
@@ -177,7 +178,7 @@ public class LuceneIndex extends Index {
     }
     String id = sessionEntry.getId();
     String fileName = sessionEntry.getFileName();
-    Serializable naturalId = sessionEntry.getNaturalId();
+    NaturalId naturalId = sessionEntry.getNaturalId();
     appendStandardFields(document, id, fileName, naturalId);
 
     if (log.isTraceEnabled()) {
@@ -188,7 +189,7 @@ public class LuceneIndex extends Index {
     writer.addDocument(document);
   }
 
-  private void appendStandardFields(Document document, String id, String fileName, Serializable naturalId) {
+  private void appendStandardFields(Document document, String id, String fileName, NaturalId naturalId) {
     for (StandardLuceneFields luceneField : StandardLuceneFields.values()) {
       String key = luceneField.name();
       if (document.getField(key) != null) {
@@ -197,7 +198,7 @@ public class LuceneIndex extends Index {
     }
     document.add(StandardLuceneFields.ID.create(id));
     document.add(StandardLuceneFields.FILENAME.create(fileName));
-    document.add(StandardLuceneFields.NATURAL_ID.create(String.valueOf(naturalId)));
+    document.add(StandardLuceneFields.NATURAL_ID.create(naturalId == null ? "" : String.valueOf(naturalId.getKey())));
   }
 
   public Directory getDirectory() {

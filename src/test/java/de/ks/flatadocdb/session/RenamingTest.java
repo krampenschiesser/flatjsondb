@@ -69,7 +69,7 @@ public class RenamingTest {
     Collection<IndexElement> indexElements = repository.getIndex().getAllOf(TestEntity.class);
     assertEquals(1, indexElements.size());
     IndexElement element = indexElements.iterator().next();
-    assertEquals("huhu", element.getNaturalId());
+    assertEquals("huhu", element.getNaturalId().getKey());
 
     Path repoPath = tempRepository.getPath();
     List<Path> folders = Files.list(repoPath.resolve(TestEntity.class.getSimpleName())).collect(Collectors.toList());
@@ -97,12 +97,12 @@ public class RenamingTest {
     Collection<IndexElement> indexElements = repository.getIndex().getAllOf(RelationOwner.class);
     assertEquals(1, indexElements.size());
     IndexElement element = indexElements.iterator().next();
-    assertEquals("huhu", element.getNaturalId());
+    assertEquals("huhu", element.getNaturalId().getKey());
 
     indexElements = repository.getIndex().getAllOf(Related.class);
     assertEquals(1, indexElements.size());
     element = indexElements.iterator().next();
-    assertEquals("child", element.getNaturalId());
+    assertEquals("child", element.getNaturalId().getKey());
 
     Path repoPath = tempRepository.getPath();
     List<Path> folders = Files.list(repoPath.resolve(RelationOwner.class.getSimpleName())).collect(Collectors.toList());
@@ -132,12 +132,12 @@ public class RenamingTest {
     Collection<IndexElement> indexElements = repository.getIndex().getAllOf(RelationOwner.class);
     assertEquals(1, indexElements.size());
     IndexElement element = indexElements.iterator().next();
-    assertEquals("huhu", element.getNaturalId());
+    assertEquals("huhu", element.getNaturalId().getKey());
 
     indexElements = repository.getIndex().getAllOf(Related.class);
     assertEquals(1, indexElements.size());
     element = indexElements.iterator().next();
-    assertEquals("haha", element.getNaturalId());
+    assertEquals("haha", element.getNaturalId().getKey());
 
     Path repoPath = tempRepository.getPath();
 

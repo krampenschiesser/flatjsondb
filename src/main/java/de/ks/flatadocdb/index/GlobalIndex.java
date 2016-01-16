@@ -26,6 +26,7 @@ import de.ks.flatadocdb.defaults.DefaultIdGenerator;
 import de.ks.flatadocdb.metamodel.EntityDescriptor;
 import de.ks.flatadocdb.metamodel.MetaModel;
 import de.ks.flatadocdb.query.Query;
+import de.ks.flatadocdb.session.NaturalId;
 import de.ks.flatadocdb.session.SessionEntry;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
@@ -60,7 +61,7 @@ public class GlobalIndex extends Index {
   public static final String QUERY_FILE = "query.json";
   private static final Logger log = LoggerFactory.getLogger(GlobalIndex.class);
 
-  protected final Map<Serializable, IndexElement> naturalIdToElement = new ConcurrentHashMap<>();
+  protected final Map<NaturalId, IndexElement> naturalIdToElement = new ConcurrentHashMap<>();
   protected final Map<String, IndexElement> idToElement = new ConcurrentHashMap<>();
   protected final ConcurrentHashMap<Query, ConcurrentHashMap<IndexElement, Optional<Object>>> queryElements = new ConcurrentHashMap<>();
 
@@ -116,7 +117,7 @@ public class GlobalIndex extends Index {
     return idToElement.get(id);
   }
 
-  public IndexElement getByNaturalId(Serializable id) {
+  public IndexElement getByNaturalId(NaturalId id) {
     return naturalIdToElement.get(id);
   }
 
@@ -150,7 +151,7 @@ public class GlobalIndex extends Index {
           long lastModified = getLastModified(path);
           Object loaded = descriptor.getPersister().load(repository, descriptor, path, new HashMap<>());
           Serializable naturalId = descriptor.getNaturalId(loaded);
-          IndexElement indexElement = new IndexElement(repository, path, id, naturalId, descriptor.getEntityClass());
+          IndexElement indexElement = new IndexElement(repository, path, id, new NaturalId(loaded.getClass(), naturalId), descriptor.getEntityClass());
           indexElement.setMd5Sum(md5).setLastModified(lastModified);
           log.trace("Created index element {}", indexElement);
           return indexElement;
@@ -239,7 +240,7 @@ public class GlobalIndex extends Index {
           String id = element.getId();
           Serializable naturalId = element.getNaturalId();
           idToElement.put(id, element);
-          naturalIdToElement.put(naturalId, element);
+          naturalIdToElement.put(new NaturalId(element.getEntityClass(), naturalId), element);
         }
         loaded++;
       } catch (IOException e) {

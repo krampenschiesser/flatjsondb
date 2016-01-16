@@ -18,8 +18,8 @@ package de.ks.flatadocdb.index;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.ks.flatadocdb.Repository;
+import de.ks.flatadocdb.session.NaturalId;
 
-import java.io.Serializable;
 import java.nio.file.Path;
 
 public class IndexElement {
@@ -27,7 +27,7 @@ public class IndexElement {
   private Repository repository;
   private final Path pathInRepository;
   private final String id;
-  private final Serializable naturalId;
+  private final NaturalId naturalId;
   private final Class<?> entityClass;
   private byte[] md5Sum;
   private long lastModified;
@@ -39,7 +39,7 @@ public class IndexElement {
     pathInRepository = null;
   }
 
-  public IndexElement(Repository repository, Path pathInRepository, String id, Serializable naturalId, Class<?> entityClass) {
+  public IndexElement(Repository repository, Path pathInRepository, String id, NaturalId naturalId, Class<?> entityClass) {
     this.repository = repository;
     this.pathInRepository = pathInRepository;
     this.id = id;
@@ -72,7 +72,7 @@ public class IndexElement {
     return id;
   }
 
-  public Serializable getNaturalId() {
+  public NaturalId getNaturalId() {
     return naturalId;
   }
 

@@ -66,7 +66,7 @@ public class Session implements TransactionResource {
   protected final DefaultIdGenerator idGenerator = new DefaultIdGenerator();
 
   protected final Map<String, SessionEntry> entriesById = new HashMap<>();
-  protected final Map<Object, SessionEntry> entriesByNaturalId = new HashMap<>();
+  protected final Map<NaturalId, SessionEntry> entriesByNaturalId = new HashMap<>();
   protected final Map<Object, SessionEntry> entity2Entry = new IdentityHashMap<>();
 
   protected final List<SessionAction> actions = new LinkedList<>();
@@ -121,7 +121,7 @@ public class Session implements TransactionResource {
 
     entityDescriptor.writetId(entity, id);
 
-    SessionEntry sessionEntry = new SessionEntry(entity, id, 0, naturalId, complete, entityDescriptor);
+    SessionEntry sessionEntry = new SessionEntry(entity, id, 0, new NaturalId(entityDescriptor.getEntityClass(), naturalId), complete, entityDescriptor);
     addToSession(sessionEntry);
 
     dirtyChecker.trackPersist(sessionEntry);
@@ -203,9 +203,10 @@ public class Session implements TransactionResource {
     Objects.requireNonNull(clazz);
     Objects.requireNonNull(naturalId);
 
-    SessionEntry sessionEntry = entriesByNaturalId.get(naturalId);
+    NaturalId realNaturalId = new NaturalId(clazz, naturalId);
+    SessionEntry sessionEntry = entriesByNaturalId.get(realNaturalId);
     if (sessionEntry == null) {
-      IndexElement indexElement = globalIndex.getByNaturalId(naturalId);
+      IndexElement indexElement = globalIndex.getByNaturalId(realNaturalId);
       if (indexElement == null) {
         return null;
       } else {

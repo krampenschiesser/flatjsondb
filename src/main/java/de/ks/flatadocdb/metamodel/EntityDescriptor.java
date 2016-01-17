@@ -26,6 +26,9 @@ import de.ks.flatadocdb.annotation.lifecycle.LifeCycle;
 import de.ks.flatadocdb.ifc.*;
 import de.ks.flatadocdb.metamodel.relation.*;
 import de.ks.flatadocdb.query.Query;
+import de.ks.flatadocdb.session.relation.LazyEntity;
+import javassist.util.proxy.MethodHandler;
+import javassist.util.proxy.ProxyObject;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
@@ -288,6 +291,12 @@ public class EntityDescriptor {
   }
 
   public String getId(Object entity) {
+    if (entity instanceof ProxyObject) {
+      MethodHandler handler = ((ProxyObject) entity).getHandler();
+      if (handler instanceof LazyEntity) {
+        return ((LazyEntity) handler).getId();
+      }
+    }
     return invokeGetter(idGetterAccess, entity);
   }
 

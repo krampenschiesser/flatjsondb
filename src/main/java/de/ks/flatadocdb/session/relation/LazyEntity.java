@@ -124,4 +124,8 @@ public class LazyEntity implements MethodHandler {
       }
     }
   }
+
+  public String getId() {
+    return id;
+  }
 }

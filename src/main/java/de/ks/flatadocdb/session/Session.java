@@ -329,7 +329,7 @@ public class Session implements TransactionResource {
   public void prepare() {
     Set<SessionEntry> renamed = handleRenames();
 
-    Collection<SessionEntry> dirty = dirtyChecker.findDirty(this.entriesById.values());
+    Collection<SessionEntry> dirty = dirtyChecker.findDirty(new HashSet<>(this.entriesById.values()));
     dirty.removeAll(renamed);
     dirty.forEach(e -> {
       e.getEntityDescriptor().getChildRelations().stream()//

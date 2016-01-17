@@ -52,7 +52,7 @@ public class LuceneTaggingTest {
   public void testTags() throws Exception {
     IndexWriter writer = new IndexWriter(directory, new IndexWriterConfig(analyzer));
 
-    List<String> allTags = Arrays.asList("bla blubb", "blubb", "blubber huhu", "bla huhu", "haha");
+    List<String> allTags = Arrays.asList("Bla Blubb", "Blubb", "Blubber Huhu", "Bla Huhu", "Haha");
     for (String tag : allTags) {
       Document doc = new Document();
       doc.add(new TextField("tags", tag, Field.Store.YES));

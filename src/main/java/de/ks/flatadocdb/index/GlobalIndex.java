@@ -284,7 +284,7 @@ public class GlobalIndex extends Index {
   public <E, V> Map<IndexElement, Optional<V>> getQueryElements(Query<E, V> query) {
     @SuppressWarnings("unchecked")
     ConcurrentHashMap<IndexElement, Optional<V>> retval = (ConcurrentHashMap) queryElements.get(query);
-    return retval;
+    return retval == null ? new ConcurrentHashMap<>() : retval;
   }
 
   static class QueryWrapper {

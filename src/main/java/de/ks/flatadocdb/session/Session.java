@@ -519,7 +519,7 @@ public class Session implements TransactionResource {
             map.put(query, entry.getValue().orElse(null));
           });
 
-        session.entriesById.values().stream()//
+        new ArrayList<>(session.entriesById.values()).stream()//
           .filter(v -> resultClass.isAssignableFrom(v.getEntityDescriptor().getEntityClass()))//
           .forEach(v -> {
             String id = v.getId();
